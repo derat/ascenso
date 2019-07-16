@@ -31,7 +31,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .stat-row {
   display: flex;
   justify-content: space-between;

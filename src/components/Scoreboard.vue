@@ -35,7 +35,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .team-row {
   display: flex;
   justify-content: space-between;
