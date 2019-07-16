@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import { ClimbState } from './ClimbState.js'
+import ClimbState from './ClimbState.js'
 
 export default {
   props: ['routeState'],

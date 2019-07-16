@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { ClimbState } from './ClimbState.js'
+import ClimbState from './ClimbState.js'
 import ClimbDropdown from './ClimbDropdown.vue'
 
 export default {
