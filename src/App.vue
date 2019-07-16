@@ -8,13 +8,14 @@
       <v-list>
         <v-list-tile
           v-for="item in navItems"
-          v-bind:key="item.name"
+          v-bind:key="item.text"
+          :to="{name: item.routeName}"
         >
           <v-list-tile-action>
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>
-            <v-list-title>{{ item.name }}</v-list-title>
+            <v-list-tile-title>{{ item.text }}</v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
       </v-list>
@@ -32,31 +33,29 @@
     </v-toolbar>
 
     <v-content>
-      <Climbs/>
+      <router-view />
     </v-content>
   </v-app>
 </template>
 
 <script>
-import Climbs from './components/Climbs'
-
 export default {
   name: 'App',
-  components: {
-    Climbs
-  },
   data () {
     return {
       drawer: null,
       navItems: [
-        { name: "Climbs",
-          icon: "view_list",
+        { text: 'Routes',
+          icon: 'view_list',
+          routeName: 'routes',
         },
-        { name: "Scoreboard",
-          icon: "assessment",
+        { text: 'Scoreboard',
+          icon: 'assessment',
+          routeName: 'scores',
         },
-        { name: "Statistics",
-          icon: "score",
+        { text: 'Statistics',
+          icon: 'score',
+          routeName: 'stats',
         },
       ],
     }
