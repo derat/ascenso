@@ -12,11 +12,11 @@
           :key="route.name"
         >
           <v-list-tile-action>
-            <ClimbDropdown v-bind:route_state=route.state />
+            <ClimbDropdown v-bind:routeState=route.state />
           </v-list-tile-action>
 
           <v-list-tile-action>
-            <ClimbDropdown v-bind:route_state=route.state />
+            <ClimbDropdown v-bind:routeState=route.state />
           </v-list-tile-action>
 
           <v-list-tile-content>

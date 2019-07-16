@@ -2,18 +2,19 @@
   <v-menu class="mr-3">
     <template v-slot:activator="{ on }">
       <v-btn
-        :color="states[route_state].color"
+        :color="states[routeState].color"
         class="white--text"
         v-on="on"
       >
-        {{ states[route_state].abbrev }}
+        {{ states[routeState].abbrev }}
       </v-btn>
     </template>
     <v-list>
+      <!-- TODO: support passing in the variable to bind to state -->
       <v-list-tile
         v-for="state in orderedStates"
         :key="state"
-        @click="route_state = state"
+        @click="routeState = state"
       >
         <v-list-tile-title>{{ states[state].name }}</v-list-tile-title>
       </v-list-tile>
@@ -25,7 +26,7 @@
 import { ClimbState } from './ClimbState.js'
 
 export default {
-  props: ['route_state'],
+  props: ['routeState'],
   data: () => ({
     states: [
       {
