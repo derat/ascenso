@@ -1,3 +1,5 @@
+<!-- TODO: Rename this to Routes.vue. -->
+
 <template>
   <v-expansion-panel :expand="true">
     <v-expansion-panel-content v-for="area in areas" :key="area.name">
