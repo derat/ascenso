@@ -2,6 +2,7 @@
   <v-app>
 
     <v-navigation-drawer
+      v-if="signedIn()"
       v-model="drawer"
       app
     >
@@ -18,10 +19,21 @@
             <v-list-tile-title>{{ item.text }}</v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
+
+        <v-list-tile key="logout" @click="signOut()">
+          <v-list-tile-action>
+            <v-icon>exit_to_app</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-list-tile-title>Sign out</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
+
       </v-list>
     </v-navigation-drawer>
 
     <v-toolbar
+      v-if="signedIn()"
       color="blue"
       app
     >
@@ -39,9 +51,11 @@
 </template>
 
 <script>
+import firebase from 'firebase';
+
 export default {
   name: 'App',
-  data () {
+  data() {
     return {
       drawer: null,
       navItems: [
@@ -59,6 +73,14 @@ export default {
         },
       ],
     }
-  }
+  },
+  methods: {
+    signedIn: function() { return !!firebase.auth().currentUser; },
+    signOut: function() {
+      firebase.auth().signOut().then(() => {
+        this.$router.replace('login');
+      });
+    },
+  },
 }
 </script>
