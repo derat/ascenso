@@ -22,25 +22,24 @@ const router = new VueRouter({
       name: 'login',
       path: '/login',
       component: Login,
-      meta: { forbidAuth: true },
     },
     {
       name: 'routes',
       path: '/routes',
       component: Routes,
-      meta: { requireAuth: true },
+      meta: { auth: true },
     },
     {
       name: 'scores',
       path: '/scores',
       component: Scoreboard,
-      meta: { requireAuth: true },
+      meta: { auth: true },
     },
     {
       name: 'stats',
       path: '/stats',
       component: Statistics,
-      meta: { requireAuth: true },
+      meta: { auth: true },
     },
     {
       path: '*',
@@ -51,12 +50,12 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   const user = firebase.auth().currentUser;
-  const requireAuth = to.matched.some(record => record.meta.requireAuth);
-  const forbidAuth = to.matched.some(record => record.meta.forbidAuth);
+  const auth = to.matched.some(record => record.meta.auth);
+  const login = to.matched.some(record => record.name == 'login');
 
-  if (requireAuth && !user) {
+  if (auth && !user) {
     next('login');
-  } else if (forbidAuth && user) {
+  } else if (login && user) {
     next('routes');
   } else {
     next();
