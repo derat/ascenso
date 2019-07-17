@@ -50,12 +50,12 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   const user = firebase.auth().currentUser;
-  const auth = to.matched.some(record => record.meta.auth);
-  const login = to.matched.some(record => record.name == 'login');
+  const needsAuth = to.matched.some(record => record.meta.auth);
+  const isLoginPage = to.matched.some(record => record.name == 'login');
 
-  if (auth && !user) {
+  if (needsAuth && !user) {
     next('login');
-  } else if (login && user) {
+  } else if (isLoginPage && user) {
     next('routes');
   } else {
     next();
