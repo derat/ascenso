@@ -7,8 +7,8 @@ import firebase from "firebase";
 import firebaseConfig from "./firebase";
 
 import App from './App.vue';
-import Climbs from './components/Climbs.vue';
 import Login from './components/Login.vue';
+import Routes from './components/Routes.vue';
 import Scoreboard from './components/Scoreboard.vue';
 import Statistics from './components/Statistics.vue';
 
@@ -27,7 +27,7 @@ const router = new VueRouter({
     {
       name: 'routes',
       path: '/routes',
-      component: Climbs,
+      component: Routes,
       meta: { requireAuth: true },
     },
     {
