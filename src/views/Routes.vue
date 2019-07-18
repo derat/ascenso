@@ -31,12 +31,12 @@
 </template>
 
 <script>
-import ClimbState from './ClimbState.js'
-import ClimbDropdown from './ClimbDropdown.vue'
+import ClimbState from '@/components/ClimbState.js'
+import ClimbDropdown from '@/components/ClimbDropdown.vue'
 
 export default {
   components: {
-    ClimbDropdown
+    ClimbDropdown,
   },
   data: () => ({
     areas: [
