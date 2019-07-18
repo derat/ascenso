@@ -10,6 +10,7 @@ import Scoreboard from '@/views/Scoreboard.vue';
 import Statistics from '@/views/Statistics.vue';
 
 const router = new VueRouter({
+  mode: 'history',
   routes: [
     {
       name: 'login',
