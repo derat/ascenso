@@ -3,4 +3,4 @@
 dist/
 firebase.json
 node_modules/
-src/firebase.js
+src/firebase/config.js

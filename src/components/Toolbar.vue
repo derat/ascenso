@@ -29,17 +29,20 @@
         @click.stop="drawer = !drawer"
         class="white--text"
       ></v-toolbar-side-icon>
-      <v-toolbar-title class="white--text">Climbing competition</v-toolbar-title>
+      <v-toolbar-title class="white--text">
+        {{ config ? config.competitionName : 'Loading...'}}
+      </v-toolbar-title>
     </v-toolbar>
   </div>
 </template>
 
 <script>
-import firebase from 'firebase';
+import { auth, db } from '@/firebase';
 
 export default {
   data() {
     return {
+      config: null,
       drawer: null,
       navItems: [
         { text: 'Routes',
@@ -57,13 +60,14 @@ export default {
         { text: 'Sign out',
           icon: 'exit_to_app',
           method: () => {
-            firebase.auth().signOut().then(() => {
-              this.$router.replace('login');
-            });
+            auth.signOut().then(() => { this.$router.replace('login'); });
           },
         },
       ],
     }
+  },
+  firestore: {
+    config: db.collection('global').doc('config'),
   },
 }
 </script>

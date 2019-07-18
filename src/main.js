@@ -1,22 +1,24 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import firebase from 'firebase';
+
 import './plugins/vuetify';
+import { firestorePlugin } from 'vuefire';
+
+import { auth } from './firebase';
 
 import App from './App.vue';
 import router from './router';
-import firebaseConfig from './firebase';
 
 Vue.config.productionTip = false;
 
 Vue.use(VueRouter);
+Vue.use(firestorePlugin);
 
 // Defer Vue initialization until Firebase has determined if the user has
 // authenticated or not. Otherwise, router.beforeEach may end up trying to
 // inspect Firebase's auth state before it's been initialized.
 let app = null;
-firebase.initializeApp(firebaseConfig);
-firebase.auth().onAuthStateChanged(() => {
+auth.onAuthStateChanged(() => {
   if (!app) {
     app = new Vue({
       router,
