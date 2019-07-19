@@ -103,7 +103,7 @@ export default {
 };
 ```
 
-## Cloud Firestore schema
+## Cloud Firestore
 
 Attempting to impose a modicum of order in the brave new NoSQL world:
 
@@ -111,14 +111,33 @@ Attempting to impose a modicum of order in the brave new NoSQL world:
 
 Heterogeneous singleton documents:
 
+*   `auth` - Document containing authentication-related information.
+    *   `cloudFunctionSHA256` - Hex-encoded SHA256 hash of secret password used
+        to restrict HTTP access to Cloud Functions.
 *   `config` - Document containing global configuration:
     *   `competitionName` - String field containing competition name, e.g. `"My
         Competition 2019"`.
+*   `indexedData` - Document containing indexed area and route information:
+    *   `areas` - Map field containing area information keyed by area ID, e.g.
+        `my_area`.
+        *   `<area_id>` - Map containing area information:
+            *   `name` - String field containing area name, e.g. `My Area`.
+    *   `routes` - Map field containing route information keyed by route ID,
+        e.g. `my_route`.
+        *   `<route_id>` - Map containing route information:
+            *   `name` - String field containing route name, e.g. `"My Route"`.
+            *   `area` - String field containing area ID, e.g. `my_area`.
+            *   `grade` - String field containing route grade, e.g. `"5.10c"` or
+                `"5.11c/d"`.
+            *   `lead` - Number field containing points awarded for leading the
+                route.
+            *   `tr` - Number field containing points awarded for top-roping the
+                route.
 *   `sortedData` - Document containing sorted area and route information:
     *   `areas` - Array of sorted area maps:
-        *   `name` - String field containing the area name.
+        *   `name` - String field containing area name, e.g. `My Area`.
         *   `routes` - Array of sorted route maps:
-            *   `id` - String containing unique route ID. This should be a
+            *   `id` - String containing the unique route ID. This should be a
                 `hacker_style` version of the `name` field, e.g. `my_route`.
             *   `name` - String field containing route name, e.g. `"My Route"`.
             *   `grade` - String field containing route grade, e.g. `"5.10c"` or
@@ -127,3 +146,26 @@ Heterogeneous singleton documents:
                 route.
             *   `tr` - Number field containing points awarded for top-roping the
                 route.
+
+### Security rules
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /global/{doc} {
+      allow read: if doc != "auth"
+                  && request.auth.uid != null;
+      allow write: if false;
+    }
+  }
+}
+```
+
+## Cloud Functions
+
+In the `functions/routes` directory, deploy the function:
+
+```sh
+gcloud functions deploy UpdateRoutes --runtime go111 --trigger-http
+```
