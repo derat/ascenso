@@ -8,8 +8,7 @@
 </template>
 
 <script>
-import firebase from 'firebase';
-
+import { auth } from '@/firebase';
 import Toolbar from '@/components/Toolbar.vue';
 
 export default {
@@ -18,7 +17,7 @@ export default {
     Toolbar,
   },
   methods: {
-    signedIn: function() { return !!firebase.auth().currentUser; },
+    signedIn: function() { return !!auth.currentUser; },
   },
 }
 </script>

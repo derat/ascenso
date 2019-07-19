@@ -78,7 +78,7 @@ configuration is described here.
 }
 ```
 
-### src/firebase.js
+### src/firebase/config.js
 
 Firebase configuration values are available from the
 [Firebase Console](https://console.firebase.google.com/):
@@ -102,3 +102,9 @@ export default {
   appId: "...",
 };
 ```
+
+## Cloud Firestore schema
+
+*   `global`: Collection of heterogeneous singleton documents.
+    *   `config`: Document with global configuration.
+        *   `competitionName`: String field containing competition name.

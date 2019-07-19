@@ -2,7 +2,8 @@
 // different views.
 
 import VueRouter from 'vue-router';
-import firebase from 'firebase';
+
+import { auth } from '@/firebase';
 
 import Login from '@/views/Login.vue';
 import Routes from '@/views/Routes.vue';
@@ -43,7 +44,7 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const user = firebase.auth().currentUser;
+  const user = auth.currentUser;
   const needsAuth = to.matched.some(record => record.meta.auth);
   const isLoginPage = to.matched.some(record => record.name == 'login');
 

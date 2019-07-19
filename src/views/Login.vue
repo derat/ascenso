@@ -3,12 +3,13 @@
 </template>
 
 <script>
-import firebase from 'firebase';
+import firebase from 'firebase/app';
 import firebaseui from 'firebaseui';
+import { auth } from '@/firebase';
 
 export default {
   mounted() {
-    var ui = new firebaseui.auth.AuthUI(firebase.auth());
+    var ui = new firebaseui.auth.AuthUI(auth);
     ui.start("#firebaseui-auth-container", {
       signInSuccessUrl: '/',
       signInOptions: [
