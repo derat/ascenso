@@ -37,12 +37,12 @@ export default {
       {
         name: 'Lead',
         abbrev: 'L',
-        color: 'red'
+        color: 'red darken-4'
       },
       {
         name: 'Top-rope',
         abbrev: 'TR',
-        color: 'purple'
+        color: 'red'
       }
     ],
     orderedStates: [
