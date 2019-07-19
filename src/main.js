@@ -11,6 +11,9 @@ import router from './router';
 
 Vue.config.productionTip = false;
 
+// Uncomment to turn on performance tracing.
+//Vue.config.performance = true;
+
 Vue.use(VueRouter);
 Vue.use(firestorePlugin);
 
