@@ -105,6 +105,34 @@ export default {
 
 ## Cloud Firestore schema
 
-*   `global`: Collection of heterogeneous singleton documents.
-    *   `config`: Document with global configuration.
-        *   `competitionName`: String field containing competition name.
+Attempting to impose a modicum of order in the brave new NoSQL world:
+
+### `global` collection
+
+Heterogeneous singleton documents:
+
+*   `config` - Document containing global configuration.
+    *   `competitionName` - String field containing competition name, e.g. `"My
+        Competition 2019"`.
+
+### `areas` collection
+
+Read-only area data:
+
+*   `<area>` - Document containing info about an area. ID should be a
+    `hacker_style` version of the `name` field, e.g. `my_area`.
+    *   `name` - String field containing area name, e.g. `"My Area"`.
+    *   `sort` - Number field containing sort index. Values should start with 1,
+        but non-integer values can be introduced when reordering or inserting
+        routes.
+    *   `routes` - Subcollection containing the area's routes.
+        *   `<route>` - Document containing info about a route. ID should be a
+            `hacker_style` version of the `name` field, e.g. `my_route`.
+            *   `name` - String field containing route name, e.g. `"My Route"`.
+            *   `grade` - String field containing route grade, e.g. `"5.10c"` or
+                `"5.11c/d"`.
+            *   `pointsLead` - Number field containing points awarded for
+                leading the route.
+            *   `pointsTopRope` - Number field containing points awarded for
+                top-roping the route.
+            *   `sort` - Number field containing sort index.
