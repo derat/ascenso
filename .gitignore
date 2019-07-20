@@ -1,6 +1,5 @@
 .firebaserc
 .firebase/
 dist/
-firebase.json
 node_modules/
 src/firebase/config.js
