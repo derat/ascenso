@@ -3,7 +3,7 @@
     <template v-slot:activator="{ on }">
       <v-btn
         :color="states[routeState].color"
-        class="white--text"
+        class="white--text narrow-button"
         v-on="on"
       >
         {{ states[routeState].abbrev }}
@@ -53,3 +53,9 @@ export default {
   })
 }
 </script>
+
+<style>
+.narrow-button {
+  min-width: 48px;
+}
+</style>
