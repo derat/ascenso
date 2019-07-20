@@ -1,12 +1,17 @@
 <template>
-  <v-expansion-panel :expand="true">
-    <v-expansion-panel-content v-for="area in areas" :key="area.name">
+  <v-expansion-panel v-if="loaded" :expand="true">
+    <v-expansion-panel-content v-for="area in sortedData.areas" :key="area.name">
       <template v-slot:header>
         <div>{{area.name}}</div>
       </template>
-      <RouteList v-bind:areaID=area.id />
+      <RouteList v-bind:routes=area.routes />
     </v-expansion-panel-content>
   </v-expansion-panel>
+  <v-container v-else fill-height>
+    <v-layout column justify-center align-center>
+      <v-progress-circular indeterminate size="48" />
+    </v-layout>
+  </v-container>
 </template>
 
 <script>
@@ -14,17 +19,20 @@ import { db } from '@/firebase';
 import RouteList from '@/components/RouteList.vue'
 
 export default {
+  name: 'Routes',
   components: {
     RouteList,
   },
   data() {
     return {
-      areas: [],
+      loaded: false,
+      sortedData: {},
     }
   },
-  firestore: {
-    // TODO: Sort by the 'sort' field.
-    areas: db.collection('areas'),
+  created() {
+    this.$bind('sortedData', db.collection('global').doc('sortedData'))
+        .then(() => { this.loaded = true; })
+        .catch((error) => { console.log('Failed to load sorted data: ', error) });
   },
 }
 </script>

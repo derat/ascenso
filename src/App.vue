@@ -2,7 +2,10 @@
   <v-app>
     <Toolbar v-if="signedIn()" />
     <v-content>
-      <router-view />
+      <!-- Cache the routes view since it's slow to render. -->
+      <keep-alive include="Routes">
+        <router-view />
+      </keep-alive>
     </v-content>
   </v-app>
 </template>

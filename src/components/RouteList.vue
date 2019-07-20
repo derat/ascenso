@@ -19,7 +19,7 @@
         <v-list-tile-sub-title class="details">
           <span class="grade">{{ route.grade }}</span>
           <span class="points">
-            {{ route.pointsLead }} ({{ route.pointsTopRope }})
+            {{ route.lead }} ({{ route.tr }})
           </span>
         </v-list-tile-sub-title>
       </v-list-tile-content>
@@ -28,30 +28,13 @@
 </template>
 
 <script>
-import { db } from '@/firebase';
 import ClimbDropdown from '@/components/ClimbDropdown.vue'
-
-const areas = db.collection('areas');
 
 export default {
   components: {
     ClimbDropdown,
   },
-  props: ['areaID'],
-  data() {
-    return {
-      routes: [],
-    }
-  },
-  watch: {
-    areaID: {
-      immediate: true,
-      handler(areaID) {
-        // TODO: Sort by the 'sort' field.
-        this.$bind('routes', areas.doc(areaID).collection('routes'));
-      },
-    },
-  },
+  props: ['routes'],
 }
 </script>
 
