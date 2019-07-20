@@ -133,6 +133,14 @@ Heterogeneous singleton documents:
             *   `tr` - Number field containing points awarded for top-roping the
                 route.
 
+### `users` collection
+
+*   `<uid>` - Document containing information about a user.
+    *   `name` - String field containing the user's name, e.g. "Some Climber."
+    *   `climbs` - Map field containing information about completed climbs. Keys
+        are route IDs. Values are 0 for not climbed, 1 for lead, or 2 for
+        top-rope.
+
 ## Cloud Functions
 
 In the `functions/routes` directory, deploy the function:

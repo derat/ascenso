@@ -10,6 +10,7 @@ import VueRouter from 'vue-router';
 import { auth } from '@/firebase';
 
 import Login from '@/views/Login.vue';
+import Profile from '@/views/Profile.vue';
 import Routes from '@/views/Routes.vue';
 import Scoreboard from '@/views/Scoreboard.vue';
 import Statistics from '@/views/Statistics.vue';
@@ -21,6 +22,12 @@ const router = new VueRouter({
       name: 'login',
       path: '/login',
       component: Login,
+    },
+    {
+      name: 'profile',
+      path: '/profile',
+      component: Profile,
+      meta: { auth: true },
     },
     {
       name: 'routes',

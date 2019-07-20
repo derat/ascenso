@@ -58,7 +58,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .narrow-button {
   min-width: 48px;
 }

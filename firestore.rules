@@ -8,6 +8,12 @@ service cloud.firestore {
                  && request.auth.uid != null;
     }
 
+    // Give users full access to their own docs.
+    // TODO: Validate fields here.
+    match /users/{uid} {
+      allow read, write: if request.auth.uid == uid;
+    }
+
     // Access to everything else is denied by default.
   }
 }

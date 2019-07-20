@@ -61,6 +61,10 @@ export default {
           icon: 'score',
           route: 'stats',
         },
+        { text: 'Profile',
+          icon: 'person',
+          route: 'profile',
+        },
         { text: 'Sign out',
           icon: 'exit_to_app',
           method: () => {
