@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Let logged-in users read all global docs besides "auth".
+    match /global/{doc} {
+      allow get: if doc != "auth"
+                 && request.auth.uid != null;
+    }
+
+    // Access to everything else is denied by default.
+  }
+}
