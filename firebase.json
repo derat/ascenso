@@ -4,9 +4,7 @@
       "target": "prod",
       "public": "dist",
       "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
+        "report.html"
       ],
       "rewrites": [
         {
