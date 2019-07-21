@@ -9,7 +9,10 @@ import VueRouter from 'vue-router';
 
 import { auth } from '@/firebase';
 
-import Login from '@/views/Login.vue';
+// Lazily load the Login view since it imports firebaseui, which is 200+ KB.
+// See https://alexjover.com/blog/lazy-load-in-vue-using-webpack-s-code-splitting/
+const Login = () => import('@/views/Login.vue');
+
 import Profile from '@/views/Profile.vue';
 import Routes from '@/views/Routes.vue';
 import Scoreboard from '@/views/Scoreboard.vue';
