@@ -6,19 +6,18 @@
   <v-menu class="mr-3">
     <template v-slot:activator="{ on }">
       <v-btn
-        :color="states[routeState].color"
+        :color="states[currentState].color"
         class="white--text narrow-button"
         v-on="on"
       >
-        {{ states[routeState].abbrev }}
+        {{ states[currentState].abbrev }}
       </v-btn>
     </template>
     <v-list>
-      <!-- TODO: support passing in the variable to bind to state -->
       <v-list-tile
         v-for="state in orderedStates"
         :key="state"
-        @click="routeState = state"
+        @click="setState(state)"
       >
         <v-list-tile-title>{{ states[state].name }}</v-list-tile-title>
       </v-list-tile>
@@ -27,10 +26,12 @@
 </template>
 
 <script>
+import firebase from 'firebase/app';
+import { auth, db } from '@/firebase';
 import ClimbState from './ClimbState.js'
 
 export default {
-  props: ['routeState'],
+  props: ['currentState', 'routeID'],
   data: () => ({
     states: [
       {
@@ -54,7 +55,17 @@ export default {
       ClimbState.TOP_ROPE,
       ClimbState.NOT_CLIMBED
     ],
-  })
+  }),
+  methods: {
+    setState(state) {
+      // Just delete the map entry instead of recording a not-climbed state.
+      const value = (state == ClimbState.NOT_CLIMBED) ?
+          firebase.firestore.FieldValue.delete() : state;
+      db.collection('users').doc(auth.currentUser.uid).update({
+        ['climbs.' + this.routeID]: value,
+      });
+    },
+  },
 }
 </script>
 

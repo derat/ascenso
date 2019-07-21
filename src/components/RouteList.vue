@@ -9,14 +9,14 @@
       :key="route.name"
     >
       <v-list-tile-action>
-        <!-- TODO: Need to get the route state from somewhere. -->
-        <ClimbDropdown v-bind:routeState=0 />
+        <ClimbDropdown
+          v-bind:currentState="climbs[route.id] || 0"
+          v-bind:routeID="route.id"
+        />
       </v-list-tile-action>
 
-      <v-list-tile-action>
-        <!-- TODO: Need to get the route state from somewhere. -->
-        <ClimbDropdown v-bind:routeState=0 />
-      </v-list-tile-action>
+      <!-- TODO: Add a second <v-list-tile-action> and <ClimbDropdown> here
+        once teams are added. -->
 
       <v-list-tile-content>
         <v-list-tile-title>{{ route.name }}</v-list-tile-title>
@@ -38,7 +38,7 @@ export default {
   components: {
     ClimbDropdown,
   },
-  props: ['routes'],
+  props: ['climbs', 'routes'],
 }
 </script>
 
