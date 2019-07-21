@@ -20,21 +20,19 @@
       />
     </v-expansion-panel-content>
   </v-expansion-panel>
-  <v-container v-else fill-height>
-    <v-layout column justify-center align-center>
-      <v-progress-circular indeterminate size="48" />
-    </v-layout>
-  </v-container>
+  <Spinner v-else />
 </template>
 
 <script>
 import { auth, db } from '@/firebase';
-import RouteList from '@/components/RouteList.vue'
+import RouteList from '@/components/RouteList.vue';
+import Spinner from '@/components/Spinner.vue';
 
 export default {
   name: 'Routes',
   components: {
     RouteList,
+    Spinner,
   },
   data() {
     return {
