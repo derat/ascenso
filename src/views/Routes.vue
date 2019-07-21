@@ -8,7 +8,7 @@
       <template v-slot:header>
         <div>{{area.name}}</div>
       </template>
-      <RouteList v-bind:routes=area.routes />
+      <RouteList v-bind:climbs="userDoc.climbs || {}" v-bind:routes="area.routes" />
     </v-expansion-panel-content>
   </v-expansion-panel>
   <v-container v-else fill-height>
@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import { db } from '@/firebase';
+import { auth, db } from '@/firebase';
 import RouteList from '@/components/RouteList.vue'
 
 export default {
@@ -31,12 +31,14 @@ export default {
     return {
       loaded: false,
       sortedData: {},
+      userDoc: {},
     }
   },
-  created() {
+  mounted() {
     this.$bind('sortedData', db.collection('global').doc('sortedData'))
         .then(() => { this.loaded = true; })
         .catch((error) => { console.log('Failed to load sorted data: ', error) });
+    this.$bind('userDoc', db.collection('users').doc(auth.currentUser.uid));
   },
 }
 </script>
