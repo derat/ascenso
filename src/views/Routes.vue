@@ -3,12 +3,21 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-expansion-panel v-if="loaded" :expand="true">
-    <v-expansion-panel-content v-for="area in sortedData.areas" :key="area.name">
+  <v-expansion-panel
+    v-if="loaded"
+    expand
+  >
+    <v-expansion-panel-content
+      v-for="area in sortedData.areas"
+      :key="area.name"
+    >
       <template v-slot:header>
         <div>{{area.name}}</div>
       </template>
-      <RouteList v-bind:climbs="userDoc.climbs || {}" v-bind:routes="area.routes" />
+      <RouteList
+        v-bind:climbs="userDoc.climbs || {}"
+        v-bind:routes="area.routes"
+      />
     </v-expansion-panel-content>
   </v-expansion-panel>
   <v-container v-else fill-height>
