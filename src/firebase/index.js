@@ -21,3 +21,12 @@ firebase.initializeApp(config);
 
 export const auth = firebase.auth();
 export const db = firebase.firestore();
+
+// See https://firebase.google.com/docs/firestore/manage-data/enable-offline.
+db.enablePersistence().catch(function(err) {
+  if (err.code == 'failed-precondition') {
+    console.log('Firestore persistence unavailable (multiple tabs open)');
+  } else if (err.code == 'unimplemented') {
+    console.log('Firestore persistence unsupported by browser');
+  }
+});
