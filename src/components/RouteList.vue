@@ -10,7 +10,7 @@
     >
       <v-list-tile-action>
         <ClimbDropdown
-          v-bind:currentState="climbs[route.id] || 0"
+          v-bind:currentState="climbs[route.id] || ClimbState.NOT_CLIMBED"
           v-bind:routeID="route.id"
         />
       </v-list-tile-action>
@@ -33,12 +33,16 @@
 
 <script>
 import ClimbDropdown from '@/components/ClimbDropdown.vue'
+import ClimbState from '@/components/ClimbState.js'
 
 export default {
   components: {
     ClimbDropdown,
   },
   props: ['climbs', 'routes'],
+  data: () => ({
+    ClimbState: ClimbState,
+  }),
 }
 </script>
 
