@@ -3,19 +3,7 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-list v-if="loaded">
-    <v-list-tile
-      v-for="stat in stats"
-      :key="stat.name"
-    >
-      <v-list-tile-content>
-        <v-list-tile-title class="stat-row">
-          <span>{{ stat.name }}</span>
-          <span>{{ stat.func() }}</span>
-        </v-list-tile-title>
-      </v-list-tile-content>
-    </v-list-tile>
-  </v-list>
+  <StatisticsList v-if="loaded" :items="items" />
   <Spinner v-else />
 </template>
 
@@ -23,51 +11,27 @@
 import { auth, db } from '@/firebase';
 import ClimbState from '@/components/ClimbState.js';
 import Spinner from '@/components/Spinner.vue';
+import StatisticsList from '@/components/StatisticsList.vue';
 
 export default {
   components: {
     Spinner,
+    StatisticsList,
   },
   data() {
     return {
-      // Stats rows to display.
-      stats: [
-        {
-          name: 'Points',
-          func: () => this.score,
-        },
-        {
-          name: 'Climbs',
-          func: () => this.allClimbs,
-        },
-        {
-          name: 'Lead climbs',
-          func: () => this.leadClimbs,
-        },
-        {
-          name: 'Top-rope climbs',
-          func: () => this.topRopeClimbs,
-        },
-      ],
-
-      // Computed stats.
-      loaded: false,
-      allClimbs: 0,
-      leadClimbs: 0,
-      topRopeClimbs: 0,
-      score: 0,
-
-      // Firestore documents.
       indexedData: {},
+      items: [],
+      loaded: false,
       userDoc: {},
     };
   },
   watch: {
-    indexedData: function() { this.updateStats() },
-    userDoc: function() { this.updateStats() },
+    indexedData: function() { this.updateItems() },
+    userDoc: function() { this.updateItems() },
   },
   methods: {
-    updateStats() {
+    updateItems() {
       if (!this.userDoc || !this.userDoc.climbs ||
           !this.indexedData || !this.indexedData.routes) {
         return;
@@ -77,6 +41,7 @@ export default {
       let lead = 0;
       let topRope = 0;
       let score = 0;
+      let areas = {};
 
       for (const id in this.userDoc.climbs) {
         const route = this.indexedData.routes[id];
@@ -86,20 +51,30 @@ export default {
 
         const state = this.userDoc.climbs[id];
         if (state == ClimbState.LEAD) {
-          all++;
           lead++;
           score += route.lead;
         } else if (state == ClimbState.TOP_ROPE) {
-          all++;
           topRope++;
           score += route.tr;
         }
+        if (state == ClimbState.LEAD || state == ClimbState.TOP_ROPE) {
+          all++;
+          areas[route.area] = true;
+        }
       }
 
-      this.allClimbs = all;
-      this.leadClimbs = lead;
-      this.topRopeClimbs = topRope;
-      this.score = score;
+      this.items = [
+        { name: 'Points', value: score },
+        {
+          name: 'Climbs',
+          value: all,
+          children: [
+            { name: 'Lead', value: lead },
+            { name: 'Top-rope', value: topRope },
+          ]
+        },
+        { name: 'Areas climbed', value: Object.keys(areas).length },
+      ];
       this.loaded = true;
     },
   },
