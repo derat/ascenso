@@ -12,7 +12,7 @@
       :key="area.name"
     >
       <template v-slot:header>
-        <div>{{area.name}}</div>
+        <div class="area">{{area.name}}</div>
       </template>
       <RouteList
         v-bind:climbs="userDoc.climbs || {}"
@@ -49,3 +49,9 @@ export default {
   },
 }
 </script>
+
+<style>
+.area {
+  font-size: 16px;
+}
+</style>
