@@ -26,12 +26,12 @@
     </v-navigation-drawer>
 
     <v-toolbar
-      color="blue"
+      class="primary"
       app
     >
       <v-toolbar-side-icon
         @click.stop="drawer = !drawer"
-        class="white--text"
+        class="primary"
       ></v-toolbar-side-icon>
       <v-toolbar-title class="white--text">
         {{ config ? config.competitionName : 'Loading...'}}
