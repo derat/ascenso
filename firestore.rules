@@ -2,16 +2,35 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // TODO: Add function for auth check.
+
     // Let logged-in users read all global docs besides "auth".
     match /global/{doc} {
-      allow get: if doc != "auth"
-                 && request.auth.uid != null;
+      allow get:
+        if request.auth.uid != null && doc != "auth";
     }
 
     // Give users full access to their own docs.
     // TODO: Validate fields here.
     match /users/{uid} {
-      allow read, write: if request.auth.uid == uid;
+      allow get, write: if request.auth.uid == uid;
+    }
+
+    match /teams/{tid} {
+      // Let all logged-in users create new teams.
+      allow create: if request.auth.uid != null;
+
+      // Let team members access their team, and let all logged-in
+      // users access update incomplete teams (to add themselves).
+      allow get, update:
+        if request.auth.uid != null &&
+            (request.auth.uid in resource.data.users ||
+             resource.data.users.size() < 2);
+    }
+
+    match /invites/{iid} {
+      // Let all logged-in users create or read invites.
+      allow create, get: if request.auth.uid != null;
     }
 
     // Access to everything else is denied by default.
