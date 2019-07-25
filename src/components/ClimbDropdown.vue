@@ -30,7 +30,7 @@
 <script>
 import firebase from 'firebase/app';
 import { auth, db } from '@/firebase';
-import ClimbState from '@/components/ClimbState.js'
+import ClimbState from '@/components/ClimbState.js';
 
 const stateColors = Object.freeze({
   [ClimbState.LEAD]: 'red',
@@ -54,14 +54,18 @@ export default {
   methods: {
     setState(state) {
       // Just delete the map entry instead of recording a not-climbed state.
-      const value = (state == ClimbState.NOT_CLIMBED) ?
-          firebase.firestore.FieldValue.delete() : state;
-      db.collection('users').doc(auth.currentUser.uid).update({
-        ['climbs.' + this.routeID]: value,
-      });
+      const value =
+        state == ClimbState.NOT_CLIMBED
+          ? firebase.firestore.FieldValue.delete()
+          : state;
+      db.collection('users')
+        .doc(auth.currentUser.uid)
+        .update({
+          ['climbs.' + this.routeID]: value,
+        });
     },
   },
-}
+};
 </script>
 
 <style scoped>

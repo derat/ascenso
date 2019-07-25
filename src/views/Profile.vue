@@ -3,20 +3,13 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-container
-    v-if="ready"
-    grid-list-md
-    text-ms-center
-  >
+  <v-container v-if="ready" grid-list-md text-ms-center>
     <!-- "Individual" card -->
     <v-card class="pa-3">
       <div class="caption">Individual</div>
       <v-layout row>
         <v-flex>
-          <v-form
-            v-model="userNameValid"
-            @submit.prevent
-          >
+          <v-form v-model="userNameValid" @submit.prevent>
             <v-text-field
               :value="userDoc.name"
               :counter="nameMaxLength"
@@ -39,10 +32,7 @@
       <template v-if="!_.isEmpty(teamDoc)">
         <v-layout row>
           <v-flex>
-            <v-form
-              v-model="teamNameValid"
-              @submit.prevent
-            >
+            <v-form v-model="teamNameValid" @submit.prevent>
               <v-text-field
                 :value="teamDoc.name"
                 :counter="nameMaxLength"
@@ -62,7 +52,7 @@
               v-bind:key="name"
               class="member-name"
             >
-              {{name}}
+              {{ name }}
             </div>
           </v-flex>
         </v-layout>
@@ -73,20 +63,13 @@
           <!-- "Show invite code" button and dialog -->
           <v-dialog v-model="inviteDialogShown">
             <template v-slot:activator="{ on }">
-              <v-btn
-                :disabled="teamFull"
-                color="primary"
-                v-on="on"
-              >
+              <v-btn :disabled="teamFull" color="primary" v-on="on">
                 Show invite code
               </v-btn>
             </template>
 
             <v-card>
-              <v-card-title
-                class="title grey lighten-2"
-                primary-title
-              >
+              <v-card-title class="title grey lighten-2" primary-title>
                 Invite Code
               </v-card-title>
 
@@ -103,7 +86,7 @@
                 <v-btn
                   flat
                   color="secondary"
-                  @click="inviteDialogShown=false"
+                  @click="inviteDialogShown = false"
                 >
                   Dismiss
                 </v-btn>
@@ -120,10 +103,7 @@
             </template>
 
             <v-card>
-              <v-card-title
-                class="title grey lighten-2"
-                primary-title
-              >
+              <v-card-title class="title grey lighten-2" primary-title>
                 Leave Team
               </v-card-title>
 
@@ -132,19 +112,11 @@
               </v-card-text>
 
               <v-card-actions>
-                <v-btn
-                  flat
-                  color="secondary"
-                  @click="leaveDialogShown=false"
-                >
+                <v-btn flat color="secondary" @click="leaveDialogShown = false">
                   Cancel
                 </v-btn>
                 <v-spacer />
-                <v-btn
-                  flat
-                  color="error"
-                  @click="leaveTeam"
-                >
+                <v-btn flat color="error" @click="leaveTeam">
                   Leave team
                 </v-btn>
               </v-card-actions>
@@ -155,7 +127,6 @@
 
       <!-- User is not on a team -->
       <template v-else>
-
         <div class="no-team-text mt-2">
           You are not on a team.
         </div>
@@ -170,22 +141,16 @@
             </template>
 
             <v-card>
-              <v-card-title
-                class="title grey lighten-2"
-                primary-title
-              >
+              <v-card-title class="title grey lighten-2" primary-title>
                 Join Team
               </v-card-title>
 
               <v-card-text>
                 <div>
-                  Ask your teammate to give you the {{inviteCodeLength}}-digit
+                  Ask your teammate to give you the {{ inviteCodeLength }}-digit
                   invite code from their profile page.
                 </div>
-                <v-form
-                  v-model="joinTeamValid"
-                  @submit.prevent="joinTeam"
-                >
+                <v-form v-model="joinTeamValid" @submit.prevent="joinTeam">
                   <!-- The v-if fixes autofocus on reopen. See
                        https://github.com/vuetifyjs/vuetify/issues/1731 -->
                   <v-text-field
@@ -226,10 +191,7 @@
             </template>
 
             <v-card>
-              <v-card-title
-                class="title grey lighten-2"
-                primary-title
-              >
+              <v-card-title class="title grey lighten-2" primary-title>
                 Create Team
               </v-card-title>
 
@@ -238,10 +200,7 @@
                   After creating a new team, you'll get an invite code to give
                   to your teammate so they can join.
                 </div>
-                <v-form
-                  v-model="createTeamValid"
-                  @submit.prevent="createTeam"
-                >
+                <v-form v-model="createTeamValid" @submit.prevent="createTeam">
                   <v-text-field
                     v-model="createTeamName"
                     v-if="createDialogShown"
@@ -260,18 +219,17 @@
                 <v-btn
                   :disabled="!createTeamValid || creatingTeam"
                   color="primary"
-                  flat @click="createTeam"
+                  flat
+                  @click="createTeam"
                 >
                   Create
                 </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
-
         </v-card-actions>
       </template>
     </v-card>
-
   </v-container>
   <Spinner v-else />
 </template>
@@ -287,20 +245,28 @@ export default {
     Spinner,
   },
   computed: {
-    _() { return _; },
-    inviteCodeMask: function() { return '#'.repeat(this.inviteCodeLength) },
+    _() {
+      return _;
+    },
+    inviteCodeMask: function() {
+      return '#'.repeat(this.inviteCodeLength);
+    },
     teamUserNames: function() {
       if (!this.teamDoc.users) {
         return [];
       }
       // Sort by UID to get stable ordering.
-      return Object.keys(this.teamDoc.users).sort().map((uid) => {
-        return this.teamDoc.users[uid].name;
-      });
+      return Object.keys(this.teamDoc.users)
+        .sort()
+        .map(uid => {
+          return this.teamDoc.users[uid].name;
+        });
     },
     teamFull: function() {
-      return this.teamDoc.users &&
-          Object.keys(this.teamDoc.users).length >= this.teamSize;
+      return (
+        this.teamDoc.users &&
+        Object.keys(this.teamDoc.users).length >= this.teamSize
+      );
     },
   },
   data() {
@@ -309,8 +275,10 @@ export default {
       nameMaxLength: 50,
       nameRules: [
         v => !!v || 'Name must not be empty',
-        v => (!v || v.length <= this.nameMaxLength) ||
-            'Name must be ' + this.nameMaxLength + ' characters or shorter',
+        v =>
+          !v ||
+          v.length <= this.nameMaxLength ||
+          'Name must be ' + this.nameMaxLength + ' characters or shorter',
       ],
 
       userNameValid: false,
@@ -326,7 +294,8 @@ export default {
       joinInviteCode: '',
       joiningTeam: false,
       joinInviteCodeRules: [
-        v => (v && v.length == this.inviteCodeLength) ||
+        v =>
+          (v && v.length == this.inviteCodeLength) ||
           'Code must be ' + this.inviteCodeLength + ' digits',
       ],
 
@@ -341,7 +310,7 @@ export default {
       userDoc: {},
       userRef: null,
       ready: false,
-    }
+    };
   },
   methods: {
     updateUserName(name) {
@@ -372,41 +341,45 @@ export default {
       }
       this.creatingTeam = true;
 
-      const inviteCode =
-          Math.random().toString().slice(2, 2 + this.inviteCodeLength);
+      const inviteCode = Math.random()
+        .toString()
+        .slice(2, 2 + this.inviteCodeLength);
 
       // First, create the team doc.
-      db.collection('teams').add({
-        name: this.createTeamName,
-        users: {
-          [auth.currentUser.uid]: {
-            name: this.userDoc.name,
+      db.collection('teams')
+        .add({
+          name: this.createTeamName,
+          users: {
+            [auth.currentUser.uid]: {
+              name: this.userDoc.name,
+            },
           },
-        },
-        invite: inviteCode,
-      }).then((teamRef) => {
-        // Perform a batched write to add the invite doc and update the user.
-        const batch = db.batch();
-        batch.set(db.collection('invites').doc(inviteCode), {
-          team: teamRef.id,
-        });
-        batch.update(this.userRef, {
-          team: teamRef.id,
-        });
-        batch.commit().then(() => {
-          // Update the UI to reflect the changes.
-          this.teamRef = teamRef;
-          this.$bind('teamDoc', this.teamRef);
-          this.creatingTeam = false;
-          this.createDialogShown = false;
-          this.createTeamName = '';
-          this.inviteDialogShown = true;
+          invite: inviteCode,
         })
-      }).catch((err) => {
-        // TODO: Surface to the user.
-        console.log('Failed to create team:', err);
-        this.creatingTeam = false;
-      });
+        .then(teamRef => {
+          // Perform a batched write to add the invite doc and update the user.
+          const batch = db.batch();
+          batch.set(db.collection('invites').doc(inviteCode), {
+            team: teamRef.id,
+          });
+          batch.update(this.userRef, {
+            team: teamRef.id,
+          });
+          batch.commit().then(() => {
+            // Update the UI to reflect the changes.
+            this.teamRef = teamRef;
+            this.$bind('teamDoc', this.teamRef);
+            this.creatingTeam = false;
+            this.createDialogShown = false;
+            this.createTeamName = '';
+            this.inviteDialogShown = true;
+          });
+        })
+        .catch(err => {
+          // TODO: Surface to the user.
+          console.log('Failed to create team:', err);
+          this.creatingTeam = false;
+        });
     },
 
     joinTeam() {
@@ -417,44 +390,50 @@ export default {
 
       // First get the invite doc to find the team ID.
       const inviteRef = db.collection('invites').doc(this.joinInviteCode);
-      inviteRef.get().then((inviteSnap) => {
-        // Now get the team doc.
-        const teamRef = db.collection('teams').doc(inviteSnap.data().team);
-        teamRef.get().then((teamSnap) => {
-          if (Object.keys(teamSnap.get('users')).length >= this.teamSize) {
-            // TODO: Surface to the user.
-            console.log('Team is full');
-            this.joiningTeam = false;
-            return;
-          }
+      inviteRef
+        .get()
+        .then(inviteSnap => {
+          // Now get the team doc.
+          const teamRef = db.collection('teams').doc(inviteSnap.data().team);
+          teamRef.get().then(teamSnap => {
+            if (Object.keys(teamSnap.get('users')).length >= this.teamSize) {
+              // TODO: Surface to the user.
+              console.log('Team is full');
+              this.joiningTeam = false;
+              return;
+            }
 
-          // Update the team doc and the user doc.
-          const batch = db.batch();
-          batch.update(teamRef, {
-            ['users.' + auth.currentUser.uid]: {
-              name: this.userDoc.name,
-            },
+            // Update the team doc and the user doc.
+            const batch = db.batch();
+            batch.update(teamRef, {
+              ['users.' + auth.currentUser.uid]: {
+                name: this.userDoc.name,
+              },
+            });
+            batch.update(this.userRef, { team: teamRef.id });
+            batch
+              .commit()
+              .then(() => {
+                // Update the UI to reflect the change.
+                this.teamRef = teamRef;
+                this.$bind('teamDoc', this.teamRef);
+                this.joiningTeam = false;
+                this.joinDialog = false;
+                this.joinInviteCode = '';
+                this.joiningTeam = false;
+              })
+              .catch(err => {
+                // TODO: Surface to the user.
+                console.log('Failed to join team:', err);
+                this.joiningTeam = false;
+              });
           });
-          batch.update(this.userRef, {team: teamRef.id});
-          batch.commit().then(() => {
-            // Update the UI to reflect the change.
-            this.teamRef = teamRef;
-            this.$bind('teamDoc', this.teamRef);
-            this.joiningTeam = false;
-            this.joinDialog = false;
-            this.joinInviteCode = '';
-            this.joiningTeam = false;
-          }).catch((err) => {
-            // TODO: Surface to the user.
-            console.log('Failed to join team:', err);
-            this.joiningTeam = false;
-          });
+        })
+        .catch(err => {
+          // TODO: Surface to the user.
+          console.log('Failed to get team from invite code:', err);
+          this.joiningTeam = false;
         });
-      }).catch((err) => {
-        // TODO: Surface to the user.
-        console.log('Failed to get team from invite code:', err);
-        this.joiningTeam = false;
-      });
 
       this.joinDialog = false;
     },
@@ -465,7 +444,7 @@ export default {
       this.teamRef.update({
         ['users.' + uid]: firebase.firestore.FieldValue.delete(),
       });
-      this.userRef.update({team: firebase.firestore.FieldValue.delete()});
+      this.userRef.update({ team: firebase.firestore.FieldValue.delete() });
       batch.commit().then(() => {
         this.$unbind('teamDoc');
         this.teamRef = null;
@@ -486,8 +465,8 @@ export default {
         });
       }
     });
-  }
-}
+  },
+};
 </script>
 
 <style scoped>

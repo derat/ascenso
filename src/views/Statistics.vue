@@ -27,13 +27,21 @@ export default {
     };
   },
   watch: {
-    indexedData: function() { this.updateItems() },
-    userDoc: function() { this.updateItems() },
+    indexedData: function() {
+      this.updateItems();
+    },
+    userDoc: function() {
+      this.updateItems();
+    },
   },
   methods: {
     updateItems() {
-      if (!this.userDoc || !this.userDoc.climbs ||
-          !this.indexedData || !this.indexedData.routes) {
+      if (
+        !this.userDoc ||
+        !this.userDoc.climbs ||
+        !this.indexedData ||
+        !this.indexedData.routes
+      ) {
         return;
       }
 
@@ -71,7 +79,7 @@ export default {
           children: [
             { name: 'Lead', value: lead },
             { name: 'Top-rope', value: topRope },
-          ]
+          ],
         },
         { name: 'Areas climbed', value: Object.keys(areas).length },
       ];

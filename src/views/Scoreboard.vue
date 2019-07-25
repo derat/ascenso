@@ -4,10 +4,7 @@
 
 <template>
   <v-list>
-    <v-list-tile
-      v-for="team in teams"
-      :key="team.name"
-    >
+    <v-list-tile v-for="team in teams" :key="team.name">
       <v-list-tile-content>
         <v-list-tile-title class="team-row">
           <span>{{ team.name }}</span>
