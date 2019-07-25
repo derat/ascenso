@@ -116,7 +116,12 @@
                   Cancel
                 </v-btn>
                 <v-spacer />
-                <v-btn flat color="error" @click="leaveTeam">
+                <v-btn
+                  flat
+                  color="error"
+                  :disabled="leavingTeam"
+                  @click="leaveTeam"
+                >
                   Leave team
                 </v-btn>
               </v-card-actions>
@@ -135,7 +140,7 @@
 
         <v-card-actions class="pa-0">
           <!-- "Join team" button and dialog -->
-          <v-dialog v-model="joinDialog">
+          <v-dialog v-model="joinDialogShown">
             <template v-slot:activator="{ on }">
               <v-btn class="primary" v-on="on">Join team</v-btn>
             </template>
@@ -155,7 +160,7 @@
                        https://github.com/vuetifyjs/vuetify/issues/1731 -->
                   <v-text-field
                     v-model="joinInviteCode"
-                    v-if="joinDialog"
+                    v-if="joinDialogShown"
                     :mask="inviteCodeMask"
                     :counter="inviteCodeLength"
                     :rules="joinInviteCodeRules"
@@ -248,13 +253,16 @@ export default {
     _() {
       return _;
     },
+
+    // String input mask passed to <v-text-input> for invite code.
     inviteCodeMask: function() {
       return '#'.repeat(this.inviteCodeLength);
     },
+
+    // Stably-ordered array of names of team members.
     teamUserNames: function() {
-      if (!this.teamDoc.users) {
-        return [];
-      }
+      if (!this.teamDoc.users) return [];
+
       // Sort by UID to get stable ordering.
       return Object.keys(this.teamDoc.users)
         .sort()
@@ -262,6 +270,8 @@ export default {
           return this.teamDoc.users[uid].name;
         });
     },
+
+    // Bool describing whether the team is currently full.
     teamFull: function() {
       return (
         this.teamDoc.users &&
@@ -271,8 +281,9 @@ export default {
   },
   data() {
     return {
-      // Share the same rules for user and team names.
+      // Maximum length of user and team names.
       nameMaxLength: 50,
+      // Rules for user and team name inputs.
       nameRules: [
         v => !!v || 'Name must not be empty',
         v =>
@@ -281,42 +292,63 @@ export default {
           'Name must be ' + this.nameMaxLength + ' characters or shorter',
       ],
 
+      // Whether the user and team name text fields contain valid input.
       userNameValid: false,
       teamNameValid: false,
 
+      // Model for "Create team" dialog visibility.
       createDialogShown: false,
+      // Whether "Create team" form contains valid input.
       createTeamValid: false,
+      // Model for team name input in "Create team" dialog.
       createTeamName: '',
+      // Whether we're in the process of creating a team.
       creatingTeam: false,
 
-      joinDialog: false,
+      // Model for "Join team" dialog visibility.
+      joinDialogShown: false,
+      // Whether "Join team" form contains valid input.
       joinTeamValid: false,
+      // Model for invite code input in "Join team" dialog.
       joinInviteCode: '',
+      // Whether we're in the process of joining a team.
       joiningTeam: false,
+      // Rules for invite code input.
       joinInviteCodeRules: [
         v =>
           (v && v.length == this.inviteCodeLength) ||
           'Code must be ' + this.inviteCodeLength + ' digits',
       ],
 
+      // Model for "Show invite code" dialog visibility.
       inviteDialogShown: false,
-      leaveDialogShown: false,
 
+      // Model for "Leave team" dialog visibility.
+      leaveDialogShown: false,
+      // Whether we're in the process of leaving the team.
+      leavingTeam: false,
+
+      // Length of invite codes.
       inviteCodeLength: 6,
+      // Number of users on a full team.
       teamSize: 2,
 
+      // Snapshot and reference for team document.
       teamDoc: {},
       teamRef: null,
+
+      // Snapshot and reference for user document.
       userDoc: {},
       userRef: null,
+
+      // Whether view is ready to be initially displayed.
       ready: false,
     };
   },
   methods: {
+    // Updates the user's name in Firestore when the user name input is blurred.
     updateUserName(name) {
-      if (!this.userNameValid) {
-        return;
-      }
+      if (!this.userNameValid) return;
       // TODO: Trim whitespace, discard embedded newlines, etc.?
       const batch = db.batch();
       batch.update(this.userRef, { name: name });
@@ -327,129 +359,151 @@ export default {
       batch.commit();
     },
 
+    // Updates the team's name in Firestore when the team name input is blurred.
     updateTeamName(name) {
-      if (!this.teamNameValid) {
-        return;
-      }
+      if (!this.teamNameValid) return;
       // TODO: Trim whitespace, discard embedded newlines, etc.?
       this.teamRef.update({ name: name });
     },
 
+    // Creates a new team when the "Create" button is clicked in the "Create
+    // team" dialog.
     createTeam() {
-      if (!this.createTeamValid || this.creatingTeam) {
-        return;
-      }
+      if (!this.createTeamValid || this.creatingTeam) return;
       this.creatingTeam = true;
 
+      // Generate an ID for a new team document.
+      const teamRef = db.collection('teams').doc();
+
+      // We get a string like "0.4948219742736113" and then chop off the left.
       const inviteCode = Math.random()
         .toString()
         .slice(2, 2 + this.inviteCodeLength);
 
-      // First, create the team doc.
-      db.collection('teams')
-        .add({
-          name: this.createTeamName,
-          users: {
-            [auth.currentUser.uid]: {
-              name: this.userDoc.name,
-            },
+      // Perform a single batched write that creates the team document, creates
+      // an invite document containing the team ID, and updates the user doc to
+      // contain the team ID.
+      const batch = db.batch();
+      batch.set(teamRef, {
+        name: this.createTeamName,
+        users: {
+          [auth.currentUser.uid]: {
+            name: this.userDoc.name,
           },
-          invite: inviteCode,
-        })
-        .then(teamRef => {
-          // Perform a batched write to add the invite doc and update the user.
-          const batch = db.batch();
-          batch.set(db.collection('invites').doc(inviteCode), {
-            team: teamRef.id,
-          });
-          batch.update(this.userRef, {
-            team: teamRef.id,
-          });
-          batch.commit().then(() => {
+        },
+        invite: inviteCode,
+      });
+      batch.set(db.collection('invites').doc(inviteCode), { team: teamRef.id });
+      batch.update(this.userRef, { team: teamRef.id });
+      batch
+        .commit()
+        .then(
+          () => {
             // Update the UI to reflect the changes.
             this.teamRef = teamRef;
             this.$bind('teamDoc', this.teamRef);
-            this.creatingTeam = false;
             this.createDialogShown = false;
-            this.createTeamName = '';
             this.inviteDialogShown = true;
-          });
-        })
-        .catch(err => {
-          // TODO: Surface to the user.
-          console.log('Failed to create team:', err);
+            this.createTeamName = '';
+          },
+          err => {
+            // TODO: Surface to the user.
+            console.log('Failed to create team:', err);
+          }
+        )
+        .finally(() => {
           this.creatingTeam = false;
         });
     },
 
+    // Joins a team when the "Join" button is clicked in the "Join team" dialog.
     joinTeam() {
-      if (!this.joinTeamValid || this.joiningTeam) {
-        return;
-      }
+      if (!this.joinTeamValid || this.joiningTeam) return;
       this.joiningTeam = true;
 
-      // First get the invite doc to find the team ID.
-      const inviteRef = db.collection('invites').doc(this.joinInviteCode);
-      inviteRef
-        .get()
-        .then(inviteSnap => {
-          // Now get the team doc.
-          const teamRef = db.collection('teams').doc(inviteSnap.data().team);
-          teamRef.get().then(teamSnap => {
-            if (Object.keys(teamSnap.get('users')).length >= this.teamSize) {
-              // TODO: Surface to the user.
-              console.log('Team is full');
-              this.joiningTeam = false;
-              return;
-            }
+      // We need to access this throughout the promise chain.
+      let teamRef;
 
-            // Update the team doc and the user doc.
-            const batch = db.batch();
-            batch.update(teamRef, {
-              ['users.' + auth.currentUser.uid]: {
-                name: this.userDoc.name,
-              },
-            });
-            batch.update(this.userRef, { team: teamRef.id });
-            batch
-              .commit()
-              .then(() => {
-                // Update the UI to reflect the change.
-                this.teamRef = teamRef;
-                this.$bind('teamDoc', this.teamRef);
-                this.joiningTeam = false;
-                this.joinDialog = false;
-                this.joinInviteCode = '';
-                this.joiningTeam = false;
-              })
-              .catch(err => {
-                // TODO: Surface to the user.
-                console.log('Failed to join team:', err);
-                this.joiningTeam = false;
-              });
+      // First get the invite doc to find the team ID.
+      db.collection('invites')
+        .doc(this.joinInviteCode)
+        .get()
+        .then(
+          inviteSnap => {
+            // Now get the team doc.
+            teamRef = db.collection('teams').doc(inviteSnap.data().team);
+            return teamRef.get();
+          },
+          err => {
+            // Rethrow to skip to the final error handler.
+            throw 'Failed to check invite code: ' + err;
+          }
+        )
+        .then(teamSnap => {
+          if (Object.keys(teamSnap.get('users')).length >= this.teamSize) {
+            throw 'Team is full';
+          }
+          // Update the team doc and the user doc.
+          const batch = db.batch();
+          batch.update(teamRef, {
+            ['users.' + auth.currentUser.uid]: {
+              name: this.userDoc.name,
+            },
           });
+          batch.update(this.userRef, { team: teamRef.id });
+          return batch.commit();
         })
-        .catch(err => {
-          // TODO: Surface to the user.
-          console.log('Failed to get team from invite code:', err);
+        .then(
+          () => {
+            // Update the UI to reflect the change.
+            this.teamRef = teamRef;
+            this.$bind('teamDoc', teamRef);
+            this.joinDialogShown = false;
+            this.joinInviteCode = '';
+          },
+          err => {
+            // TODO: Surface to the user.
+            console.log('Failed to join team:', err);
+          }
+        )
+        .finally(() => {
           this.joiningTeam = false;
         });
-
-      this.joinDialog = false;
     },
 
+    // Leaves the current team when the "Leave team" button is clicked in the
+    // "Leave team" dialog.
     leaveTeam() {
-      const uid = auth.currentUser.uid;
+      if (this.leavingTeam) return;
+      this.leavingTeam = true;
+
+      // Perform a batched update that removes the user from the team doc and
+      // removes the team from the user doc.
       const batch = db.batch();
-      this.teamRef.update({
-        ['users.' + uid]: firebase.firestore.FieldValue.delete(),
+      batch.update(this.teamRef, {
+        ['users.' +
+        auth.currentUser.uid]: firebase.firestore.FieldValue.delete(),
       });
-      this.userRef.update({ team: firebase.firestore.FieldValue.delete() });
-      batch.commit().then(() => {
-        this.$unbind('teamDoc');
-        this.teamRef = null;
-        this.leaveDialogShown = false;
+      batch.update(this.userRef, {
+        team: firebase.firestore.FieldValue.delete(),
       });
+      batch
+        .commit()
+        .then(
+          () => {
+            // Update the UI to reflect the change.
+            this.$unbind('teamDoc');
+            this.teamRef = null;
+            this.leaveDialogShown = false;
+          },
+          err => {
+            // TODO: Surface to the user.
+            console.log('Failed to leave team:', err);
+          }
+        )
+        .finally(() => {
+          this.leavingTeam = false;
+        });
     },
   },
 
