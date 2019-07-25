@@ -25,5 +25,5 @@ export default {
   components: {
     StatisticsRow,
   },
-}
+};
 </script>

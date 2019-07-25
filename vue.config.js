@@ -1,10 +1,10 @@
 module.exports = {
   devServer: {
-    disableHostCheck: true
+    disableHostCheck: true,
   },
   pluginOptions: {
     webpackBundleAnalyzer: {
-      openAnalyzer: false
-    }
-  }
-}
+      openAnalyzer: false,
+    },
+  },
+};

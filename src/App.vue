@@ -24,7 +24,9 @@ export default {
     Toolbar,
   },
   methods: {
-    signedIn: function() { return !!auth.currentUser; },
+    signedIn: function() {
+      return !!auth.currentUser;
+    },
   },
-}
+};
 </script>

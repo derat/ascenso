@@ -4,10 +4,7 @@
 
 <template>
   <v-list two-line>
-    <v-list-tile
-      v-for="route in routes"
-      :key="route.name"
-    >
+    <v-list-tile v-for="route in routes" :key="route.name">
       <v-list-tile-action>
         <ClimbDropdown
           v-bind:currentState="climbs[route.id] || ClimbState.NOT_CLIMBED"
@@ -22,9 +19,7 @@
         <v-list-tile-title>{{ route.name }}</v-list-tile-title>
         <v-list-tile-sub-title class="details">
           <span class="grade">{{ route.grade }}</span>
-          <span class="points">
-            {{ route.lead }} ({{ route.tr }})
-          </span>
+          <span class="points"> {{ route.lead }} ({{ route.tr }}) </span>
         </v-list-tile-sub-title>
       </v-list-tile-content>
     </v-list-tile>
@@ -32,8 +27,8 @@
 </template>
 
 <script>
-import ClimbDropdown from '@/components/ClimbDropdown.vue'
-import ClimbState from '@/components/ClimbState.js'
+import ClimbDropdown from '@/components/ClimbDropdown.vue';
+import ClimbState from '@/components/ClimbState.js';
 
 export default {
   components: {
@@ -43,7 +38,7 @@ export default {
   data: () => ({
     ClimbState: ClimbState,
   }),
-}
+};
 </script>
 
 <style scoped>

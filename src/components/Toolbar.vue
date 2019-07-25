@@ -4,15 +4,12 @@
 
 <template>
   <div>
-    <v-navigation-drawer
-      v-model="drawer"
-      app
-    >
+    <v-navigation-drawer v-model="drawer" app>
       <v-list>
         <v-list-tile
           v-for="item in navItems"
           v-bind:key="item.text"
-          :to="item.route ? {name: item.route} : ''"
+          :to="item.route ? { name: item.route } : ''"
           v-on="item.method ? { click: item.method } : null"
         >
           <v-list-tile-action>
@@ -25,16 +22,13 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-toolbar
-      class="primary"
-      app
-    >
+    <v-toolbar class="primary" app>
       <v-toolbar-side-icon
         @click.stop="drawer = !drawer"
         class="primary"
       ></v-toolbar-side-icon>
       <v-toolbar-title class="white--text">
-        {{ config ? config.competitionName : 'Loading...'}}
+        {{ config ? config.competitionName : 'Loading...' }}
       </v-toolbar-title>
     </v-toolbar>
   </div>
@@ -49,33 +43,24 @@ export default {
       config: null,
       drawer: null,
       navItems: [
-        { text: 'Routes',
-          icon: 'view_list',
-          route: 'routes',
-        },
-        { text: 'Scoreboard',
-          icon: 'assessment',
-          route: 'scores',
-        },
-        { text: 'Statistics',
-          icon: 'score',
-          route: 'stats',
-        },
-        { text: 'Profile',
-          icon: 'person',
-          route: 'profile',
-        },
-        { text: 'Sign out',
+        { text: 'Routes', icon: 'view_list', route: 'routes' },
+        { text: 'Scoreboard', icon: 'assessment', route: 'scores' },
+        { text: 'Statistics', icon: 'score', route: 'stats' },
+        { text: 'Profile', icon: 'person', route: 'profile' },
+        {
+          text: 'Sign out',
           icon: 'exit_to_app',
           method: () => {
-            auth.signOut().then(() => { this.$router.replace('login'); });
+            auth.signOut().then(() => {
+              this.$router.replace('login');
+            });
           },
         },
       ],
-    }
+    };
   },
   firestore: {
     config: db.collection('global').doc('config'),
   },
-}
+};
 </script>

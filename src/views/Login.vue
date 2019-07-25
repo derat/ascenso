@@ -19,7 +19,7 @@ export default {
       ui = new firebaseui.auth.AuthUI(auth);
     }
 
-    ui.start("#firebaseui-auth-container", {
+    ui.start('#firebaseui-auth-container', {
       signInOptions: [
         firebase.auth.GoogleAuthProvider.PROVIDER_ID,
         firebase.auth.EmailAuthProvider.PROVIDER_ID,
@@ -27,18 +27,23 @@ export default {
       callbacks: {
         signInSuccessWithAuthResult: () => {
           const ref = db.collection('users').doc(auth.currentUser.uid);
-          ref.get().then((snap) => {
+          ref.get().then(snap => {
             if (snap.exists) {
               // If the user has logged in before, send them to the routes view.
               this.$router.replace('routes');
             } else {
               // Otherwise, create the doc using their default name and send
               // them to the profile view.
-              ref.set({
-                name: auth.currentUser.displayName,
-              }, { merge: true }).then(() => {
-                this.$router.replace('profile');
-              });
+              ref
+                .set(
+                  {
+                    name: auth.currentUser.displayName,
+                  },
+                  { merge: true }
+                )
+                .then(() => {
+                  this.$router.replace('profile');
+                });
             }
           });
 
@@ -47,8 +52,8 @@ export default {
         },
       },
     });
-  }
-}
+  },
+};
 </script>
 
 <style src="firebaseui/dist/firebaseui.css"></style>
