@@ -133,10 +133,21 @@ Heterogeneous singleton documents:
             *   `tr` - Number field containing points awarded for top-roping the
                 route.
 
+### `invites` collection
+
+*   `<invite_id>` - Document containing an invite code. The ID is a six-digit
+    number.
+    *   `team` - String field containing ID in `teams` collection.
+
 ### `teams` collection
 
 *   `<team_id>` - Document containing information about a team.
     *   `name` - Team name, e.g. "Our Team".
+    *   `invite` - Invite code, i.e. `<invite_id>` from `invites` collection.
+    *   `users` - Map field containing data about team members keyed by UID.
+        *   `<uid>` - Map containing user information:
+            *   `name` - User name (duplicated from `name` field in `users`
+                collection).
 
 ### `users` collection
 
@@ -145,8 +156,8 @@ Heterogeneous singleton documents:
     *   `climbs` - Map field containing information about completed climbs. Keys
         are route IDs. Values are 0 for not climbed, 1 for lead, or 2 for
         top-rope.
-    *   `team` - String field containing ID of the user's team's document in the
-        `teams` collection. Unset or empty if the user is not on a team.
+    *   `team` - String field containing ID of a document in the `teams`
+        collection. Unset if the user is not on a team.
 
 ## Cloud Functions
 
