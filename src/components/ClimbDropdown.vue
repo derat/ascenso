@@ -3,7 +3,10 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-menu class="mr-3" lazy>
+  <!-- The "lazy" attribute here is important: rendering a bunch of
+       ClimbDropdown components is significantly faster when we defer rendering
+       their menus until they need to be displayed. -->
+  <v-menu lazy>
     <template v-slot:activator="{ on }">
       <v-btn
         :color="stateColors[currentState]"
@@ -14,13 +17,14 @@
       </v-btn>
     </template>
     <v-list>
-      <v-list-tile @click="setState(ClimbState.LEAD)">
+      <!-- Emit a "set-state" event with the requested state. -->
+      <v-list-tile @click="$emit('set-state', ClimbState.LEAD)">
         <v-list-tile-title>Lead</v-list-tile-title>
       </v-list-tile>
-      <v-list-tile @click="setState(ClimbState.TOP_ROPE)">
+      <v-list-tile @click="$emit('set-state', ClimbState.TOP_ROPE)">
         <v-list-tile-title>Top-rope</v-list-tile-title>
       </v-list-tile>
-      <v-list-tile @click="setState(ClimbState.NOT_CLIMBED)">
+      <v-list-tile @click="$emit('set-state', ClimbState.NOT_CLIMBED)">
         <v-list-tile-title>Not climbed</v-list-tile-title>
       </v-list-tile>
     </v-list>
@@ -28,8 +32,6 @@
 </template>
 
 <script>
-import firebase from 'firebase/app';
-import { auth, db } from '@/firebase';
 import ClimbState from '@/components/ClimbState.js';
 
 const stateColors = Object.freeze({
@@ -45,26 +47,12 @@ const stateAbbrevs = Object.freeze({
 });
 
 export default {
-  props: ['currentState', 'routeID'],
+  props: ['currentState'],
   data: () => ({
     ClimbState: ClimbState,
     stateColors: stateColors,
     stateAbbrevs: stateAbbrevs,
   }),
-  methods: {
-    setState(state) {
-      // Just delete the map entry instead of recording a not-climbed state.
-      const value =
-        state == ClimbState.NOT_CLIMBED
-          ? firebase.firestore.FieldValue.delete()
-          : state;
-      db.collection('users')
-        .doc(auth.currentUser.uid)
-        .update({
-          ['climbs.' + this.routeID]: value,
-        });
-    },
-  },
 };
 </script>
 
