@@ -29,7 +29,7 @@
       <div class="caption">Team</div>
 
       <!-- User is on a team -->
-      <template v-if="!_.isEmpty(teamDoc)">
+      <template v-if="teamDoc.users">
         <v-layout row>
           <v-flex>
             <v-form v-model="teamNameValid" @submit.prevent>
@@ -240,7 +240,6 @@
 </template>
 
 <script>
-import _ from 'lodash';
 import firebase from 'firebase/app';
 import { auth, db } from '@/firebase';
 import Spinner from '@/components/Spinner.vue';
@@ -250,10 +249,6 @@ export default {
     Spinner,
   },
   computed: {
-    _() {
-      return _;
-    },
-
     // String input mask passed to <v-text-input> for invite code.
     inviteCodeMask: function() {
       return '#'.repeat(this.inviteCodeLength);
