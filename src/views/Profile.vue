@@ -384,17 +384,26 @@ export default {
         users: {
           [auth.currentUser.uid]: {
             name: this.userDoc.name,
+            climbs: this.userDoc.climbs || {},
           },
         },
         invite: inviteCode,
       });
       batch.set(db.collection('invites').doc(inviteCode), { team: teamRef.id });
-      batch.update(this.userRef, { team: teamRef.id });
+      batch.update(this.userRef, {
+        team: teamRef.id,
+        // The user's climbs are now stored in the team doc. We do this to avoid
+        // needing to write to both the team and user doc every time the user
+        // completes another climb, and also to prevent needing to let user A
+        // write to teammate B's user doc if A reports a climb performed by B.
+        climbs: firebase.firestore.FieldValue.delete(),
+      });
       batch
         .commit()
         .then(
           () => {
             // Update the UI to reflect the changes.
+            // TODO: Just watch userDoc.team instead?
             this.teamRef = teamRef;
             this.$bind('teamDoc', this.teamRef);
             this.createDialogShown = false;
@@ -443,14 +452,19 @@ export default {
           batch.update(teamRef, {
             ['users.' + auth.currentUser.uid]: {
               name: this.userDoc.name,
+              climbs: this.userDoc.climbs || {},
             },
           });
-          batch.update(this.userRef, { team: teamRef.id });
+          batch.update(this.userRef, {
+            team: teamRef.id,
+            climbs: firebase.firestore.FieldValue.delete(),
+          });
           return batch.commit();
         })
         .then(
           () => {
             // Update the UI to reflect the change.
+            // TODO: Just watch userDoc.team instead?
             this.teamRef = teamRef;
             this.$bind('teamDoc', teamRef);
             this.joinDialogShown = false;
@@ -472,6 +486,15 @@ export default {
       if (this.leavingTeam) return;
       this.leavingTeam = true;
 
+      const uid = auth.currentUser.uid;
+
+      // Grab the user's climbs from the team doc.
+      let climbs = {};
+      const userData = this.teamDoc.users[uid];
+      if (userData && userData.climbs) {
+        climbs = userData.climbs;
+      }
+
       // Perform a batched update that removes the user from the team doc and
       // removes the team from the user doc.
       const batch = db.batch();
@@ -481,13 +504,16 @@ export default {
       });
       batch.update(this.userRef, {
         team: firebase.firestore.FieldValue.delete(),
+        // Move the climbs back from the team doc to the user doc.
+        climbs: climbs,
       });
       batch
         .commit()
         .then(
           () => {
             // Update the UI to reflect the change.
-            this.$unbind('teamDoc');
+            // TODO: Just watch userDoc.team instead?
+            this.$unbind('teamDoc', { reset: () => ({}) });
             this.teamRef = null;
             this.leaveDialogShown = false;
           },

@@ -5,17 +5,16 @@
 <template>
   <v-list two-line>
     <v-list-tile v-for="route in routes" :key="route.name">
-      <v-list-tile-action>
+      <v-list-tile-action v-for="(climbs, i) in climbMaps" :key="i">
         <ClimbDropdown
           v-bind:currentState="climbs[route.id] || ClimbState.NOT_CLIMBED"
-          v-bind:routeID="route.id"
+          @set-state="onSetState(i, route.id, $event)"
+          class="mr-3"
         />
       </v-list-tile-action>
 
-      <!-- TODO: Add a second <v-list-tile-action> and <ClimbDropdown> here
-        once teams are added. -->
-
-      <v-list-tile-content>
+      <!-- Add a left margin if there aren't any climb drop-downs. -->
+      <v-list-tile-content v-bind:class="[{ 'ml-3': !climbMaps.length }]">
         <v-list-tile-title>{{ route.name }}</v-list-tile-title>
         <v-list-tile-sub-title class="details">
           <span class="grade">{{ route.grade }}</span>
@@ -34,10 +33,25 @@ export default {
   components: {
     ClimbDropdown,
   },
-  props: ['climbs', 'routes'],
+  props: {
+    // Array of objects mapping from route ID to climb state in the order in
+    // which climb drop-down menus should be displayed. If empty, no menus are
+    // displayed.
+    climbMaps: Array,
+    // Array of objects describing routes to display. See the
+    // /globals/sortedData Firestore doc.
+    routes: Array,
+  },
   data: () => ({
     ClimbState: ClimbState,
   }),
+  methods: {
+    // Emits a "set-state" event consisting of an object with an index into
+    // climbMaps, the route ID, and the requested state.
+    onSetState(index, route, state) {
+      this.$emit('set-state', { index, route, state });
+    },
+  },
 };
 </script>
 

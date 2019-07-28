@@ -6,10 +6,13 @@
   <v-app>
     <Toolbar v-if="signedIn()" />
     <v-content>
-      <!-- Cache the routes view since it's slow to render. -->
-      <keep-alive include="Routes">
-        <router-view />
-      </keep-alive>
+      <!-- Ideally, this could be wrapped in <keep-alive include="Routes"> to
+           keep the slow-to-render Routes view alive after navigating away from
+           it, but that seems to break vuefire bindings: after switching away
+           from the view and then back to it, vuefire no longer notifies about
+           changes to the team document.
+           TODO: File a bug against vuefire. -->
+      <router-view />
     </v-content>
   </v-app>
 </template>
