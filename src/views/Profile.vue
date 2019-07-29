@@ -513,7 +513,10 @@ export default {
           () => {
             // Update the UI to reflect the change.
             // TODO: Just watch userDoc.team instead?
-            this.$unbind('teamDoc', { reset: () => ({}) });
+            this.$unbind('teamDoc');
+            // $unbind's 'reset' attribute doesn't seem to work correctly.
+            // Often this.teamDoc ends up being null instead of an empty object.
+            this.teamDoc = {};
             this.teamRef = null;
             this.leaveDialogShown = false;
           },

@@ -101,7 +101,8 @@ export default {
         this.teamRef = db.collection('teams').doc(this.userDoc.team);
         this.$bind('teamDoc', this.teamRef);
       } else {
-        this.$unbind('teamDoc', { reset: () => ({}) });
+        this.$unbind('teamDoc');
+        this.teamDoc = {};
         this.teamRef = null;
       }
     },
