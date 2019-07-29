@@ -22,11 +22,14 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-toolbar class="primary" app>
+    <v-toolbar color="primary" app>
       <v-toolbar-side-icon
         @click.stop="drawer = !drawer"
-        class="primary"
+        color="primary"
       ></v-toolbar-side-icon>
+      <!-- It's super-ugly that Vuetify seems to require hard-coding the text
+           color here. Oddly, color="primary" gives us a white icon in
+           <v-toolbar-side-icon> above, but it gives us black text here. -->
       <v-toolbar-title class="white--text">
         {{ config ? config.competitionName : 'Loading...' }}
       </v-toolbar-title>
