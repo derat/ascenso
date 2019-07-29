@@ -13,6 +13,7 @@
       </template>
       <RouteList
         v-bind:climbMaps="climbMaps"
+        v-bind:climbColors="climbColors"
         v-bind:routes="area.routes"
         @set-state="onSetState"
       />
@@ -46,6 +47,11 @@ export default {
     // for each team member. Empty if the user is not currently on a team.
     climbMaps: function() {
       return this.teamMembers.map(uid => this.teamDoc.users[uid].climbs || {});
+    },
+
+    // Array of color strings to pass to RouteList's climbColors prop.
+    climbColors: function() {
+      return ['orange', 'indigo'].slice(0, this.climbMaps.length);
     },
   },
   data() {

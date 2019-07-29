@@ -8,11 +8,7 @@
        their menus until they need to be displayed. -->
   <v-menu lazy>
     <template v-slot:activator="{ on }">
-      <v-btn
-        :color="stateColors[currentState]"
-        class="white--text narrow-button"
-        v-on="on"
-      >
+      <v-btn :color="stateColor" class="white--text narrow-button" v-on="on">
         {{ stateAbbrevs[currentState] }}
       </v-btn>
     </template>
@@ -34,12 +30,6 @@
 <script>
 import ClimbState from '@/components/ClimbState.js';
 
-const stateColors = Object.freeze({
-  [ClimbState.LEAD]: 'red',
-  [ClimbState.TOP_ROPE]: 'red darken-4',
-  [ClimbState.NOT_CLIMBED]: 'gray',
-});
-
 const stateAbbrevs = Object.freeze({
   [ClimbState.LEAD]: 'L',
   [ClimbState.TOP_ROPE]: 'TR',
@@ -47,10 +37,27 @@ const stateAbbrevs = Object.freeze({
 });
 
 export default {
-  props: ['currentState'],
+  props: {
+    // ClimbState value describing the current state of the climb.
+    currentState: Number,
+    // String value used in button's 'color' property for the 'lead' state.
+    // See https://vuetifyjs.com/en/styles/colors.
+    color: String,
+  },
+  computed: {
+    stateColor() {
+      switch (this.currentState) {
+        case ClimbState.LEAD:
+          return this.color;
+        case ClimbState.TOP_ROPE:
+          return this.color + ' lighten-3';
+        default:
+          return 'grey lighten-4';
+      }
+    },
+  },
   data: () => ({
     ClimbState: ClimbState,
-    stateColors: stateColors,
     stateAbbrevs: stateAbbrevs,
   }),
 };
