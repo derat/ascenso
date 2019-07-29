@@ -83,11 +83,7 @@
 
               <v-card-actions>
                 <v-spacer />
-                <v-btn
-                  flat
-                  color="secondary"
-                  @click="inviteDialogShown = false"
-                >
+                <v-btn flat color="primary" @click="inviteDialogShown = false">
                   Dismiss
                 </v-btn>
               </v-card-actions>
@@ -112,7 +108,7 @@
               </v-card-text>
 
               <v-card-actions>
-                <v-btn flat color="secondary" @click="leaveDialogShown = false">
+                <v-btn flat color="primary" @click="leaveDialogShown = false">
                   Cancel
                 </v-btn>
                 <v-spacer />
@@ -142,7 +138,7 @@
           <!-- "Join team" button and dialog -->
           <v-dialog v-model="joinDialogShown">
             <template v-slot:activator="{ on }">
-              <v-btn class="primary" v-on="on">Join team</v-btn>
+              <v-btn color="primary" v-on="on">Join team</v-btn>
             </template>
 
             <v-card>
@@ -192,7 +188,7 @@
           <!-- "Create team" button and dialog -->
           <v-dialog v-model="createDialogShown">
             <template v-slot:activator="{ on }">
-              <v-btn class="primary" v-on="on">Create team</v-btn>
+              <v-btn color="primary" v-on="on">Create team</v-btn>
             </template>
 
             <v-card>
