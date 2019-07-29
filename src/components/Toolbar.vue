@@ -22,7 +22,12 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-toolbar color="primary" app>
+    <v-toolbar
+      color="primary"
+      app
+      scroll-off-screen
+      v-bind:scroll-threshold="32"
+    >
       <v-toolbar-side-icon
         @click.stop="drawer = !drawer"
         color="primary"
