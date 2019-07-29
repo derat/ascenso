@@ -8,6 +8,7 @@
       <v-list-tile-action v-for="(climbs, i) in climbMaps" :key="i">
         <ClimbDropdown
           v-bind:currentState="climbs[route.id] || ClimbState.NOT_CLIMBED"
+          v-bind:color="climbColors[i]"
           @set-state="onSetState(i, route.id, $event)"
           class="mr-3"
         />
@@ -38,6 +39,9 @@ export default {
     // which climb drop-down menus should be displayed. If empty, no menus are
     // displayed.
     climbMaps: Array,
+    // Array containing color strings to use for climb drop-down menus. Each
+    // entry here corresponds to the entry in climbMaps with the same index.
+    climbColors: Array,
     // Array of objects describing routes to display. See the
     // /globals/sortedData Firestore doc.
     routes: Array,
