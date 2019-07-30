@@ -8,7 +8,7 @@ import VueRouter from 'vue-router';
 import './plugins/vuetify';
 import { firestorePlugin } from 'vuefire';
 
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 
 import App from './App.vue';
 import router from './router';
@@ -33,3 +33,10 @@ auth.onAuthStateChanged(() => {
     }).$mount('#app');
   }
 });
+
+// Set the page title.
+db.doc('global/config')
+  .get()
+  .then(snap => {
+    document.title = snap.data().competitionName;
+  });
