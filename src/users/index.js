@@ -5,16 +5,25 @@
 import { db } from '@/firebase';
 
 // Returns a promise that is satisfied once document snapshot(s) are loaded.
+// The user and team documents (if present) are bound to properties named
+// userProp and teamProp on view.
 export function bindUserAndTeamDocs(view, userId, userProp, teamProp) {
-  view.userRef = db.collection('users').doc(userId);
-  view.$bind(userProp, view.userRef).then(() => {
-    if (!view.userDoc.team) {
-      view.ready = true;
-    } else {
-      view.teamRef = db.collection('teams').doc(view.userDoc.team);
-      view.$bind(teamProp, view.teamRef).then(() => {
-        view.ready = true;
-      });
-    }
+  return new Promise((resolve, reject) => {
+    const userRef = db.collection('users').doc(userId);
+    view.$bind(userProp, userRef).then(
+      () => {
+        const team = view[userProp].team;
+        if (!team) {
+          resolve({ user: userRef });
+        }
+        const teamRef = db.collection('teams').doc(team);
+        view.$bind(teamProp, teamRef).then(() => {
+          resolve({ user: userRef, team: teamRef });
+        });
+      },
+      err => {
+        reject(err);
+      }
+    );
   });
 }

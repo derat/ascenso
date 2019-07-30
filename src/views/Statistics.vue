@@ -2,13 +2,14 @@
      Use of this source code is governed by a BSD-style license that can be
      found in the LICENSE file. -->
 
+// TODO: Style this, and add tabs for User & Team.
 <template>
-  <div v-if="loaded">
+  <div v-if="haveStats">
     <h1 class="pl-2 py-2">You</h1>
     <StatisticsList :items="itemsUser" />
-    <hr>
+    <hr />
     <h1 class="pl-2 py-2" v-if="itemsTeam.length">Team</h1>
-    <StatisticsList v-if="loaded" :items="itemsTeam" />
+    <StatisticsList :items="itemsTeam" />
   </div>
   <Spinner v-else />
 </template>
@@ -30,7 +31,8 @@ export default {
       indexedData: {},
       itemsUser: [],
       itemsTeam: [],
-      loaded: false,
+      haveStats: false,
+      climbDataLoaded: false,
       userDoc: {},
       teamDoc: {},
     };
@@ -39,15 +41,18 @@ export default {
     indexedData: function() {
       this.updateItems();
     },
-    'userDoc.climbs' : function() {
+    'userDoc.climbs': function() {
       this.updateItems();
     },
 
-    'teamDoc.users' : function() {
+    'teamDoc.users': function() {
       this.updateItems();
     },
   },
   methods: {
+    // Takes an array where each element is a dict mapping a route to a
+    // state (e.g. lead, top rope). Computes the score and other stats based
+    // on this array.
     computeStats(climbsArray) {
       let all = 0;
       let lead = 0;
@@ -92,35 +97,51 @@ export default {
     },
 
     updateItems() {
-      if (!this.userDoc || !this.indexedData || !this.indexedData.routes) {
+      if (!this.userDoc || !this.indexedData || !this.indexedData.routes ||
+          !this.climbDataLoaded) {
         return;
       }
 
       // If the user is on a team, retrieve the user stats from the team
       // climbs, and also fill in team stats.
       if (this.teamDoc && this.teamDoc.users) {
-        // Compute the stats for the user.
-        this.itemsUser = this.computeStats([this.teamDoc.users[
-          auth.currentUser.uid].climbs]);
+        const users = this.teamDoc.users;
 
-        // Compute the stats for the whole team.
-        let userClimbs = [];
-        for (const userId of Object.keys(this.teamDoc.users)) {
-          userClimbs.push(this.teamDoc.users[userId].climbs);
+        // Compute the stats for the user.
+        if (auth.currentUser.uid in users) {
+          this.itemsUser = this.computeStats([
+            users[auth.currentUser.uid].climbs,
+          ]);
+        } else {
+          this.itemsUser = this.computeStats([]);
         }
 
+        // Compute the stats for the whole team.
+        const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
         this.itemsTeam = this.computeStats(userClimbs);
       } else if (this.userDoc.climbs) {
         // Compute the stats for the user.
         this.itemsUser = this.computeStats([this.userDoc.climbs]);
       }
 
-      this.loaded = true;
+      this.haveStats = true;
     },
   },
   mounted() {
     this.$bind('indexedData', db.collection('global').doc('indexedData'));
-    bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc');
+
+    bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc')
+      .then(result => {
+        this.userRef = result.user;
+        if (result.team) {
+          this.teamRef = result.team;
+        }
+
+        this.climbDataLoaded = true;
+        this.updateItems();
+      }, err => {
+        console.log('Failed to bind user and team from database:', err);
+      });
   },
 };
 </script>
