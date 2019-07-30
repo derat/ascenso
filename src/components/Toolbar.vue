@@ -68,7 +68,7 @@ export default {
     };
   },
   firestore: {
-    config: db.collection('global').doc('config'),
+    config: db.doc('global/config'),
   },
 };
 </script>
