@@ -9,7 +9,7 @@
 
 <script>
 import { auth, db } from '@/firebase';
-import ClimbState from '@/components/ClimbState.js';
+import { ClimbState } from '@/climbs';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
 
