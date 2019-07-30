@@ -24,7 +24,7 @@ Vue.use(firestorePlugin);
 // Defer Vue initialization until Firebase has determined if the user has
 // authenticated or not. Otherwise, router.beforeEach may end up trying to
 // inspect Firebase's auth state before it's been initialized.
-let app = null;
+let app: Vue | null = null;
 auth.onAuthStateChanged(() => {
   if (!app) {
     app = new Vue({
@@ -38,5 +38,9 @@ auth.onAuthStateChanged(() => {
 db.doc('global/config')
   .get()
   .then(snap => {
-    document.title = snap.data().competitionName;
+    const data = snap.data();
+    if (!data) {
+      throw new Error('No config data');
+    }
+    document.title = data.competitionName;
   });

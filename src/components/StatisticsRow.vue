@@ -9,10 +9,14 @@
   </v-list-tile>
 </template>
 
-<script>
-export default {
-  props: ['name', 'value'],
-};
+<script lang="ts">
+import { Component, Prop, Vue } from 'vue-property-decorator';
+
+@Component
+export default class StatisticsRow extends Vue {
+  @Prop(String) readonly name!: string;
+  @Prop(Number) readonly value!: number;
+}
 </script>
 
 <style scoped>

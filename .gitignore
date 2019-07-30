@@ -2,4 +2,4 @@
 .firebase/
 dist/
 node_modules/
-src/firebase/config.js
+src/firebase/config.ts

@@ -7,9 +7,11 @@
     <v-list-tile v-for="route in routes" :key="route.name">
       <v-list-tile-action v-for="(info, i) in climberInfos" :key="i">
         <ClimbDropdown
-          v-bind:currentState="info.states[route.id] || ClimbState.NOT_CLIMBED"
+          v-bind:state="info.states[route.id] || ClimbState.NOT_CLIMBED"
           v-bind:color="info.color"
-          @set-state="onSetState(i, route.id, $event)"
+          @update:state="
+            $emit('set-state', { index: i, route: route.id, state: $event })
+          "
           class="mr-3"
         />
       </v-list-tile-action>
@@ -26,32 +28,20 @@
   </v-list>
 </template>
 
-<script>
-import { ClimbState } from '@/climbs';
+<script lang="ts">
+import { Component, Prop, Vue } from 'vue-property-decorator';
+import { ClimberInfo, ClimbState, Route } from '@/models';
 import ClimbDropdown from '@/components/ClimbDropdown.vue';
 
-export default {
-  components: {
-    ClimbDropdown,
-  },
-  props: {
-    // Array of ClimberInfo objects.
-    climberInfos: Array,
-    // Array of objects describing routes to display. See the
-    // /globals/sortedData Firestore doc.
-    routes: Array,
-  },
-  data: () => ({
-    ClimbState: ClimbState,
-  }),
-  methods: {
-    // Emits a "set-state" event consisting of an object with an index into
-    // climberInfos, the route ID, and the requested state.
-    onSetState(index, route, state) {
-      this.$emit('set-state', { index, route, state });
-    },
-  },
-};
+@Component({
+  components: { ClimbDropdown },
+})
+export default class RouteList extends Vue {
+  @Prop(Array) readonly climberInfos!: ClimberInfo[];
+  @Prop(Array) readonly routes!: Route[];
+
+  ClimbState = ClimbState;
+}
 </script>
 
 <style scoped>

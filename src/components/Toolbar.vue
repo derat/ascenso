@@ -42,33 +42,47 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import { auth, db } from '@/firebase';
 
-export default {
-  data() {
-    return {
-      config: null,
-      drawer: null,
-      navItems: [
-        { text: 'Routes', icon: 'view_list', route: 'routes' },
-        { text: 'Scoreboard', icon: 'assessment', route: 'scores' },
-        { text: 'Statistics', icon: 'score', route: 'stats' },
-        { text: 'Profile', icon: 'person', route: 'profile' },
-        {
-          text: 'Sign out',
-          icon: 'exit_to_app',
-          method: () => {
-            auth.signOut().then(() => {
-              this.$router.replace('login');
-            });
-          },
-        },
-      ],
-    };
-  },
-  firestore: {
-    config: db.doc('global/config'),
-  },
-};
+// An entry in the navigation drawer.
+interface NavItem {
+  // Title to display.
+  text: string;
+  // Material icon name to use.
+  icon: string;
+  // vue-router route name to navigate to when clicked.
+  route?: string;
+  // Anonymous function to invoke when clicked.
+  method?: () => void;
+}
+
+@Component
+export default class Toolbar extends Vue {
+  // global/config doc from Firestore.
+  config: object | null = null;
+  // Model for navigation drawer.
+  drawer: any = null;
+  // Navigation drawer entries.
+  navItems: readonly NavItem[] = Object.freeze([
+    { text: 'Routes', icon: 'view_list', route: 'routes' },
+    { text: 'Scoreboard', icon: 'assessment', route: 'scores' },
+    { text: 'Statistics', icon: 'score', route: 'stats' },
+    { text: 'Profile', icon: 'person', route: 'profile' },
+    {
+      text: 'Sign out',
+      icon: 'exit_to_app',
+      method: () => {
+        auth.signOut().then(() => {
+          this.$router.replace('login');
+        });
+      },
+    },
+  ]);
+
+  mounted() {
+    this.$bind('config', db.doc('global/config'));
+  }
+}
 </script>

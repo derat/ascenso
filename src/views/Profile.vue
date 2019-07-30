@@ -237,9 +237,8 @@
 
 <script>
 import firebase from 'firebase/app';
-import { auth, db } from '@/firebase';
+import { auth, db, bindUserAndTeamDocs } from '@/firebase';
 import Spinner from '@/components/Spinner.vue';
-import { bindUserAndTeamDocs } from '@/users';
 
 export default {
   components: {
@@ -529,14 +528,16 @@ export default {
   },
 
   mounted() {
-    bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc')
-      .then(result => {
+    bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc').then(
+      result => {
         this.userRef = result.user;
         this.teamRef = result.team;
         this.ready = true;
-      }, err => {
+      },
+      err => {
         console.log('Failed to bind user and team from database:', err);
-      });
+      }
+    );
   },
 };
 </script>
