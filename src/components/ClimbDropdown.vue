@@ -28,7 +28,7 @@
 </template>
 
 <script>
-import ClimbState from '@/components/ClimbState.js';
+import { ClimbState } from '@/climbs';
 
 const stateAbbrevs = Object.freeze({
   [ClimbState.LEAD]: 'L',

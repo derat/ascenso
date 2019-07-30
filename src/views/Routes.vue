@@ -12,8 +12,7 @@
         <div class="area">{{ area.name }}</div>
       </template>
       <RouteList
-        v-bind:climbMaps="climbMaps"
-        v-bind:climbColors="climbColors"
+        v-bind:climberInfos="climberInfos"
         v-bind:routes="area.routes"
         @set-state="onSetState"
       />
@@ -25,9 +24,12 @@
 <script>
 import firebase from 'firebase/app';
 import { auth, db } from '@/firebase';
-import ClimbState from '@/components/ClimbState.js';
+import { ClimberInfo, ClimbState } from '@/climbs';
 import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
+
+// Colors associated with climbers.
+const climbColors = Object.freeze(['orange', 'indigo']);
 
 export default {
   name: 'Routes',
@@ -43,15 +45,17 @@ export default {
       return !this.teamDoc.users ? [] : Object.keys(this.teamDoc.users).sort();
     },
 
-    // Array of objects mapping from route ID to climb state, with one object
-    // for each team member. Empty if the user is not currently on a team.
-    climbMaps: function() {
-      return this.teamMembers.map(uid => this.teamDoc.users[uid].climbs || {});
-    },
-
-    // Array of color strings to pass to RouteList's climbColors prop.
-    climbColors: function() {
-      return ['orange', 'indigo'].slice(0, this.climbMaps.length);
+    // Array of ClimberInfo objects, with one for each team member.
+    // Empty if the user is not currently on a team.
+    climberInfos: function() {
+      return this.teamMembers.map(
+        (uid, i) =>
+          new ClimberInfo(
+            this.teamDoc.users[uid].name || '',
+            this.teamDoc.users[uid].climbs || {},
+            climbColors[i % climbColors.length]
+          )
+      );
     },
   },
   data() {
