@@ -10,6 +10,9 @@
   </v-container>
 </template>
 
-<script>
-export default {};
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator';
+
+@Component
+export default class Spinner extends Vue {}
 </script>

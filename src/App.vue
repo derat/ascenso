@@ -17,19 +17,17 @@
   </v-app>
 </template>
 
-<script>
+<script lang="ts">
+import { Vue, Component } from 'vue-property-decorator';
 import { auth } from '@/firebase';
 import Toolbar from '@/components/Toolbar.vue';
 
-export default {
-  name: 'App',
-  components: {
-    Toolbar,
-  },
-  methods: {
-    signedIn: function() {
-      return !!auth.currentUser;
-    },
-  },
-};
+@Component({
+  components: { Toolbar },
+})
+export default class App extends Vue {
+  signedIn() {
+    return !!auth.currentUser;
+  }
+}
 </script>

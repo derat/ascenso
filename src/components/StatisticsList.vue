@@ -16,14 +16,15 @@
   </v-list>
 </template>
 
-<script>
+<script lang="ts">
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import StatisticsRow from '@/components/StatisticsRow.vue';
+import { Statistic } from '@/models';
 
-export default {
-  name: 'StatisticsList',
-  props: ['items'],
-  components: {
-    StatisticsRow,
-  },
-};
+@Component({
+  components: { StatisticsRow },
+})
+export default class StatisticsList extends Vue {
+  @Prop(Array) readonly items!: Statistic[];
+}
 </script>

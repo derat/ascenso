@@ -9,26 +9,26 @@
   <v-menu lazy>
     <template v-slot:activator="{ on }">
       <v-btn :color="stateColor" class="white--text narrow-button" v-on="on">
-        {{ stateAbbrevs[currentState] }}
+        {{ stateAbbrevs[syncedState] }}
       </v-btn>
     </template>
     <v-list>
-      <!-- Emit a "set-state" event with the requested state. -->
-      <v-list-tile @click="$emit('set-state', ClimbState.LEAD)">
+      <v-list-tile @click="syncedState = ClimbState.LEAD">
         <v-list-tile-title>Lead</v-list-tile-title>
       </v-list-tile>
-      <v-list-tile @click="$emit('set-state', ClimbState.TOP_ROPE)">
+      <v-list-tile @click="syncedState = ClimbState.TOP_ROPE">
         <v-list-tile-title>Top-rope</v-list-tile-title>
       </v-list-tile>
-      <v-list-tile @click="$emit('set-state', ClimbState.NOT_CLIMBED)">
+      <v-list-tile @click="syncedState = ClimbState.NOT_CLIMBED">
         <v-list-tile-title>Not climbed</v-list-tile-title>
       </v-list-tile>
     </v-list>
   </v-menu>
 </template>
 
-<script>
-import { ClimbState } from '@/climbs';
+<script lang="ts">
+import { Component, Prop, PropSync, Vue } from 'vue-property-decorator';
+import { ClimbState } from '@/models';
 
 const stateAbbrevs = Object.freeze({
   [ClimbState.LEAD]: 'L',
@@ -36,31 +36,28 @@ const stateAbbrevs = Object.freeze({
   [ClimbState.NOT_CLIMBED]: '',
 });
 
-export default {
-  props: {
-    // ClimbState value describing the current state of the climb.
-    currentState: Number,
-    // String value used in button's 'color' property for the 'lead' state.
-    // See https://vuetifyjs.com/en/styles/colors.
-    color: String,
-  },
-  computed: {
-    stateColor() {
-      switch (this.currentState) {
-        case ClimbState.LEAD:
-          return this.color;
-        case ClimbState.TOP_ROPE:
-          return this.color + ' lighten-3';
-        default:
-          return 'grey lighten-4';
-      }
-    },
-  },
-  data: () => ({
-    ClimbState: ClimbState,
-    stateAbbrevs: stateAbbrevs,
-  }),
-};
+@Component
+export default class ClimbDropdown extends Vue {
+  // The current state of the climb.
+  @PropSync('state', { type: Number }) syncedState!: ClimbState;
+  // The button's 'color' property for the 'lead' state.
+  // See https://vuetifyjs.com/en/styles/colors.
+  @Prop(String) readonly color!: string;
+
+  ClimbState = ClimbState;
+  stateAbbrevs = stateAbbrevs;
+
+  get stateColor() {
+    switch (this.syncedState) {
+      case ClimbState.LEAD:
+        return this.color;
+      case ClimbState.TOP_ROPE:
+        return this.color + ' lighten-3';
+      default:
+        return 'grey lighten-4';
+    }
+  }
+}
 </script>
 
 <style scoped>

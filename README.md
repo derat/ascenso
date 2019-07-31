@@ -2,10 +2,10 @@
 
 ## Configuration
 
-### src/firebase/config.js
+### src/firebase/config.ts
 
 A local file similar to the following must be created at
-`src/firebase/config.js` to configure the app's use of
+`src/firebase/config.ts` to configure the app's use of
 [Firebase](https://firebase.google.com/):
 
 ```js

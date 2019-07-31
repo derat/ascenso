@@ -24,7 +24,7 @@
 <script>
 import firebase from 'firebase/app';
 import { auth, db } from '@/firebase';
-import { ClimberInfo, ClimbState } from '@/climbs';
+import { ClimberInfo, ClimbState } from '@/models';
 import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
 

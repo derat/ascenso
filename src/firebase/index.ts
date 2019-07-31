@@ -16,7 +16,9 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
 
-import config from './config.js';
+import Vue from 'vue';
+
+import config from './config';
 firebase.initializeApp(config);
 
 export const auth = firebase.auth();
@@ -30,3 +32,31 @@ db.enablePersistence().catch(function(err) {
     console.log('Firestore persistence unsupported by browser');
   }
 });
+
+// Returns a promise that is satisfied once document snapshot(s) are loaded.
+// The user and team documents (if present) are bound to properties named
+// userProp and teamProp on view.
+export function bindUserAndTeamDocs(
+  view: Vue,
+  userId: string,
+  userProp: string,
+  teamProp: string
+) {
+  return new Promise((resolve, reject) => {
+    const userRef = db.collection('users').doc(userId);
+    view.$bind(userProp, userRef).then(
+      userSnap => {
+        if (!userSnap.team) {
+          resolve({ user: userRef, team: null });
+        }
+        const teamRef = db.collection('teams').doc(userSnap.team);
+        view.$bind(teamProp, teamRef).then(() => {
+          resolve({ user: userRef, team: teamRef });
+        });
+      },
+      err => {
+        reject(err);
+      }
+    );
+  });
+}

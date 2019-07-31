@@ -17,11 +17,10 @@
 </template>
 
 <script>
-import { auth, db } from '@/firebase';
-import { ClimbState } from '@/climbs';
+import { auth, db, bindUserAndTeamDocs } from '@/firebase';
+import { ClimbState } from '@/models';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
-import { bindUserAndTeamDocs } from '@/users';
 
 export default {
   components: {
@@ -99,8 +98,11 @@ export default {
     },
 
     updateItems() {
-      if (!this.indexedData || !this.indexedData.routes ||
-          !this.climbDataLoaded) {
+      if (
+        !this.indexedData ||
+        !this.indexedData.routes ||
+        !this.climbDataLoaded
+      ) {
         return;
       }
 
@@ -112,7 +114,8 @@ export default {
         const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
 
         this.itemsUser = this.computeStats(
-          users[userId].climbs ? [users[userId].climbs] : []);
+          users[userId].climbs ? [users[userId].climbs] : []
+        );
 
         this.itemsTeam = this.computeStats(userClimbs);
       } else if (this.userDoc.climbs) {
@@ -125,15 +128,17 @@ export default {
   mounted() {
     this.$bind('indexedData', db.collection('global').doc('indexedData'));
 
-    bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc')
-      .then(result => {
+    bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc').then(
+      result => {
         this.userRef = result.user;
         this.teamRef = result.team;
         this.climbDataLoaded = true;
         this.updateItems();
-      }, err => {
+      },
+      err => {
         console.log('Failed to bind user and team from database:', err);
-      });
+      }
+    );
   },
 };
 </script>
