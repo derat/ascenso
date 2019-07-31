@@ -15,6 +15,7 @@
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
+type DocumentReference = firebase.firestore.DocumentReference;
 
 import Vue from 'vue';
 
@@ -33,6 +34,22 @@ db.enablePersistence().catch(function(err) {
   }
 });
 
+// getUser returns the firebase.auth.User for the currently-logged in user.
+// An error is thrown if the user is not logged in.
+export function getUser() {
+  if (!auth.currentUser) {
+    throw new Error('No current user');
+  }
+  return auth.currentUser;
+}
+
+// DocRefs contains references to documents in the 'users' and (optionally)
+// 'teams' collections and is returned by bindUserAndTeamDocs.
+interface DocRefs {
+  user: DocumentReference;
+  team: DocumentReference | null;
+}
+
 // Returns a promise that is satisfied once document snapshot(s) are loaded.
 // The user and team documents (if present) are bound to properties named
 // userProp and teamProp on view.
@@ -41,7 +58,7 @@ export function bindUserAndTeamDocs(
   userId: string,
   userProp: string,
   teamProp: string
-) {
+): Promise<DocRefs> {
   return new Promise((resolve, reject) => {
     const userRef = db.collection('users').doc(userId);
     view.$bind(userProp, userRef).then(
