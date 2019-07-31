@@ -111,14 +111,11 @@ export default {
         const userId = auth.currentUser.uid;
         const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
 
-        // Compute the stats for the user.
         this.itemsUser = this.computeStats(
           users[userId].climbs ? [users[userId].climbs] : []);
 
-        // Compute the stats for the whole team.
         this.itemsTeam = this.computeStats(userClimbs);
       } else if (this.userDoc.climbs) {
-        // Compute the stats for the user.
         this.itemsUser = this.computeStats([this.userDoc.climbs]);
       }
 

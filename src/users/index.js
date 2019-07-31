@@ -14,7 +14,7 @@ export function bindUserAndTeamDocs(view, userId, userProp, teamProp) {
       () => {
         const team = view[userProp].team;
         if (!team) {
-          resolve({ user: userRef });
+          resolve({ user: userRef, team: null });
         }
         const teamRef = db.collection('teams').doc(team);
         view.$bind(teamProp, teamRef).then(() => {
