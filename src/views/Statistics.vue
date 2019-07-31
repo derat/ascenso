@@ -2,14 +2,16 @@
      Use of this source code is governed by a BSD-style license that can be
      found in the LICENSE file. -->
 
-// TODO: Style this, and add tabs for User & Team.
+<!-- TODO: Style this, and add tabs for User & Team. -->
 <template>
   <div v-if="haveStats">
     <h1 class="pl-2 py-2">You</h1>
     <StatisticsList :items="itemsUser" />
-    <hr />
-    <h1 class="pl-2 py-2" v-if="itemsTeam.length">Team</h1>
-    <StatisticsList :items="itemsTeam" />
+    <template v-if="itemsTeam.length">
+      <hr />
+      <h1 class="pl-2 py-2">Team</h1>
+      <StatisticsList :items="itemsTeam" />
+    </template>
   </div>
   <Spinner v-else />
 </template>
@@ -97,7 +99,7 @@ export default {
     },
 
     updateItems() {
-      if (!this.userDoc || !this.indexedData || !this.indexedData.routes ||
+      if (!this.indexedData || !this.indexedData.routes ||
           !this.climbDataLoaded) {
         return;
       }
@@ -106,18 +108,14 @@ export default {
       // climbs, and also fill in team stats.
       if (this.teamDoc && this.teamDoc.users) {
         const users = this.teamDoc.users;
+        const userId = auth.currentUser.uid;
+        const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
 
         // Compute the stats for the user.
-        if (auth.currentUser.uid in users) {
-          this.itemsUser = this.computeStats([
-            users[auth.currentUser.uid].climbs,
-          ]);
-        } else {
-          this.itemsUser = this.computeStats([]);
-        }
+        this.itemsUser = this.computeStats(
+          users[userId].climbs ? [users[userId].climbs] : []);
 
         // Compute the stats for the whole team.
-        const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
         this.itemsTeam = this.computeStats(userClimbs);
       } else if (this.userDoc.climbs) {
         // Compute the stats for the user.
@@ -133,10 +131,7 @@ export default {
     bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc')
       .then(result => {
         this.userRef = result.user;
-        if (result.team) {
-          this.teamRef = result.team;
-        }
-
+        this.teamRef = result.team;
         this.climbDataLoaded = true;
         this.updateItems();
       }, err => {

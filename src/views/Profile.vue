@@ -532,9 +532,7 @@ export default {
     bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc')
       .then(result => {
         this.userRef = result.user;
-        if (result.team) {
-          this.teamRef = result.team;
-        }
+        this.teamRef = result.team;
         this.ready = true;
       }, err => {
         console.log('Failed to bind user and team from database:', err);
