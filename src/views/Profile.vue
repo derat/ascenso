@@ -239,6 +239,7 @@
 import firebase from 'firebase/app';
 import { auth, db } from '@/firebase';
 import Spinner from '@/components/Spinner.vue';
+import { bindUserAndTeamDocs } from '@/users';
 
 export default {
   components: {
@@ -528,17 +529,14 @@ export default {
   },
 
   mounted() {
-    this.userRef = db.collection('users').doc(auth.currentUser.uid);
-    this.$bind('userDoc', this.userRef).then(() => {
-      if (!this.userDoc.team) {
+    bindUserAndTeamDocs(this, auth.currentUser.uid, 'userDoc', 'teamDoc')
+      .then(result => {
+        this.userRef = result.user;
+        this.teamRef = result.team;
         this.ready = true;
-      } else {
-        this.teamRef = db.collection('teams').doc(this.userDoc.team);
-        this.$bind('teamDoc', this.teamRef).then(() => {
-          this.ready = true;
-        });
-      }
-    });
+      }, err => {
+        console.log('Failed to bind user and team from database:', err);
+      });
   },
 };
 </script>
