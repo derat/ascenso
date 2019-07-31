@@ -29,7 +29,7 @@ import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
 
 // Colors associated with climbers.
-const climbColors = Object.freeze(['orange', 'indigo']);
+const climbColors = Object.freeze(['red', 'indigo']);
 
 export default {
   name: 'Routes',
