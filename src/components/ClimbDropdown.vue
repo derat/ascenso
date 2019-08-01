@@ -10,7 +10,7 @@
     <template v-slot:activator="{ on }">
       <v-btn
         :color="stateColor"
-        class="narrow-button"
+        class="narrow-button elevation-1"
         :class="stateTextClass"
         v-on="on"
       >

@@ -3,7 +3,7 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-list two-line>
+  <v-list two-line class="py-0">
     <v-list-tile v-for="route in routes" :key="route.name">
       <v-list-tile-action v-for="(info, i) in climberInfos" :key="i">
         <ClimbDropdown
