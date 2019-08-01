@@ -24,4 +24,11 @@ export default class StatisticsRow extends Vue {
   display: flex;
   justify-content: space-between;
 }
+
+/* This is disgusting. See https://stackoverflow.com/q/56342926/ and
+   https://stackoverflow.com/q/50985783/. */
+>>> .v-list__tile {
+  height: auto;
+  padding: 8px 0 0 0;
+}
 </style>
