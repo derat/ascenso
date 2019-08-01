@@ -8,7 +8,7 @@
       <v-list>
         <v-list-tile
           v-for="item in navItems"
-          v-bind:key="item.text"
+          :key="item.text"
           :to="item.route ? { name: item.route } : ''"
           v-on="item.method ? { click: item.method } : null"
         >
@@ -26,7 +26,7 @@
       color="primary"
       app
       scroll-off-screen
-      v-bind:scroll-threshold="32"
+      :scroll-threshold="32"
     >
       <v-toolbar-side-icon
         @click.stop="drawer = !drawer"

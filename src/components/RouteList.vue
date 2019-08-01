@@ -7,16 +7,16 @@
     <v-list-tile v-for="route in routes" :key="route.name">
       <v-list-tile-action v-for="(info, i) in climberInfos" :key="i">
         <ClimbDropdown
-          v-bind:state="info.states[route.id] || ClimbState.NOT_CLIMBED"
-          v-bind:color="info.color"
-          v-bind:label="info.initials"
+          :state="info.states[route.id] || ClimbState.NOT_CLIMBED"
+          :color="info.color"
+          :label="info.initials"
           @update:state="onUpdateClimb(i, route.id, $event)"
           class="mr-3"
         />
       </v-list-tile-action>
 
       <!-- Add a left margin if there aren't any climb drop-downs. -->
-      <v-list-tile-content v-bind:class="[{ 'ml-3': !climberInfos.length }]">
+      <v-list-tile-content :class="[{ 'ml-3': !climberInfos.length }]">
         <v-list-tile-title>{{ route.name }}</v-list-tile-title>
         <v-list-tile-sub-title class="details">
           <span class="grade">{{ route.grade }}</span>

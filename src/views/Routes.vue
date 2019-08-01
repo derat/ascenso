@@ -12,8 +12,8 @@
         <div class="area">{{ area.name }}</div>
       </template>
       <RouteList
-        v-bind:climberInfos="climberInfos"
-        v-bind:routes="area.routes"
+        :climberInfos="climberInfos"
+        :routes="area.routes"
         @set-climb-state="onSetClimbState"
       />
     </v-expansion-panel-content>
