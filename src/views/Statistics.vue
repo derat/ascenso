@@ -10,11 +10,7 @@
 
       <v-tab-item key="team" value="team" v-if="teamCards.length">
         <v-container grid-list-md text-ms-center class="pt-0">
-          <v-card
-            class="pa-3 mt-3"
-            v-for="card in teamCards"
-            v-bind:key="card.name"
-          >
+          <v-card class="pa-3 mt-3" v-for="card in teamCards" :key="card.name">
             <div class="caption">{{ card.name }}</div>
             <StatisticsList :items="card.items" />
           </v-card>
@@ -23,11 +19,7 @@
 
       <v-tab-item key="user" value="user">
         <v-container grid-list-md text-ms-center class="pt-0">
-          <v-card
-            class="pa-3 mt-3"
-            v-for="card in userCards"
-            v-bind:key="card.name"
-          >
+          <v-card class="pa-3 mt-3" v-for="card in userCards" :key="card.name">
             <div class="caption">{{ card.name }}</div>
             <StatisticsList :items="card.items" />
           </v-card>

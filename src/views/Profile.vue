@@ -47,11 +47,7 @@
         <v-layout row>
           <v-flex>
             <div class="caption grey--text text--darken-1">Members</div>
-            <div
-              v-for="name in teamUserNames"
-              v-bind:key="name"
-              class="member-name"
-            >
+            <div v-for="name in teamUserNames" :key="name" class="member-name">
               {{ name }}
             </div>
           </v-flex>
