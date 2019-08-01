@@ -43,7 +43,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-property-decorator';
 import { auth, db } from '@/firebase';
 import { Config } from '@/models';
 

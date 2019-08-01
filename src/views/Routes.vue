@@ -27,7 +27,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import { auth, db, getUser } from '@/firebase';
+import { db, getUser } from '@/firebase';
 import {
   ClimberInfo,
   ClimbState,

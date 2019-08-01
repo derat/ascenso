@@ -241,7 +241,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import { auth, db, getUser, bindUserAndTeamDocs } from '@/firebase';
+import { db, getUser, bindUserAndTeamDocs } from '@/firebase';
 import { ClimbState, User, Team } from '@/models';
 import Spinner from '@/components/Spinner.vue';
 
