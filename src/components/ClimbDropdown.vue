@@ -30,12 +30,6 @@
 import { Component, Prop, PropSync, Vue } from 'vue-property-decorator';
 import { ClimbState } from '@/models';
 
-const stateAbbrevs = Object.freeze({
-  [ClimbState.LEAD]: 'L',
-  [ClimbState.TOP_ROPE]: 'TR',
-  [ClimbState.NOT_CLIMBED]: '',
-});
-
 @Component
 export default class ClimbDropdown extends Vue {
   // The current state of the climb.
@@ -44,8 +38,12 @@ export default class ClimbDropdown extends Vue {
   // See https://vuetifyjs.com/en/styles/colors.
   @Prop(String) readonly color!: string;
 
-  ClimbState = ClimbState;
-  stateAbbrevs = stateAbbrevs;
+  readonly ClimbState = ClimbState;
+  readonly stateAbbrevs: Record<ClimbState, string> = Object.freeze({
+    [ClimbState.LEAD]: 'L',
+    [ClimbState.TOP_ROPE]: 'TR',
+    [ClimbState.NOT_CLIMBED]: '',
+  });
 
   get stateColor() {
     switch (this.syncedState) {

@@ -14,83 +14,88 @@
       <RouteList
         v-bind:climberInfos="climberInfos"
         v-bind:routes="area.routes"
-        @set-state="onSetState"
+        @set-climb-state="onSetClimbState"
       />
     </v-expansion-panel-content>
   </v-expansion-panel>
   <Spinner v-else />
 </template>
 
-<script>
+<script lang="ts">
+import { Component, Vue, Watch } from 'vue-property-decorator';
+
 import firebase from 'firebase/app';
-import { auth, db } from '@/firebase';
-import { ClimberInfo, ClimbState } from '@/models';
+type DocumentReference = firebase.firestore.DocumentReference;
+
+import { auth, db, getUser } from '@/firebase';
+import {
+  ClimberInfo,
+  ClimbState,
+  SetClimbStateEvent,
+  SortedData,
+  User,
+  Team,
+} from '@/models';
 import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
 
-// Colors associated with climbers.
-const climbColors = Object.freeze(['red', 'indigo']);
+@Component({
+  components: { RouteList, Spinner },
+})
+export default class Routes extends Vue {
+  readonly sortedData: Partial<SortedData> = {};
+  // True after sortedData is loaded.
+  loaded = false;
 
-export default {
-  name: 'Routes',
-  components: {
-    RouteList,
-    Spinner,
-  },
-  computed: {
-    // Array of sorted UIDs from the team. Empty if the user is not currently on
-    // a team.
-    teamMembers: function() {
-      // Sort by UID to get stable ordering.
-      return !this.teamDoc.users ? [] : Object.keys(this.teamDoc.users).sort();
-    },
+  // Colors associated with climbers.
+  static readonly climbColors = ['red', 'indigo'];
 
-    // Array of ClimberInfo objects, with one for each team member.
-    // Empty if the user is not currently on a team.
-    climberInfos: function() {
-      return this.teamMembers.map(
-        (uid, i) =>
-          new ClimberInfo(
-            this.teamDoc.users[uid].name || '',
-            this.teamDoc.users[uid].climbs || {},
-            climbColors[i % climbColors.length]
-          )
+  // Snapshot and reference to doc in /users collection.
+  readonly userDoc: Partial<User> = {};
+  userRef: DocumentReference | null = null;
+
+  // Snapshot and reference to doc in /teams collection.
+  teamDoc: Partial<Team> = {};
+  teamRef: DocumentReference | null = null;
+
+  // Sorted UIDs from the team. Empty if the user is not currently on a team.
+  get teamMembers(): string[] {
+    // Sort by UID to get stable ordering.
+    return this.teamDoc.users ? Object.keys(this.teamDoc.users).sort() : [];
+  }
+
+  // Info for each climber on the team.
+  // Empty if the user is not currently on a team.
+  get climberInfos(): ClimberInfo[] {
+    return this.teamMembers.map((uid, i) => {
+      const data = this.teamDoc.users ? this.teamDoc.users[uid] : null;
+      if (!data) throw new Error('No data found for user ' + uid);
+      return new ClimberInfo(
+        data.name || '',
+        data.climbs || {},
+        Routes.climbColors[i % Routes.climbColors.length]
       );
-    },
-  },
-  data() {
-    return {
-      // Snapshot of /globals/sortedData doc consisting of a sorted array of
-      // area objects containing sorted arrays of route objects.
-      sortedData: {},
-      // True after sortedData has been loaded.
-      loaded: false,
+    });
+  }
 
-      // Snapshot and reference to doc in /users collection.
-      userDoc: {},
-      userRef: null,
+  // Updates team document in response to 'set-climb-state' events from RouteList
+  // component.
+  onSetClimbState(ev: SetClimbStateEvent) {
+    if (!this.teamRef) throw new Error('No ref to team doc');
+    if (ev.index >= this.teamMembers.length) {
+      throw new Error('Invalid team member index ' + ev.index);
+    }
 
-      // Snapshot and reference to doc in /teams collection.
-      teamDoc: {},
-      teamRef: null,
-    };
-  },
-  methods: {
-    // Updates team document in response to 'set-state' events from RouteList
-    // component.
-    onSetState(ev) {
-      if (ev.index >= this.teamMembers.length) return;
+    // Just delete the map entry instead of recording a not-climbed state.
+    const value =
+      ev.state == ClimbState.NOT_CLIMBED
+        ? firebase.firestore.FieldValue.delete()
+        : ev.state;
 
-      // Just delete the map entry instead of recording a not-climbed state.
-      const value =
-        ev.state == ClimbState.NOT_CLIMBED
-          ? firebase.firestore.FieldValue.delete()
-          : ev.state;
+    const uid = this.teamMembers[ev.index];
+    this.teamRef.update({ ['users.' + uid + '.climbs.' + ev.route]: value });
+  }
 
-      const uid = this.teamMembers[ev.index];
-      this.teamRef.update({ ['users.' + uid + '.climbs.' + ev.route]: value });
-    },
-  },
   mounted() {
     this.$bind('sortedData', db.collection('global').doc('sortedData'))
       .then(() => {
@@ -100,24 +105,24 @@ export default {
         console.log('Failed to load sorted data: ', error);
       });
 
-    this.userRef = db.collection('users').doc(auth.currentUser.uid);
+    this.userRef = db.collection('users').doc(getUser().uid);
     this.$bind('userDoc', this.userRef);
-  },
-  watch: {
-    'userDoc.team': function() {
-      // When the team ID in the user doc changes, update the reference and
-      // snapshot to the team document accordingly.
-      if (this.userDoc.team) {
-        this.teamRef = db.collection('teams').doc(this.userDoc.team);
-        this.$bind('teamDoc', this.teamRef);
-      } else {
-        this.$unbind('teamDoc');
-        this.teamDoc = {};
-        this.teamRef = null;
-      }
-    },
-  },
-};
+  }
+
+  @Watch('userDoc.team')
+  onTeamChanged() {
+    // When the team ID in the user doc changes, update the reference and
+    // snapshot to the team document accordingly.
+    if (this.userDoc.team) {
+      this.teamRef = db.collection('teams').doc(this.userDoc.team);
+      this.$bind('teamDoc', this.teamRef);
+    } else {
+      this.$unbind('teamDoc');
+      this.teamDoc = {};
+      this.teamRef = null;
+    }
+  }
+}
 </script>
 
 <style>

@@ -6,12 +6,14 @@
   <div id="firebaseui-auth-container"></div>
 </template>
 
-<script>
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 import firebaseui from 'firebaseui';
-import { auth, db } from '@/firebase';
+import { auth, db, getUser } from '@/firebase';
 
-export default {
+@Component
+export default class Login extends Vue {
   mounted() {
     // See https://github.com/firebase/firebaseui-web/issues/293.
     let ui = firebaseui.auth.AuthUI.getInstance();
@@ -26,7 +28,8 @@ export default {
       ],
       callbacks: {
         signInSuccessWithAuthResult: () => {
-          const ref = db.collection('users').doc(auth.currentUser.uid);
+          const user = getUser();
+          const ref = db.collection('users').doc(user.uid);
           ref.get().then(snap => {
             if (snap.exists) {
               // If the user has logged in before, send them to the routes view.
@@ -34,16 +37,9 @@ export default {
             } else {
               // Otherwise, create the doc using their default name and send
               // them to the profile view.
-              ref
-                .set(
-                  {
-                    name: auth.currentUser.displayName,
-                  },
-                  { merge: true }
-                )
-                .then(() => {
-                  this.$router.replace('profile');
-                });
+              ref.set({ name: user.displayName }, { merge: true }).then(() => {
+                this.$router.replace('profile');
+              });
             }
           });
 
@@ -52,8 +48,8 @@ export default {
         },
       },
     });
-  },
-};
+  }
+}
 </script>
 
 <style src="firebaseui/dist/firebaseui.css"></style>

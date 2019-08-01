@@ -8,10 +8,11 @@ import VueRouter from 'vue-router';
 import './plugins/vuetify';
 import { firestorePlugin } from 'vuefire';
 
-import { auth, db } from './firebase';
+import { auth, db } from '@/firebase';
+import { Config } from '@/models';
 
-import App from './App.vue';
-import router from './router';
+import App from '@/App.vue';
+import router from '@/router';
 
 Vue.config.productionTip = false;
 
@@ -38,9 +39,9 @@ auth.onAuthStateChanged(() => {
 db.doc('global/config')
   .get()
   .then(snap => {
-    const data = snap.data();
+    const data: Partial<Config> | undefined = snap.data();
     if (!data) {
       throw new Error('No config data');
     }
-    document.title = data.competitionName;
+    document.title = data.competitionName || 'Unnamed';
   });

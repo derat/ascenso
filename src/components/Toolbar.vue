@@ -36,7 +36,7 @@
            color here. Oddly, color="primary" gives us a white icon in
            <v-toolbar-side-icon> above, but it gives us black text here. -->
       <v-toolbar-title class="white--text">
-        {{ config ? config.competitionName : 'Loading...' }}
+        {{ config.competitionName || 'Loading...' }}
       </v-toolbar-title>
     </v-toolbar>
   </div>
@@ -45,6 +45,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { auth, db } from '@/firebase';
+import { Config } from '@/models';
 
 // An entry in the navigation drawer.
 interface NavItem {
@@ -61,7 +62,7 @@ interface NavItem {
 @Component
 export default class Toolbar extends Vue {
   // global/config doc from Firestore.
-  config: object | null = null;
+  config: Partial<Config> = {};
   // Model for navigation drawer.
   drawer: any = null;
   // Navigation drawer entries.
@@ -75,7 +76,10 @@ export default class Toolbar extends Vue {
       icon: 'exit_to_app',
       method: () => {
         auth.signOut().then(() => {
-          this.$router.replace('login');
+          // It makes no sense to me, but this.$router produces an exception
+          // here: "TypeError: Cannot read property '_router' of undefined".
+          // this.$root.$router works, though...
+          this.$root.$router.replace('login');
         });
       },
     },

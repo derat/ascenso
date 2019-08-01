@@ -15,25 +15,32 @@
   </v-list>
 </template>
 
-<script>
-export default {
-  data: () => ({
-    teams: [
-      {
-        name: 'Team Rocket',
-        score: 123,
-      },
-      {
-        name: 'Team Aqua',
-        score: 59,
-      },
-      {
-        name: 'Team Magma',
-        score: 23,
-      },
-    ],
-  }),
-};
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator';
+
+interface TeamData {
+  name: string;
+  score: number;
+}
+
+@Component({})
+export default class Scoreboard extends Vue {
+  // TODO: Display real data.
+  readonly teams: TeamData[] = [
+    {
+      name: 'Team Rocket',
+      score: 123,
+    },
+    {
+      name: 'Team Aqua',
+      score: 59,
+    },
+    {
+      name: 'Team Magma',
+      score: 23,
+    },
+  ];
+}
 </script>
 
 <style scoped>

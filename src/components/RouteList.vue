@@ -9,9 +9,7 @@
         <ClimbDropdown
           v-bind:state="info.states[route.id] || ClimbState.NOT_CLIMBED"
           v-bind:color="info.color"
-          @update:state="
-            $emit('set-state', { index: i, route: route.id, state: $event })
-          "
+          @update:state="onUpdateClimb(i, route.id, $event)"
           class="mr-3"
         />
       </v-list-tile-action>
@@ -29,8 +27,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { ClimberInfo, ClimbState, Route } from '@/models';
+import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
+import { ClimberInfo, ClimbState, SetClimbStateEvent, Route } from '@/models';
 import ClimbDropdown from '@/components/ClimbDropdown.vue';
 
 @Component({
@@ -40,7 +38,12 @@ export default class RouteList extends Vue {
   @Prop(Array) readonly climberInfos!: ClimberInfo[];
   @Prop(Array) readonly routes!: Route[];
 
-  ClimbState = ClimbState;
+  readonly ClimbState = ClimbState;
+
+  @Emit('set-climb-state')
+  onUpdateClimb(index: number, route: string, state: ClimbState) {
+    return new SetClimbStateEvent(index, route, state);
+  }
 }
 </script>
 
