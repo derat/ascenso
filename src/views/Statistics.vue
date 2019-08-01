@@ -22,7 +22,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import { auth, db, getUser, bindUserAndTeamDocs } from '@/firebase';
+import { db, getUser, bindUserAndTeamDocs } from '@/firebase';
 import { ClimbState, Statistic, IndexedData, User, Team } from '@/models';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
