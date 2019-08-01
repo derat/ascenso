@@ -2,16 +2,38 @@
      Use of this source code is governed by a BSD-style license that can be
      found in the LICENSE file. -->
 
-<!-- TODO: Style this, and add tabs for User & Team. -->
 <template>
   <div v-if="haveStats">
-    <h1 class="pl-2 py-2">You</h1>
-    <StatisticsList :items="itemsUser" />
-    <template v-if="itemsTeam.length">
-      <hr />
-      <h1 class="pl-2 py-2">Team</h1>
-      <StatisticsList :items="itemsTeam" />
-    </template>
+    <v-tabs v-model="tab">
+      <v-tab key="team" href="#team" v-if="teamCards.length">Team</v-tab>
+      <v-tab key="user" href="#user">Individual</v-tab>
+
+      <v-tab-item key="team" value="team" v-if="teamCards.length">
+        <v-container grid-list-md text-ms-center class="pt-0">
+          <v-card
+            class="pa-3 mt-3"
+            v-for="card in teamCards"
+            v-bind:key="card.name"
+          >
+            <div class="caption">{{ card.name }}</div>
+            <StatisticsList :items="card.items" />
+          </v-card>
+        </v-container>
+      </v-tab-item>
+
+      <v-tab-item key="user" value="user">
+        <v-container grid-list-md text-ms-center class="pt-0">
+          <v-card
+            class="pa-3 mt-3"
+            v-for="card in userCards"
+            v-bind:key="card.name"
+          >
+            <div class="caption">{{ card.name }}</div>
+            <StatisticsList :items="card.items" />
+          </v-card>
+        </v-container>
+      </v-tab-item>
+    </v-tabs>
   </div>
   <Spinner v-else />
 </template>
@@ -27,15 +49,22 @@ import { ClimbState, Statistic, IndexedData, User, Team } from '@/models';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
 
+interface StatisticsCard {
+  name: string;
+  items: Statistic[];
+}
+
 @Component({
   components: { Spinner, StatisticsList },
 })
 export default class Statistics extends Vue {
   readonly indexedData: Partial<IndexedData> = {};
-  itemsUser: Statistic[] = [];
-  itemsTeam: Statistic[] = [];
+  userCards: StatisticsCard[] = [];
+  teamCards: StatisticsCard[] = [];
   haveStats = false;
   climbDataLoaded = false;
+
+  tab: any = null;
 
   userRef: DocumentReference | null = null;
   readonly userDoc: Partial<User> = {};
@@ -46,7 +75,7 @@ export default class Statistics extends Vue {
   // Takes an array where each element is a dict mapping a route to a
   // state (e.g. lead, top rope). Computes the score and other stats based
   // on this array.
-  computeStats(climbsArray: Record<string, ClimbState>[]): Statistic[] {
+  computeStats(climbsArray: Record<string, ClimbState>[]): StatisticsCard[] {
     if (!this.indexedData.routes) throw new Error('No routes defined');
 
     let all = 0;
@@ -78,16 +107,21 @@ export default class Statistics extends Vue {
     }
 
     return [
-      { name: 'Points', value: score },
+      { name: 'Points', items: [{ name: 'Total points', value: score }] },
       {
         name: 'Climbs',
-        value: all,
-        children: [
-          { name: 'Lead', value: lead },
-          { name: 'Top-rope', value: topRope },
+        items: [
+          {
+            name: 'Total climbs',
+            value: all,
+            children: [
+              { name: 'Lead', value: lead },
+              { name: 'Top-rope', value: topRope },
+            ],
+          },
+          { name: 'Areas climbed', value: Object.keys(areas).length },
         ],
       },
-      { name: 'Areas climbed', value: Object.keys(areas).length },
     ];
   }
 
@@ -110,13 +144,13 @@ export default class Statistics extends Vue {
       const userId = getUser().uid;
       const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
 
-      this.itemsUser = this.computeStats(
+      this.userCards = this.computeStats(
         users[userId].climbs ? [users[userId].climbs] : []
       );
 
-      this.itemsTeam = this.computeStats(userClimbs);
+      this.teamCards = this.computeStats(userClimbs);
     } else if (this.userDoc.climbs) {
-      this.itemsUser = this.computeStats([this.userDoc.climbs]);
+      this.userCards = this.computeStats([this.userDoc.climbs]);
     }
 
     this.haveStats = true;
@@ -139,10 +173,3 @@ export default class Statistics extends Vue {
   }
 }
 </script>
-
-<style scoped>
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-}
-</style>

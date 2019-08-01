@@ -1,5 +1,5 @@
 <template>
-  <v-list expand>
+  <v-list expand class="pa-0">
     <template v-for="item in items">
       <StatisticsRow
         :name="item.name"
