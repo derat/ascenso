@@ -9,6 +9,7 @@
         <ClimbDropdown
           v-bind:state="info.states[route.id] || ClimbState.NOT_CLIMBED"
           v-bind:color="info.color"
+          v-bind:label="info.initials"
           @update:state="onUpdateClimb(i, route.id, $event)"
           class="mr-3"
         />

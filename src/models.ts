@@ -11,11 +11,19 @@ export enum ClimbState {
 
 // ClimberInfo contains information about a climber.
 export class ClimberInfo {
+  initials: string;
+
   constructor(
     public name: string,
     public states: Record<string, ClimbState>,
     public color: string
-  ) {}
+  ) {
+    this.initials = name
+      .split(/\s+/, 3)
+      .map(w => (w ? w[0] : ''))
+      .join('')
+      .toUpperCase();
+  }
 }
 
 // Statistic contains a single item displayed in the Statistics view.

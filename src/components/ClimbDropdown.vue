@@ -8,7 +8,12 @@
        their menus until they need to be displayed. -->
   <v-menu lazy>
     <template v-slot:activator="{ on }">
-      <v-btn :color="stateColor" class="white--text narrow-button" v-on="on">
+      <v-btn
+        :color="stateColor"
+        class="narrow-button"
+        :class="stateTextClass"
+        v-on="on"
+      >
         {{ stateAbbrevs[syncedState] }}
       </v-btn>
     </template>
@@ -37,13 +42,19 @@ export default class ClimbDropdown extends Vue {
   // The button's 'color' property for the 'lead' state.
   // See https://vuetifyjs.com/en/styles/colors.
   @Prop(String) readonly color!: string;
+  // Identifying text (e.g. the climber's initials) to display in the button
+  // when the route hasn't been climbed.
+  @Prop(String) readonly label!: string;
 
   readonly ClimbState = ClimbState;
-  readonly stateAbbrevs: Record<ClimbState, string> = Object.freeze({
-    [ClimbState.LEAD]: 'L',
-    [ClimbState.TOP_ROPE]: 'TR',
-    [ClimbState.NOT_CLIMBED]: '',
-  });
+
+  get stateAbbrevs() {
+    return {
+      [ClimbState.LEAD]: 'L',
+      [ClimbState.TOP_ROPE]: 'TR',
+      [ClimbState.NOT_CLIMBED]: this.label,
+    };
+  }
 
   get stateColor() {
     switch (this.syncedState) {
@@ -55,11 +66,20 @@ export default class ClimbDropdown extends Vue {
         return 'grey lighten-4';
     }
   }
+
+  get stateTextClass() {
+    return this.syncedState == ClimbState.NOT_CLIMBED
+      ? 'not-climbed-button'
+      : 'white--text';
+  }
 }
 </script>
 
 <style scoped>
 .narrow-button {
   min-width: 48px;
+}
+.not-climbed-button {
+  color: #ddd;
 }
 </style>
