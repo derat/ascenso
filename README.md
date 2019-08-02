@@ -1,95 +1,20 @@
-# ascenso
+# Ascenso
 
-## Configuration
+Ascenso is a mobile web app that can be used to track scores in endurance
+rock-climbing competitions.
 
-### src/firebase/config.ts
+It uses [TypeScript], [Vue.js], and [Vuetify] in its frontend and [Firebase] as
+its backend.
 
-A local file similar to the following must be created at
-`src/firebase/config.ts` to configure the app's use of
-[Firebase](https://firebase.google.com/):
+See [INSTALL.md] for installation instructions.
 
-```js
-export default {
-  apiKey: "...",
-  authDomain: "...",
-  databaseURL: "...",
-  projectId: "...",
-  storageBucket: "",
-  messagingSenderId: "...",
-  appId: "...",
-};
-```
+[TypeScript]: https://www.typescriptlang.org/
+[Vue.js]: https://vuejs.org/
+[Vuetify]: https://vuetifyjs.com/
+[Firebase]: https://firebase.google.com/
+[INSTALL.md]: ./INSTALL.md
 
-The appropriate values can be found in the [Firebase
-Console](https://console.firebase.google.com/):
-
-*   Open the settings page by clicking the gear icon to the right of `Project
-    Overview` in the top left corner of the page and selecting `Project
-    settings`.
-*   In the `General` tab, scroll down to `Your apps`.
-*   Under `Firebase SDK snippet`, click `Config`.
-
-### .firebaserc
-
-The checked-in `firebase.json` file configures Firebase Hosting to use a `prod`
-target that deploys to a site with a name that differs from the default (i.e.
-`<project ID>.web.app`). Sometimes a desired name won't be available as a
-Firebase (or Google Cloud) Project ID, but will still be available as a Firebase
-Hosting site name. It's possible to add an additional site in Firebase Hosting
-in this scenario.
-
-With a project ID of `myapp-1234` and a desired site name of `myapp`, use a
-`.firebaserc` similar to the following to deploy the app to `myapp.web.app`
-rather than `myapp-1234.web.app`:
-
-```json
-{
-  "projects": {
-    "default": "myapp-1234"
-  },
-  "targets": {
-    "myapp-1234": {
-      "hosting": {
-        "prod": [
-          "myapp"
-        ]
-      }
-    }
-  }
-}
-```
-
-To add an additional `project` target that redirects `myapp-123.web.app` to
-`myapp.web.app`, add a field similar to the following to the `hosting` object in
-`.firebaserc`:
-
-```json
-"unused": [
-  "myapp-1234"
-]
-```
-
-Also add an object similar to the following to the `hosting` list in
-`firebase.json`:
-
-```json
-{
-  "target": "unused",
-  "public": "public",
-  "redirects": [
-    {
-      "source": "**",
-      "destination": "https://myapp.web.app/",
-      "type": 301
-    }
-  ]
-}
-```
-
-See the [Firebase Hosting docs](https://firebase.google.com/docs/hosting) for
-more details.
-
-## Cloud Firestore
+## Cloud Firestore Schema
 
 Attempting to impose a modicum of order in the brave new NoSQL world:
 
@@ -163,11 +88,3 @@ Heterogeneous singleton documents:
         leaving a team, climbs are moved back to the `users` doc.
     *   `team` - String field containing ID of a document in the `teams`
         collection. Unset if the user is not on a team.
-
-## Cloud Functions
-
-In the `functions/routes` directory, deploy the function:
-
-```sh
-gcloud functions deploy UpdateRoutes --runtime go111 --trigger-http
-```
