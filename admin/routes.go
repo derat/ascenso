@@ -2,112 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package routes
+package admin
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/csv"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 
 	"cloud.google.com/go/firestore"
 )
 
 const (
 	// Document paths in Cloud Firestore.
-	authDocPath        = "global/auth"
 	indexedDataDocPath = "global/indexedData"
 	sortedDataDocPath  = "global/sortedData"
-
-	maxRequestBytes = 10 << 20 // memory for parsing HTTP requests
 )
 
-func UpdateRoutes(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		handleGet(w)
-	case http.MethodPost:
-		handlePost(w, r)
-	default:
-		http.Error(w, fmt.Sprintf("Bad method %q", r.Method), http.StatusMethodNotAllowed)
-	}
-}
-
-// handleGet writes a simple form for uploading CSV data.
-func handleGet(w http.ResponseWriter) {
-	fmt.Fprint(w, strings.TrimLeft(`
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Update routes</title>
-  <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 14px;
-    }
-    .input-row {
-      display: flex;
-      padding: 5px;
-      align-items: baseline;
-    }
-    .label {
-      min-width: 100px;
-    }
-  </style>
-</head>
-<body>
-  <form enctype="multipart/form-data" method="POST">
-    <div class="input-row">
-      <span class="label">Areas CSV</span>
-      <input name="areas" type="file" />
-    </div>
-    <div class="input-row">
-      <span class="label">Routes CSV</span>
-      <input name="routes" type="file" />
-    </div>
-    <div class="input-row">
-      <span class="label">Password</span>
-      <input name="password" type="password" />
-    </div>
-    <div class="input-row">
-      <input type="submit" value="Update" />
-    </div>
-  </form>
-</body>
-</html>`, "\n"))
-}
-
-// handlePost reads uploaded CSV files from w and inserts data into Cloud Firestore.
-func handlePost(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(maxRequestBytes); err != nil {
-		http.Error(w, "Failed parsing form data", http.StatusBadRequest)
-		return
-	}
-
-	// Initialize Cloud Firestore.
-	ctx := context.Background()
-	var err error
-	client, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT")) // automatically set by runtime
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed creating Firestore client: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Check that the request is authorized.
-	if ok, err := checkPassword(ctx, client, r.FormValue("password")); err != nil {
-		http.Error(w, fmt.Sprintf("Failed checking password: %v", err), http.StatusInternalServerError)
-		return
-	} else if !ok {
-		http.Error(w, "Incorrect password", http.StatusUnauthorized)
-		return
-	}
-
+// handlePostRoutes handles a "routes" POST request.
+// It reads uploaded CSV files from w and inserts data into Cloud Firestore.
+func handlePostRoutes(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
 	// Read supplied areas.
 	areasFile, _, err := r.FormFile("areas")
 	if err != nil {
@@ -151,23 +67,6 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Wrote %d area(s) and %d route(s)", len(areas), len(routes))
-}
-
-// checkPassword checks that the supplied password matches the hash in Cloud Storage.
-func checkPassword(ctx context.Context, client *firestore.Client, password string) (ok bool, err error) {
-	snap, err := client.Doc(authDocPath).Get(ctx)
-	if err != nil {
-		return false, err
-	}
-	var data struct {
-		Hash string `firestore:"cloudFunctionSHA256"`
-	}
-	if err := snap.DataTo(&data); err != nil {
-		return false, err
-	}
-
-	sum := sha256.Sum256([]byte(password))
-	return data.Hash == hex.EncodeToString(sum[:]), nil
 }
 
 // sortedData holds sorted area and then route data.
