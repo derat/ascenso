@@ -147,17 +147,17 @@ Deploy Cloud Firestore security rules from `firestore.rules`:
 ```sh
 firebase deploy --only firestore:rules
 ```
-### Deploy Cloud Functions
+### Deploy Cloud Function
 
-**In the `functions/routes` directory**, deploy the function:
+Deploy the `Admin` Cloud Function:
 
 ```sh
-gcloud --project PROJECT_ID functions deploy UpdateRoutes --runtime go111 --trigger-http
+gcloud --project <PROJECT_ID> functions deploy Admin --runtime go111 --trigger-http
 ```
 
-`PROJECT_ID` should contain the Firebase project ID, e.g. `myapp-1234`. (Without
-the `--project` flag, this command appears to use the default Firebase project
-instead of the one configured in `.firebaserc`.)
+`PROJECT_ID` should contain the Firebase project ID, e.g. `myapp-1234`. Without
+the `--project` flag, this command uses the `gcloud` command's default project,
+which may be changed by running `gcloud config set project <PROJECT_ID>`.
 
 ## Cloud Firestore data
 
@@ -175,10 +175,10 @@ echo -n MYSECRETPASSWORD1234 | sha256sum
 
 ### Upload area and route data
 
-The `UpdateRoutes` Cloud Function is used to import area and route information
-from CSV files into the `global/indexedData` and `global/sortedData` documents.
-Two CSV files are needed, one describing areas and the other describing routes.
-Each file must contain an initial row containing column names.
+The `Admin` Cloud Function can be used to import area and route information from
+CSV files into the `global/indexedData` and `global/sortedData` documents. Two
+CSV files are needed, one describing areas and the other describing routes. Each
+file must contain an initial row containing column names.
 
 ```csv
 id,name
@@ -193,8 +193,8 @@ second_route,Second Route,some_area,5.9,13,7
 third_route,Third Route,another_area,5.11a,22,11
 ```
 
-The `UpdateRoutes` function can be loaded in a web browser at the URL printed
-when it was deployed, likely of the form
-`https://<gcp-region>-<project-id>.cloudfunctions.net/UpdateRoutes`. Select the
-two CSV files and enter the password that was used to generate the hash in the
+The `Admin` function can be loaded in a web browser at the URL printed when it
+was deployed, likely of the form
+`https://<gcp-region>-<project-id>.cloudfunctions.net/Admin`. Select the two CSV
+files and enter the password that was used to generate the hash in the
 `global/auth` Cloud Firestore document.
