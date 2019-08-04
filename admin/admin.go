@@ -17,10 +17,7 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-const (
-	authDocPath     = "global/auth" // document path in Cloud Firestore
-	maxRequestBytes = 10 << 20      // memory for parsing HTTP requests
-)
+const maxRequestBytes = 10 << 20 // memory for parsing HTTP requests
 
 // HandleRequest handles an HTTP request to the "Admin" Cloud Function.
 func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -53,6 +50,8 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 		switch action {
 		case "routes":
 			handlePostRoutes(ctx, w, r, client)
+		case "scores":
+			handlePostScores(ctx, w, r, client)
 		default:
 			http.Error(w, fmt.Sprintf("Bad action %q", action), http.StatusBadRequest)
 		}
@@ -63,14 +62,10 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 
 // checkPassword checks that the supplied password matches the hash in Cloud Storage.
 func checkPassword(ctx context.Context, client *firestore.Client, password string) (ok bool, err error) {
-	snap, err := client.Doc(authDocPath).Get(ctx)
-	if err != nil {
-		return false, err
-	}
 	var data struct {
 		Hash string `firestore:"cloudFunctionSHA256"`
 	}
-	if err := snap.DataTo(&data); err != nil {
+	if err := getDoc(ctx, client.Doc(authDocPath), &data); err != nil {
 		return false, err
 	}
 
@@ -108,7 +103,12 @@ const getHTML = `
       <input name="password" type="password" />
     </div>
 
-    <h2>Update routes</h3>
+    <h2>View scores</h2>
+    <div class="input-row">
+      <button name="action" value="scores" type="submit">View</button>
+    </div>
+
+    <h2>Update routes</h2>
     <div class="input-row">
       <span class="label">Areas CSV</span>
       <input name="areas" type="file" accept=".csv" />
