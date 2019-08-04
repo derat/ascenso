@@ -9,6 +9,7 @@ In the [Firebase Console]:
     add any additional hostnames that will be used to access the site.
 *   Open the `Database` page and create a Cloud Firestore database with
     fully-restricted permissions.
+*   Open the `Storage` page and create the default bucket.
 *   Open the `Hosting` page and enable hosting. Add an additional site if using
     the non-default-site configuration described below.
 
@@ -147,6 +148,15 @@ Deploy Cloud Firestore security rules from `firestore.rules`:
 ```sh
 firebase deploy --only firestore:rules
 ```
+
+### Deploy Cloud Storage Rules
+
+Deploy Cloud Storage security rules from `storage.rules`:
+
+```sh
+firebase deploy --only storage
+```
+
 ### Deploy Cloud Function
 
 Deploy the `Admin` Cloud Function:
@@ -159,17 +169,32 @@ gcloud --project <PROJECT_ID> functions deploy Admin --runtime go111 --trigger-h
 the `--project` flag, this command uses the `gcloud` command's default project,
 which may be changed by running `gcloud config set project <PROJECT_ID>`.
 
+## Image Assets
+
+Create a competition logo (ideally 400x400 and suitable for being displayed on a
+light background) and copy it to the default Cloud Storage bucket:
+
+```sh
+gsutil cp logo.png gs://<PROJECT_ID>.appspot.com/public/logo.png
+```
+
 ## Cloud Firestore data
 
 ### Global configuration
 
-In the [Firebase Console], open the `Database` page and create `global/config`
-and `global/auth` documents as described in the schema in [README.md]. The hash
-in `global/auth` can be created with a command similar to the following:
+In the [Firebase Console], open the `Database` page and create `global/auth` and
+`global/config` documents as described in the schema in [README.md].
+
+The hash in `global/auth` can be created with a command similar to the
+following:
 
 ```sh
 echo -n MYSECRETPASSWORD1234 | sha256sum
 ```
+
+To reference a Cloud Storage file in `global/config`, use the `Download URL`
+listed in the `File location` section of the file info view in the [Firebase
+Console]'s `Storage` page.
 
 [README.md]: ./README.md
 
