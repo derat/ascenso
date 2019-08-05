@@ -4,9 +4,7 @@
 
 <template>
   <v-container v-if="ready" grid-list-md text-ms-center>
-    <!-- "Individual" card -->
-    <v-card class="pa-3">
-      <div class="caption">Individual</div>
+    <Card title="Individual">
       <v-layout row>
         <v-flex>
           <v-form v-model="userNameValid" @submit.prevent>
@@ -20,14 +18,9 @@
           </v-form>
         </v-flex>
       </v-layout>
-    </v-card>
+    </Card>
 
-    <v-spacer class="mt-3" />
-
-    <!-- "Team" card -->
-    <v-card class="pa-3">
-      <div class="caption">Team</div>
-
+    <Card title="Team" class="mt-3">
       <!-- User is on a team -->
       <template v-if="teamDoc.users">
         <v-layout row>
@@ -57,18 +50,14 @@
 
         <v-card-actions class="pa-0">
           <!-- "Show invite code" button and dialog -->
-          <v-dialog v-model="inviteDialogShown">
+          <v-dialog v-model="inviteDialogShown" max-width="512px">
             <template v-slot:activator="{ on }">
               <v-btn :disabled="teamFull" color="primary" v-on="on">
                 Show invite code
               </v-btn>
             </template>
 
-            <v-card>
-              <v-card-title class="title grey lighten-2" primary-title>
-                Invite Code
-              </v-card-title>
-
+            <DialogCard title="Invite Code">
               <v-card-text>
                 <div class="invite-code mb-2">{{ teamDoc.invite }}</div>
                 <div>
@@ -83,22 +72,18 @@
                   Dismiss
                 </v-btn>
               </v-card-actions>
-            </v-card>
+            </DialogCard>
           </v-dialog>
 
           <v-spacer />
 
           <!-- "Leave team" button and dialog -->
-          <v-dialog v-model="leaveDialogShown">
+          <v-dialog v-model="leaveDialogShown" max-width="512px">
             <template v-slot:activator="{ on }">
               <v-btn flat color="error" v-on="on">Leave team</v-btn>
             </template>
 
-            <v-card>
-              <v-card-title class="title grey lighten-2" primary-title>
-                Leave Team
-              </v-card-title>
-
+            <DialogCard title="Leave Team">
               <v-card-text>
                 Are you sure you want to leave your team?
               </v-card-text>
@@ -117,7 +102,7 @@
                   Leave team
                 </v-btn>
               </v-card-actions>
-            </v-card>
+            </DialogCard>
           </v-dialog>
         </v-card-actions>
       </template>
@@ -132,16 +117,12 @@
 
         <v-card-actions class="pa-0">
           <!-- "Join team" button and dialog -->
-          <v-dialog v-model="joinDialogShown">
+          <v-dialog v-model="joinDialogShown" max-width="512px">
             <template v-slot:activator="{ on }">
               <v-btn color="primary" v-on="on">Join team</v-btn>
             </template>
 
-            <v-card>
-              <v-card-title class="title grey lighten-2" primary-title>
-                Join Team
-              </v-card-title>
-
+            <DialogCard title="Join Team">
               <v-card-text>
                 <div>
                   Ask your teammate to give you the {{ inviteCodeLength }}-digit
@@ -175,23 +156,19 @@
                   Join
                 </v-btn>
               </v-card-actions>
-            </v-card>
+            </DialogCard>
           </v-dialog>
 
           <!-- Push buttons to left and right side -->
           <v-spacer />
 
           <!-- "Create team" button and dialog -->
-          <v-dialog v-model="createDialogShown">
+          <v-dialog v-model="createDialogShown" max-width="512px">
             <template v-slot:activator="{ on }">
               <v-btn color="primary" v-on="on">Create team</v-btn>
             </template>
 
-            <v-card>
-              <v-card-title class="title grey lighten-2" primary-title>
-                Create Team
-              </v-card-title>
-
+            <DialogCard title="Create Team">
               <v-card-text>
                 <div>
                   After creating a new team, you'll get an invite code to give
@@ -222,11 +199,11 @@
                   Create
                 </v-btn>
               </v-card-actions>
-            </v-card>
+            </DialogCard>
           </v-dialog>
         </v-card-actions>
       </template>
-    </v-card>
+    </Card>
   </v-container>
   <Spinner v-else />
 </template>
@@ -239,10 +216,12 @@ type DocumentReference = firebase.firestore.DocumentReference;
 
 import { db, getUser, bindUserAndTeamDocs } from '@/firebase';
 import { ClimbState, User, Team } from '@/models';
+import Card from '@/components/Card.vue';
+import DialogCard from '@/components/DialogCard.vue';
 import Spinner from '@/components/Spinner.vue';
 
 @Component({
-  components: { Spinner },
+  components: { Card, DialogCard, Spinner },
 })
 export default class Profile extends Vue {
   // Maximum length of user and team names.

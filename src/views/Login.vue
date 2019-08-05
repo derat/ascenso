@@ -8,22 +8,25 @@
          auth container in the DOM immediately. -->
     <v-container v-show="ready" grid-list-md text-ms-center>
       <v-layout row justify-center>
-        <v-img
-          :src="config.logoURL"
-          :alt="config.competitionName"
-          height="400"
-          contain
-          class="ma-3"
-        />
+        <!-- These widths are chosen to match those of the <Card> below. -->
+        <v-flex xs12 sm8 md6>
+          <v-img
+            :src="config.logoURL || '/logo-800.png'"
+            :alt="config.competitionName"
+            contain
+          />
+        </v-flex>
       </v-layout>
-      <v-card class="mt-3 pt-3">
-        <v-layout row justify-center>
-          <div class="instructions">Please sign in to continue.</div>
-        </v-layout>
-        <v-layout row justify-center>
-          <div id="firebaseui-auth-container"></div>
-        </v-layout>
-      </v-card>
+      <Card class="mt-2">
+        <v-container class="pa-0 pt-2">
+          <v-layout row justify-center>
+            <div class="instructions">Please sign in to continue:</div>
+          </v-layout>
+          <v-layout row justify-center>
+            <div id="firebaseui-auth-container"></div>
+          </v-layout>
+        </v-container>
+      </Card>
     </v-container>
     <Spinner v-if="!ready" />
   </div>
@@ -36,10 +39,11 @@ import firebaseui from 'firebaseui';
 
 import { auth, db, getUser } from '@/firebase';
 import { Config } from '@/models';
+import Card from '@/components/Card.vue';
 import Spinner from '@/components/Spinner.vue';
 
 @Component({
-  components: { Spinner },
+  components: { Card, Spinner },
 })
 export default class Login extends Vue {
   config: Partial<Config> = {};
