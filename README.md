@@ -29,8 +29,8 @@ Heterogeneous singleton documents:
     *   `competitionName` - String field containing competition name, e.g. `"My
         Competition 2019"`.
     *   `logoURL` - String field containing competition logo URL. The image
-        should ideally be 400x400 and suitable for being displayed on a light
-        background.
+        should ideally be 800 pixels wide or larger and suitable for being
+        displayed on a light background.
 *   `indexedData` - Document containing indexed area and route information:
     *   `areas` - Map field containing area information keyed by area ID, e.g.
         `my_area`.

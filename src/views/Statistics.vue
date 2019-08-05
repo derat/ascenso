@@ -10,19 +10,27 @@
 
       <v-tab-item key="team" value="team" v-if="teamCards.length">
         <v-container grid-list-md text-ms-center class="pt-0">
-          <v-card class="pa-3 mt-3" v-for="card in teamCards" :key="card.name">
-            <div class="caption">{{ card.name }}</div>
+          <Card
+            v-for="card in teamCards"
+            :key="card.name"
+            :title="card.name"
+            class="mt-3"
+          >
             <StatisticsList :items="card.items" />
-          </v-card>
+          </Card>
         </v-container>
       </v-tab-item>
 
       <v-tab-item key="user" value="user">
         <v-container grid-list-md text-ms-center class="pt-0">
-          <v-card class="pa-3 mt-3" v-for="card in userCards" :key="card.name">
-            <div class="caption">{{ card.name }}</div>
+          <Card
+            v-for="card in userCards"
+            :key="card.name"
+            :title="card.name"
+            class="mt-3"
+          >
             <StatisticsList :items="card.items" />
-          </v-card>
+          </Card>
         </v-container>
       </v-tab-item>
     </v-tabs>
@@ -38,6 +46,7 @@ type DocumentReference = firebase.firestore.DocumentReference;
 
 import { db, getUser, bindUserAndTeamDocs } from '@/firebase';
 import { ClimbState, Statistic, IndexedData, User, Team } from '@/models';
+import Card from '@/components/Card.vue';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
 
@@ -47,7 +56,7 @@ interface StatisticsCard {
 }
 
 @Component({
-  components: { Spinner, StatisticsList },
+  components: { Card, Spinner, StatisticsList },
 })
 export default class Statistics extends Vue {
   readonly indexedData: Partial<IndexedData> = {};

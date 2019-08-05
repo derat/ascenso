@@ -171,8 +171,7 @@ which may be changed by running `gcloud config set project <PROJECT_ID>`.
 
 ## Image Assets
 
-Create a competition logo (ideally 400x400 and suitable for being displayed on a
-light background) and copy it to the default Cloud Storage bucket:
+Create a competition logo and copy it to the default Cloud Storage bucket:
 
 ```sh
 gsutil cp logo.png gs://<PROJECT_ID>.appspot.com/public/logo.png
