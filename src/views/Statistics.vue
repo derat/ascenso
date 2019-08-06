@@ -44,7 +44,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import { db, getUser, bindUserAndTeamDocs } from '@/firebase';
+import { db, getUser, bindUserAndTeamDocs, logError } from '@/firebase';
 import { ClimbState, Statistic, IndexedData, User, Team } from '@/models';
 import Card from '@/components/Card.vue';
 import Spinner from '@/components/Spinner.vue';
@@ -167,9 +167,7 @@ export default class Statistics extends Vue {
         this.climbDataLoaded = true;
         this.updateItems();
       },
-      err => {
-        console.log('Failed to bind user and team from database:', err);
-      }
+      error => logError('stats_load_failed', { error })
     );
   }
 }

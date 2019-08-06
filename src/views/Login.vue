@@ -37,7 +37,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 import firebaseui from 'firebaseui';
 
-import { auth, db, getUser } from '@/firebase';
+import { auth, db, getUser, logInfo } from '@/firebase';
 import { Config } from '@/models';
 import Card from '@/components/Card.vue';
 import Spinner from '@/components/Spinner.vue';
@@ -82,6 +82,7 @@ export default class Login extends Vue {
             } else {
               // Otherwise, create the doc using their default name and send
               // them to the profile view.
+              logInfo('create_user', { name: user.displayName });
               ref.set({ name: user.displayName }, { merge: true }).then(() => {
                 this.$router.replace('profile');
               });
