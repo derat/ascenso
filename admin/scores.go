@@ -45,6 +45,10 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		if len(teamData.Users) == 0 {
+			continue
+		}
+
 		summary := teamSummary{Name: teamData.Name}
 
 		// Iterate over the team's members.
