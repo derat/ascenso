@@ -10,10 +10,17 @@ import (
 	"net/http"
 
 	"ascenso/admin"
+	"ascenso/log"
 )
 
 // Admin is the entry point into the "Admin" Cloud Function.
 // The actual implementation lives in the admin package.
 func Admin(w http.ResponseWriter, r *http.Request) {
 	admin.HandleRequest(context.Background(), w, r)
+}
+
+// Log is the entry point into the "Log" Cloud Function.
+// The actual implementation lives in the log package.
+func Log(w http.ResponseWriter, r *http.Request) {
+	log.HandleRequest(context.Background(), w, r)
 }
