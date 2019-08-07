@@ -158,7 +158,9 @@ export default class Statistics extends Vue {
   }
 
   mounted() {
-    this.$bind('indexedData', db.collection('global').doc('indexedData'));
+    this.$bind('indexedData', db.collection('global').doc('indexedData')).catch(
+      err => logError('stats_bind_indexed_data_failed', err)
+    );
 
     bindUserAndTeamDocs(this, getUser().uid, 'userDoc', 'teamDoc').then(
       result => {
@@ -167,8 +169,11 @@ export default class Statistics extends Vue {
         this.climbDataLoaded = true;
         this.updateItems();
       },
-      error => logError('stats_load_failed', { error })
+      err => logError('stats_bind_user_and_team_failed', err)
     );
+
+    // TODO: Shouldn't we technically also watch for the user switching teams?
+    // See onTeamChanged() in Routes.vue.
   }
 }
 </script>

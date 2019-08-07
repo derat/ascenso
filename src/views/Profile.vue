@@ -337,7 +337,7 @@ export default class Profile extends Vue {
       const key = 'users.' + getUser().uid + '.name';
       batch.update(this.teamRef, { [key]: name });
     }
-    batch.commit();
+    batch.commit().catch(err => logError('set_user_name_failed', err));
   }
 
   // Updates the team's name in Firestore when the team name input is blurred.
@@ -348,7 +348,9 @@ export default class Profile extends Vue {
     // TODO: Trim whitespace, discard embedded newlines, etc.?
 
     logInfo('set_team_name', { team: this.teamRef.id, name: name });
-    this.teamRef.update({ name: name });
+    this.teamRef
+      .update({ name: name })
+      .catch(err => logError('set_team_name_failed', err));
   }
 
   // Creates a new team when the "Create" button is clicked in the "Create
@@ -405,7 +407,7 @@ export default class Profile extends Vue {
           this.inviteDialogShown = true;
           this.createTeamName = '';
         },
-        error => logError('create_team_failed', { error })
+        err => logError('create_team_failed', err)
       )
       .finally(() => {
         this.creatingTeam = false;
@@ -465,19 +467,17 @@ export default class Profile extends Vue {
         });
         return batch.commit();
       })
-      .then(
-        () => {
-          // Update the UI to reflect the change.
-          // TODO: Just watch userDoc.team instead?
-          // TODO: Why does TS require this check?
-          if (!teamRef) throw new Error('No ref to team doc');
-          this.teamRef = teamRef;
-          this.$bind('teamDoc', teamRef);
-          this.joinDialogShown = false;
-          this.joinInviteCode = '';
-        },
-        error => logError('join_team_failed', { error })
-      )
+      .then(() => {
+        // Update the UI to reflect the change.
+        // TODO: Just watch userDoc.team instead?
+        // TODO: Why does TS require this check?
+        if (!teamRef) throw new Error('No ref to team doc');
+        this.teamRef = teamRef;
+        this.$bind('teamDoc', teamRef);
+        this.joinDialogShown = false;
+        this.joinInviteCode = '';
+      })
+      .catch(err => logError('join_team_failed', err))
       .finally(() => {
         this.joiningTeam = false;
       });
@@ -527,7 +527,7 @@ export default class Profile extends Vue {
           this.teamRef = null;
           this.leaveDialogShown = false;
         },
-        error => logError('leave_team_failed', { error })
+        err => logError('leave_team_failed', err)
       )
       .finally(() => {
         this.leavingTeam = false;
@@ -541,7 +541,7 @@ export default class Profile extends Vue {
         this.teamRef = result.team;
         this.ready = true;
       },
-      error => logError('profile_load_failed', { error })
+      err => logError('profile_initial_bind_failed', err)
     );
   }
 }

@@ -95,7 +95,9 @@ export default class Routes extends Vue {
     const uid = this.teamMembers[ev.index];
 
     logInfo('set_climb_state', { user: uid, route: ev.route, state: ev.state });
-    this.teamRef.update({ ['users.' + uid + '.climbs.' + ev.route]: value });
+    this.teamRef
+      .update({ ['users.' + uid + '.climbs.' + ev.route]: value })
+      .catch(err => logError('set_climb_state_failed', err));
   }
 
   mounted() {
@@ -103,11 +105,13 @@ export default class Routes extends Vue {
       () => {
         this.loaded = true;
       },
-      error => logError('routes_load_failed', { error })
+      err => logError('routes_bind_sorted_data_failed', err)
     );
 
     this.userRef = db.collection('users').doc(getUser().uid);
-    this.$bind('userDoc', this.userRef);
+    this.$bind('userDoc', this.userRef).catch(err =>
+      logError('routes_bind_user_failed', err)
+    );
   }
 
   @Watch('userDoc.team')
@@ -116,7 +120,9 @@ export default class Routes extends Vue {
     // snapshot to the team document accordingly.
     if (this.userDoc.team) {
       this.teamRef = db.collection('teams').doc(this.userDoc.team);
-      this.$bind('teamDoc', this.teamRef);
+      this.$bind('teamDoc', this.teamRef).catch(err =>
+        logError('routes_bind_team_failed', err)
+      );
     } else {
       this.$unbind('teamDoc');
       this.teamDoc = {};

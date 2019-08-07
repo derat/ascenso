@@ -2,25 +2,60 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import { auth, db, logInfo, logError } from '@/firebase';
+
+// Install global error handlers as soon as possible.
+// This function signature is weird: https://stackoverflow.com/q/20500190/
+window.onerror = function(
+  eventOrMessage: string | Event,
+  src?: string,
+  line?: number
+) {
+  try {
+    const message =
+      eventOrMessage instanceof ErrorEvent
+        ? eventOrMessage.message
+        : eventOrMessage;
+    logError('unhandled_error', { message, src, line });
+  } catch (err) {
+    console.log('Error handler generated error:', err);
+  }
+};
+window.onunhandledrejection = function(event: PromiseRejectionEvent) {
+  try {
+    logError('unhandled_rejection', { reason: event.reason.toString() });
+  } catch (err) {
+    console.log('Rejection handler generated error:', err);
+  }
+};
+
 import Vue from 'vue';
-import VueRouter from 'vue-router';
 
-import './plugins/vuetify';
-import { firestorePlugin } from 'vuefire';
-
-import { auth, db, logInfo } from '@/firebase';
-import { Config } from '@/models';
-
-import App from '@/App.vue';
-import router from '@/router';
+Vue.config.errorHandler = function(err: Error, vm: Vue, info: string) {
+  try {
+    logError('vue_error', err);
+  } catch (e) {
+    console.log('Vue error handler generated error:', err);
+  }
+};
 
 Vue.config.productionTip = false;
 
 // Uncomment to turn on performance tracing.
 //Vue.config.performance = true;
 
+import VueRouter from 'vue-router';
+import { firestorePlugin } from 'vuefire';
+
 Vue.use(VueRouter);
 Vue.use(firestorePlugin);
+
+import './plugins/vuetify';
+
+import { Config } from '@/models';
+
+import App from '@/App.vue';
+import router from '@/router';
 
 // Defer Vue initialization until Firebase has determined if the user has
 // authenticated or not. Otherwise, router.beforeEach may end up trying to
