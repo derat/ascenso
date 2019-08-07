@@ -157,12 +157,13 @@ Deploy Cloud Storage security rules from `storage.rules`:
 firebase deploy --only storage
 ```
 
-### Deploy Cloud Function
+### Deploy Cloud Functions
 
-Deploy the `Admin` Cloud Function:
+Deploy Cloud Functions:
 
 ```sh
 gcloud --project <PROJECT_ID> functions deploy Admin --runtime go111 --trigger-http
+gcloud --project <PROJECT_ID> functions deploy Log --runtime go111 --trigger-http
 ```
 
 `PROJECT_ID` should contain the Firebase project ID, e.g. `myapp-1234`. Without
