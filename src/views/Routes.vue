@@ -27,7 +27,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import { db, getUser } from '@/firebase';
+import { db, getUser, logInfo, logError } from '@/firebase';
 import {
   ClimberInfo,
   ClimbState,
@@ -93,17 +93,18 @@ export default class Routes extends Vue {
         : ev.state;
 
     const uid = this.teamMembers[ev.index];
+
+    logInfo('set_climb_state', { user: uid, route: ev.route, state: ev.state });
     this.teamRef.update({ ['users.' + uid + '.climbs.' + ev.route]: value });
   }
 
   mounted() {
-    this.$bind('sortedData', db.collection('global').doc('sortedData'))
-      .then(() => {
+    this.$bind('sortedData', db.collection('global').doc('sortedData')).then(
+      () => {
         this.loaded = true;
-      })
-      .catch(error => {
-        console.log('Failed to load sorted data: ', error);
-      });
+      },
+      error => logError('routes_load_failed', { error })
+    );
 
     this.userRef = db.collection('users').doc(getUser().uid);
     this.$bind('userDoc', this.userRef);

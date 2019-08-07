@@ -15,9 +15,12 @@
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
+import 'firebase/functions';
 type DocumentReference = firebase.firestore.DocumentReference;
 
 import Vue from 'vue';
+
+import { Logger } from './logger';
 
 import config from './config';
 firebase.initializeApp(config);
@@ -76,4 +79,32 @@ export function bindUserAndTeamDocs(
       }
     );
   });
+}
+
+const defaultLogger = new Logger(firebase.functions().httpsCallable('Log'));
+
+// Sends a log message to Stackdriver.
+// See the Logger class's log method for more details.
+function log(severity: string, code: string, payload: Record<string, any>) {
+  if (!auth.currentUser) {
+    defaultLogger.log(severity, code, payload);
+    return;
+  }
+
+  auth.currentUser
+    .getIdToken()
+    .then(
+      token => defaultLogger.log(severity, code, payload, token),
+      err => console.log('Failed to get ID token:', err)
+    );
+}
+
+// Logs an informational message to Stackdriver.
+export function logInfo(code: string, payload: Record<string, any>) {
+  log('INFO', code, payload);
+}
+
+// Logs an error to Stackdriver.
+export function logError(code: string, payload: Record<string, any>) {
+  log('ERROR', code, payload);
 }

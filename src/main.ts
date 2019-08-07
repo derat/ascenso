@@ -8,7 +8,7 @@ import VueRouter from 'vue-router';
 import './plugins/vuetify';
 import { firestorePlugin } from 'vuefire';
 
-import { auth, db } from '@/firebase';
+import { auth, db, logInfo } from '@/firebase';
 import { Config } from '@/models';
 
 import App from '@/App.vue';
@@ -45,3 +45,5 @@ db.doc('global/config')
     }
     document.title = data.competitionName || 'Unnamed';
   });
+
+logInfo('load_app', { userAgent: navigator.userAgent });

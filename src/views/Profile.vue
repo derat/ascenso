@@ -214,7 +214,13 @@ import { Component, Vue } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import { db, getUser, bindUserAndTeamDocs } from '@/firebase';
+import {
+  db,
+  getUser,
+  bindUserAndTeamDocs,
+  logInfo,
+  logError,
+} from '@/firebase';
 import { ClimbState, User, Team } from '@/models';
 import Card from '@/components/Card.vue';
 import DialogCard from '@/components/DialogCard.vue';
@@ -322,6 +328,9 @@ export default class Profile extends Vue {
     if (!this.userNameValid) throw new Error('User name is invalid');
 
     // TODO: Trim whitespace, discard embedded newlines, etc.?
+
+    logInfo('set_user_name', { name: name });
+
     const batch = db.batch();
     batch.update(this.userRef, { name: name });
     if (this.teamRef) {
@@ -337,6 +346,8 @@ export default class Profile extends Vue {
     if (!this.teamNameValid) throw new Error('Team name is invalid');
 
     // TODO: Trim whitespace, discard embedded newlines, etc.?
+
+    logInfo('set_team_name', { team: this.teamRef.id, name: name });
     this.teamRef.update({ name: name });
   }
 
@@ -356,6 +367,8 @@ export default class Profile extends Vue {
     const inviteCode = Math.random()
       .toString()
       .slice(2, 2 + this.inviteCodeLength);
+
+    logInfo('create_team', { name: this.createTeamName, invite: inviteCode });
 
     // Perform a single batched write that creates the team document, creates
     // an invite document containing the team ID, and updates the user doc to
@@ -392,10 +405,7 @@ export default class Profile extends Vue {
           this.inviteDialogShown = true;
           this.createTeamName = '';
         },
-        err => {
-          // TODO: Surface to the user.
-          console.log('Failed to create team:', err);
-        }
+        error => logError('create_team_failed', { error })
       )
       .finally(() => {
         this.creatingTeam = false;
@@ -409,6 +419,8 @@ export default class Profile extends Vue {
     if (this.joiningTeam) throw new Error('Already joining team');
 
     this.joiningTeam = true;
+
+    logInfo('join_team', { invite: this.joinInviteCode });
 
     // We need to access this throughout the promise chain.
     let teamRef: DocumentReference | null;
@@ -464,10 +476,7 @@ export default class Profile extends Vue {
           this.joinDialogShown = false;
           this.joinInviteCode = '';
         },
-        err => {
-          // TODO: Surface to the user.
-          console.log('Failed to join team:', err);
-        }
+        error => logError('join_team_failed', { error })
       )
       .finally(() => {
         this.joiningTeam = false;
@@ -482,6 +491,8 @@ export default class Profile extends Vue {
     if (this.leavingTeam) throw new Error('Already leaving team');
 
     this.leavingTeam = true;
+
+    logInfo('leave_team', {});
 
     const uid = getUser().uid;
 
@@ -516,10 +527,7 @@ export default class Profile extends Vue {
           this.teamRef = null;
           this.leaveDialogShown = false;
         },
-        err => {
-          // TODO: Surface to the user.
-          console.log('Failed to leave team:', err);
-        }
+        error => logError('leave_team_failed', { error })
       )
       .finally(() => {
         this.leavingTeam = false;
@@ -533,9 +541,7 @@ export default class Profile extends Vue {
         this.teamRef = result.team;
         this.ready = true;
       },
-      err => {
-        console.log('Failed to bind user and team from database:', err);
-      }
+      error => logError('profile_load_failed', { error })
     );
   }
 }
