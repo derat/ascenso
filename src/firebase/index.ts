@@ -81,9 +81,14 @@ export function bindUserAndTeamDocs(
   });
 }
 
-const defaultLogger = new Logger(firebase.functions().httpsCallable('Log'));
+// Only log to Stackdriver in production environments.
+const defaultLogger = new Logger(
+  process.env.NODE_ENV == 'production'
+    ? firebase.functions().httpsCallable('Log')
+    : () => new Promise(resolve => resolve({ data: {} }))
+);
 
-// Sends a log message to Stackdriver.
+// Helper function that sends a log message to Stackdriver.
 // See the Logger class's log method for more details.
 function log(severity: string, code: string, payload: Record<string, any>) {
   if (!auth.currentUser) {
@@ -99,12 +104,24 @@ function log(severity: string, code: string, payload: Record<string, any>) {
     );
 }
 
-// Logs an informational message to Stackdriver.
+// Sends a record to Stackdriver with INFO severity.
 export function logInfo(code: string, payload: Record<string, any>) {
   log('INFO', code, payload);
 }
 
-// Logs an error to Stackdriver.
-export function logError(code: string, payload: Record<string, any>) {
-  log('ERROR', code, payload);
+// Sends a record to Stackdriver with ERROR severity.
+// If an Error object is passed, its fields are automatically extracted.
+// The error or payload is also logged via console.error.
+export function logError(
+  code: string,
+  errorOrPayload: Error | Record<string, any>
+) {
+  if (errorOrPayload instanceof Error) {
+    const e: Error = errorOrPayload;
+    log('ERROR', code, { message: e.message, name: e.name, stack: e.stack });
+    console.error(e);
+  } else {
+    log('ERROR', code, errorOrPayload);
+    console.error('Error code ' + code + ':', errorOrPayload);
+  }
 }
