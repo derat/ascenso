@@ -38,16 +38,12 @@ export class Logger {
     payload: Record<string, any>,
     token?: string
   ) {
-    const record: LogRecord = {
-      time: new Date().getTime(),
-      severity,
-      code,
-      payload,
-    };
+    const time = new Date().getTime();
+    const record: LogRecord = { time, severity, code, payload };
     if (token) record.token = token;
 
     // TODO: Batch multiple records and send them all at once.
-    this.logFunc([record]).then(null, err => {
+    this.logFunc({ records: [record], now: time }).then(null, err => {
       console.log('Failed to log', record, ':', err);
     });
   }

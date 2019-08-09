@@ -32,6 +32,10 @@ type logRecord struct {
 
 // HandleRequest handles an HTTP request to the "Log" Cloud Function.
 func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// Grab the current time as soon as possible since we're going to compute the
+	// difference between it and a client-supplied timestamp.
+	now := time.Now()
+
 	// Respond to CORS preflight requests by saying that we'll accept
 	// authorized POSTs from anywhere. For more information, see
 	// https://developer.mozilla.org/en-US/docs/Glossary/Preflight_request
@@ -50,13 +54,23 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 
 	// The client-supplied data is passed in a "data" property in a JSON object.
 	var body struct {
-		Records []logRecord `json:"data"`
+		Data struct {
+			Records []logRecord `json:"records"`
+			Now     int64       `json:"now"`
+		} `json:"data"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		log.Print("Failed reading body: ", err)
 		http.Error(w, "Failed reading body", http.StatusBadRequest)
 		return
 	}
+
+	// Determine how far off client-supplied times are. This is a bit imprecise
+	// since it can't incorporate the time that the client spends calling us.
+	// For example, if we and the client are synced to exactly the same time but
+	// it takes the client 200 ms to invoke this method, the client's log records
+	// will get timestamps 200 ms later than when they actually happened.
+	clientOffset := now.Sub(time.Unix(0, body.Data.Now*int64(time.Millisecond)))
 
 	client, err := logging.NewClient(ctx, os.Getenv("GCP_PROJECT")) // automatically set by runtime
 	if err != nil {
@@ -66,7 +80,7 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	}
 	lg := client.Logger(logName)
 
-	for _, rec := range body.Records {
+	for _, rec := range body.Data.Records {
 		var uid string
 		if rec.Token != "" {
 			var err error
@@ -76,9 +90,10 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 		}
 
 		lg.Log(logging.Entry{
-			// We use the time supplied by the client here.
-			// Stackdriver automatically adds a "receiveTimestamp" field.
-			Timestamp: time.Unix(0, rec.Time*int64(time.Millisecond)),
+			// We use the adjusted time supplied by the client here.
+			// Stackdriver automatically adds a "receiveTimestamp" field
+			// containing the time when it received the record from us.
+			Timestamp: time.Unix(0, rec.Time*int64(time.Millisecond)).Add(clientOffset),
 			Severity:  logging.ParseSeverity(rec.Severity),
 			Labels: map[string]string{
 				"code": rec.Code,
