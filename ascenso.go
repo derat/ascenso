@@ -9,8 +9,8 @@ import (
 	"context"
 	"net/http"
 
-	"ascenso/admin"
-	"ascenso/log"
+	"ascenso/go/admin"
+	"ascenso/go/log"
 )
 
 // Admin is the entry point into the "Admin" Cloud Function.
