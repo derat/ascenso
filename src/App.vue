@@ -18,16 +18,35 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Component, Mixins } from 'vue-property-decorator';
 import { auth } from '@/firebase';
+
+import Perf from '@/mixins/Perf.ts';
 import Toolbar from '@/components/Toolbar.vue';
 
 @Component({
   components: { Toolbar },
 })
-export default class App extends Vue {
+export default class App extends Mixins(Perf) {
   signedIn() {
     return !!auth.currentUser;
+  }
+  mounted() {
+    this.$nextTick(() => {
+      const data: Record<string, any> = { userAgent: navigator.userAgent };
+      try {
+        const t = window.performance.timing;
+        data.page = {
+          timeToFirstByte: t.responseStart - t.requestStart,
+          domInteractive: t.domInteractive - t.requestStart,
+          documentLoaded: t.loadEventStart - t.requestStart,
+        };
+      } catch (e) {
+        // Ignore exceptions; browser support for this is lacking per MDN:
+        // https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming
+      }
+      this.logReady('app_loaded', data);
+    });
   }
 }
 </script>

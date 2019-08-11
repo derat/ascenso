@@ -33,19 +33,20 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Mixins, Watch } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 import firebaseui from 'firebaseui';
 
 import { auth, db, getUser, logInfo } from '@/firebase';
 import { Config } from '@/models';
 import Card from '@/components/Card.vue';
+import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';
 
 @Component({
   components: { Card, Spinner },
 })
-export default class Login extends Vue {
+export default class Login extends Mixins(Perf) {
   config: Partial<Config> = {};
   loadedDoc = false;
   pendingRedirect = false;
@@ -57,6 +58,7 @@ export default class Login extends Vue {
   mounted() {
     this.$bind('config', db.collection('global').doc('config')).then(() => {
       this.loadedDoc = true;
+      this.recordEvent('loadedConfig');
     });
 
     // See https://github.com/firebase/firebaseui-web/issues/293.
@@ -92,8 +94,14 @@ export default class Login extends Vue {
           // Don't redirect automatically; we handle that above.
           return false;
         },
+        uiShown: () => this.recordEvent('loginShown'),
       },
     });
+  }
+
+  @Watch('ready')
+  onReady(val: boolean) {
+    if (val) this.logReady('login_loaded');
   }
 }
 </script>

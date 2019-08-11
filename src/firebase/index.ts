@@ -81,18 +81,33 @@ export function bindUserAndTeamDocs(
   });
 }
 
-// Change this to true to send logs to Stackdriver in dev environments.
-// By default, we only send logs in production.
-const logForDev = false;
+enum LogDest {
+  STACKDRIVER,
+  CONSOLE,
+  NONE,
+}
 
-// Only log to Stackdriver in production environments.
-const defaultLogger = new Logger(
-  'log',
-  process.env.NODE_ENV == 'production' ||
-  (logForDev && process.env.NODE_ENV == 'dev')
-    ? firebase.functions().httpsCallable('Log')
-    : () => new Promise(resolve => resolve({ data: {} }))
-);
+// Modify this to control where logs are sent in dev mode.
+let devLogDest = LogDest.NONE;
+
+// Returns an appropriate function to pass to the default Logger.
+function getLogFunc(): firebase.functions.HttpsCallable {
+  const isProd = process.env.NODE_ENV == 'production';
+  const isDev = process.env.NODE_ENV == 'development';
+
+  if (isProd || (isDev && devLogDest == LogDest.STACKDRIVER)) {
+    return firebase.functions().httpsCallable('Log');
+  }
+  if (isDev && devLogDest == LogDest.CONSOLE) {
+    return (data?: any) => {
+      console.log(data);
+      return new Promise(resolve => resolve({ data: {} }));
+    };
+  }
+  return () => new Promise(resolve => resolve({ data: {} }));
+}
+
+const defaultLogger = new Logger('log', getLogFunc());
 
 // Helper function that sends a log message to Stackdriver.
 // See the Logger class's log method for more details.

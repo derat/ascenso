@@ -34,18 +34,22 @@ export default class Perf extends Vue {
   }
 
   // Adds a 'ready' timestamp and reports performance data. Views using this
-  // mixin should call this once when they are fully loaded.
-  logReady(code: string) {
+  // mixin should call this once when they are fully loaded. |extraData| will
+  // be included in the log record.
+  logReady(code: string, extraData: Record<string, any> = {}) {
     if (this.loggedReady) return;
 
     this.recordEvent('ready');
 
     // Construct a payload mapping from event name to elapsed time in
     // milliseconds.
-    const payload: Record<string, any> = {};
+    const payload: Record<string, any> = { view: {} };
     for (const name of Object.keys(this.eventTimestamps)) {
-      payload[name] = Math.round(this.eventTimestamps[name] - this.constructed);
+      payload.view[name] = Math.round(
+        this.eventTimestamps[name] - this.constructed
+      );
     }
+    for (const key of Object.keys(extraData)) payload[key] = extraData[key];
     logDebug(code, payload);
 
     this.loggedReady = true;

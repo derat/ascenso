@@ -253,7 +253,7 @@ export class Logger {
       localStorage.removeItem(prefix + queuedKeySuffix);
       localStorage.removeItem(key);
 
-      if (!isTestEnv()) {
+      if (!isTestEnv() && (sending.length || queued.length)) {
         console.log(
           `Claimed ${sending.length} in-flight and ${queued.length} queued ` +
             `log record(s) with prefix "${prefix}"`
