@@ -81,10 +81,15 @@ export function bindUserAndTeamDocs(
   });
 }
 
+// Change this to true to send logs to Stackdriver in dev environments.
+// By default, we only send logs in production.
+const logForDev = false;
+
 // Only log to Stackdriver in production environments.
 const defaultLogger = new Logger(
   'log',
-  process.env.NODE_ENV == 'production'
+  process.env.NODE_ENV == 'production' ||
+  (logForDev && process.env.NODE_ENV == 'dev')
     ? firebase.functions().httpsCallable('Log')
     : () => new Promise(resolve => resolve({ data: {} }))
 );
@@ -103,6 +108,11 @@ function log(severity: string, code: string, payload: Record<string, any>) {
       token => defaultLogger.log(severity, code, payload, token),
       err => console.log('Failed to get ID token:', err)
     );
+}
+
+// Sends a record to Stackdriver with DEBUG severity.
+export function logDebug(code: string, payload: Record<string, any>) {
+  log('DEBUG', code, payload);
 }
 
 // Sends a record to Stackdriver with INFO severity.

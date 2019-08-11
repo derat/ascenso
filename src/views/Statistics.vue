@@ -39,7 +39,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { Component, Mixins, Watch } from 'vue-property-decorator';
 
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
@@ -47,6 +47,7 @@ type DocumentReference = firebase.firestore.DocumentReference;
 import { db, getUser, bindUserAndTeamDocs, logError } from '@/firebase';
 import { ClimbState, Statistic, IndexedData, User, Team } from '@/models';
 import Card from '@/components/Card.vue';
+import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
 
@@ -58,12 +59,14 @@ interface StatisticsCard {
 @Component({
   components: { Card, Spinner, StatisticsList },
 })
-export default class Statistics extends Vue {
+export default class Statistics extends Mixins(Perf) {
   readonly indexedData: Partial<IndexedData> = {};
   userCards: StatisticsCard[] = [];
   teamCards: StatisticsCard[] = [];
-  haveStats = false;
+
   climbDataLoaded = false;
+  indexedDataLoaded = false;
+  haveStats = false;
 
   tab: any = null;
 
@@ -130,13 +133,7 @@ export default class Statistics extends Vue {
   @Watch('userDoc.climbs')
   @Watch('teamDoc.users')
   updateItems() {
-    if (
-      !this.indexedData ||
-      !this.indexedData.routes ||
-      !this.climbDataLoaded
-    ) {
-      return;
-    }
+    if (!this.indexedDataLoaded || !this.climbDataLoaded) return;
 
     // If the user is on a team, retrieve the user stats from the team
     // climbs, and also fill in team stats.
@@ -157,8 +154,17 @@ export default class Statistics extends Vue {
     this.haveStats = true;
   }
 
+  @Watch('haveStats')
+  onHaveStats(val: boolean) {
+    if (val) this.logReady('stats_loaded');
+  }
+
   mounted() {
-    this.$bind('indexedData', db.collection('global').doc('indexedData')).catch(
+    this.$bind('indexedData', db.collection('global').doc('indexedData')).then(
+      () => {
+        this.recordEvent('loadedIndexedData'), (this.indexedDataLoaded = true);
+        this.updateItems();
+      },
       err => logError('stats_bind_indexed_data_failed', err)
     );
 
@@ -166,6 +172,7 @@ export default class Statistics extends Vue {
       result => {
         this.userRef = result.user;
         this.teamRef = result.team;
+        this.recordEvent('loadedUserAndTeam');
         this.climbDataLoaded = true;
         this.updateItems();
       },
