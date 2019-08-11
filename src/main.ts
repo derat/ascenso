@@ -55,7 +55,7 @@ import './plugins/vuetify';
 import { Config } from '@/models';
 
 import App from '@/App.vue';
-import { i18n } from '@/plugins/i18n';
+import i18n from '@/plugins/i18n';
 import router from '@/router';
 
 // Defer Vue initialization until Firebase has determined if the user has
