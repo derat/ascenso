@@ -8,6 +8,8 @@ its backend.
 
 See [INSTALL.md] for installation instructions.
 
+[![Build Status](https://travis-ci.org/derat/ascenso.svg?branch=master)](https://travis-ci.org/derat/ascenso)
+
 [TypeScript]: https://www.typescriptlang.org/
 [Vue.js]: https://vuejs.org/
 [Vuetify]: https://vuetifyjs.com/
