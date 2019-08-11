@@ -4,7 +4,7 @@
 
 <template>
   <v-container v-if="ready" grid-list-md text-ms-center>
-    <Card title="Individual">
+    <Card :title="$t('individual')">
       <v-layout row>
         <v-flex>
           <v-form v-model="userNameValid" @submit.prevent>
@@ -12,7 +12,7 @@
               :value="userDoc.name"
               :counter="nameMaxLength"
               :rules="nameRules"
-              label="Your name"
+              :label="$t('yourName')"
               @change="updateUserName"
             />
           </v-form>
@@ -20,7 +20,7 @@
       </v-layout>
     </Card>
 
-    <Card title="Team" class="mt-3">
+    <Card :title="$t('team')" class="mt-3">
       <!-- User is on a team -->
       <template v-if="teamDoc.users">
         <v-layout row>
