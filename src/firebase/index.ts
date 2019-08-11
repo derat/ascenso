@@ -83,6 +83,7 @@ export function bindUserAndTeamDocs(
 
 // Only log to Stackdriver in production environments.
 const defaultLogger = new Logger(
+  'log',
   process.env.NODE_ENV == 'production'
     ? firebase.functions().httpsCallable('Log')
     : () => new Promise(resolve => resolve({ data: {} }))
