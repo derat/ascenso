@@ -3,7 +3,7 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-expansion-panel v-if="loaded" expand>
+  <v-expansion-panel v-if="ready" expand>
     <v-expansion-panel-content
       v-for="area in sortedData.areas"
       :key="area.name"
@@ -22,7 +22,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { Component, Mixins, Watch } from 'vue-property-decorator';
 
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
@@ -36,16 +36,18 @@ import {
   User,
   Team,
 } from '@/models';
+import Perf from '@/mixins/Perf.ts';
 import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
 
 @Component({
   components: { RouteList, Spinner },
 })
-export default class Routes extends Vue {
+export default class Routes extends Mixins(Perf) {
   readonly sortedData: Partial<SortedData> = {};
-  // True after sortedData is loaded.
-  loaded = false;
+  // True after information is loaded.
+  loadedSortedData = false;
+  loadedUser = false;
 
   // Colors associated with climbers.
   static readonly climbColors = ['red', 'indigo'];
@@ -100,17 +102,26 @@ export default class Routes extends Vue {
       .catch(err => logError('set_climb_state_failed', err));
   }
 
+  get ready() {
+    return this.loadedSortedData && this.loadedUser;
+  }
+
   mounted() {
     this.$bind('sortedData', db.collection('global').doc('sortedData')).then(
       () => {
-        this.loaded = true;
+        this.loadedSortedData = true;
+        this.recordEvent('loadedSortedData');
       },
       err => logError('routes_bind_sorted_data_failed', err)
     );
 
     this.userRef = db.collection('users').doc(getUser().uid);
-    this.$bind('userDoc', this.userRef).catch(err =>
-      logError('routes_bind_user_failed', err)
+    this.$bind('userDoc', this.userRef).then(
+      () => {
+        this.loadedUser = true;
+        this.recordEvent('loadedUser');
+      },
+      err => logError('routes_bind_user_failed', err)
     );
   }
 
@@ -128,6 +139,11 @@ export default class Routes extends Vue {
       this.teamDoc = {};
       this.teamRef = null;
     }
+  }
+
+  @Watch('ready')
+  onReady(val: boolean) {
+    if (val) this.logReady('routes_loaded');
   }
 }
 </script>

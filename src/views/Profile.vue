@@ -209,7 +209,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Mixins } from 'vue-property-decorator';
 
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
@@ -224,12 +224,13 @@ import {
 import { ClimbState, User, Team } from '@/models';
 import Card from '@/components/Card.vue';
 import DialogCard from '@/components/DialogCard.vue';
+import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';
 
 @Component({
   components: { Card, DialogCard, Spinner },
 })
-export default class Profile extends Vue {
+export default class Profile extends Mixins(Perf) {
   // Maximum length of user and team names.
   readonly nameMaxLength = 50;
 
@@ -540,6 +541,7 @@ export default class Profile extends Vue {
         this.userRef = result.user;
         this.teamRef = result.team;
         this.ready = true;
+        this.logReady('profile_loaded');
       },
       err => logError('profile_initial_bind_failed', err)
     );
