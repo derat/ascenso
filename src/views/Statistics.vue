@@ -5,8 +5,8 @@
 <template>
   <div v-if="haveStats">
     <v-tabs v-model="tab">
-      <v-tab key="team" href="#team" v-if="teamCards.length">Team</v-tab>
-      <v-tab key="user" href="#user">Individual</v-tab>
+      <v-tab href="#team" v-if="teamCards.length">Team</v-tab>
+      <v-tab href="#user">Individual</v-tab>
 
       <v-tab-item key="team" value="team" v-if="teamCards.length">
         <v-container grid-list-md text-ms-center class="pt-0">
@@ -111,19 +111,15 @@ export default class Statistics extends Mixins(Perf) {
     }
 
     return [
-      { name: 'Points', items: [{ name: 'Total points', value: score }] },
+      { name: 'Points', items: [new Statistic('Total points', score)] },
       {
         name: 'Climbs',
         items: [
-          {
-            name: 'Total climbs',
-            value: all,
-            children: [
-              { name: 'Lead', value: lead },
-              { name: 'Top-rope', value: topRope },
-            ],
-          },
-          { name: 'Areas climbed', value: Object.keys(areas).length },
+          new Statistic('Total climbs', all, [
+            new Statistic('Lead', lead),
+            new Statistic('Top-rope', topRope),
+          ]),
+          new Statistic('Areas climbed', Object.keys(areas).length),
         ],
       },
     ];

@@ -2,15 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// This file initializes Firebase and exports various objects so they can be
-// used by components.
-//
-// This logic is intentionally kept separate from main.js to ensure that it can
-// be initialized when it's imported by components. When this code was instead
-// placed in main.js, there were issues caused (I think) by circular
-// dependencies -- components' <script> elements were evaluated before main.js
-// had been fully evaluated, resulting in 'auth' and 'db' being undefined at the
-// top level of those <script> elements.
+// This file exports various Firebase-related objects so they can be used by
+// components. init.ts must be imported before this file in dev and prod to call
+// firebase.initializeApp().
 
 import firebase from 'firebase/app';
 import 'firebase/auth';
@@ -21,9 +15,6 @@ type DocumentReference = firebase.firestore.DocumentReference;
 import Vue from 'vue';
 
 import { Logger } from './logger';
-
-import config from './config';
-firebase.initializeApp(config);
 
 export const auth = firebase.auth();
 export const db = firebase.firestore();

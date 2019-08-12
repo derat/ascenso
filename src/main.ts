@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import '@/firebase/init'; // needs to be imported before firebase/index.ts
 import { auth, db, logError } from '@/firebase';
 
 // Install global error handlers as soon as possible.
