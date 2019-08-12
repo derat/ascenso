@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { auth, db, logInfo, logError } from '@/firebase';
+import { auth, db, logError } from '@/firebase';
 
 // Install global error handlers as soon as possible.
 // This function signature is weird: https://stackoverflow.com/q/20500190/
@@ -82,5 +82,3 @@ db.doc('global/config')
     }
     document.title = data.competitionName || 'Unnamed';
   });
-
-logInfo('load_app', { userAgent: navigator.userAgent });
