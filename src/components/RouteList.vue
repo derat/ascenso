@@ -17,7 +17,8 @@
 
       <!-- Add a left margin if there aren't any climb drop-downs. -->
       <v-list-tile-content :class="[{ 'ml-3': !climberInfos.length }]">
-        <v-list-tile-title>{{ route.name }}</v-list-tile-title>
+        <!-- The 'name' class here just exists for unit testing. -->
+        <v-list-tile-title class="name">{{ route.name }}</v-list-tile-title>
         <v-list-tile-sub-title class="details">
           <span class="grade">{{ route.grade }}</span>
           <span class="points"> {{ route.lead }} ({{ route.tr }}) </span>
@@ -28,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import { ClimberInfo, ClimbState, SetClimbStateEvent, Route } from '@/models';
 import ClimbDropdown from '@/components/ClimbDropdown.vue';
 
@@ -41,9 +42,12 @@ export default class RouteList extends Vue {
 
   readonly ClimbState = ClimbState;
 
-  @Emit('set-climb-state')
   onUpdateClimb(index: number, route: string, state: ClimbState) {
-    return new SetClimbStateEvent(index, route, state);
+    // Call this.$emit instead of using vue-property-decorator's @Emit since the
+    // latter seems a bit weird: in addition to emitting the returned value
+    // (i.e. a SetClimbStateEvent), it emits the arguments passed to this
+    // function.
+    this.$emit('set-climb-state', new SetClimbStateEvent(index, route, state));
   }
 }
 </script>
