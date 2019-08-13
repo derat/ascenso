@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import MockFirebase from '@/firebase/mock';
+import { MockFirebase, MockUser } from '@/firebase/mock';
 
 import { shallowMount, Wrapper } from '@vue/test-utils';
 import Vue from 'vue';
@@ -19,8 +19,9 @@ describe('Statistics', () => {
   beforeEach(() => {
     MockFirebase.reset();
 
-    const uid = MockFirebase.currentUser!.uid;
-    const userName = MockFirebase.currentUser!.displayName;
+    const uid = 'test-user';
+    const userName = 'Test Name';
+    MockFirebase.currentUser = new MockUser(uid, userName);
     MockFirebase.setDoc('global/indexedData', {
       routes: {
         r1: { area: 'a1', lead: 10, tr: 5 },
@@ -32,7 +33,6 @@ describe('Statistics', () => {
       name: userName,
     });
     MockFirebase.setDoc('teams/test-team', {
-      team: 'Test Team',
       users: {
         [uid]: {
           name: userName,

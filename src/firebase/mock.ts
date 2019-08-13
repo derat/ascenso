@@ -39,6 +39,11 @@ function pathID(path: string) {
   return parts[parts.length - 1];
 }
 
+// Returns a deep copy of |data| (which must be serializable to JSON).
+function deepCopy(data: any) {
+  return JSON.parse(JSON.stringify(data));
+}
+
 // These aren't really mocks (they're more like stubs or maybe fakes), but their
 // names need to start with 'Mock' (case-insensitive) or else Jest gives a dumb
 // error: "The module factory of `jest.mock()` is not allowed to reference any
@@ -72,12 +77,16 @@ class MockDocumentReference {
       `${this.path}/${canonicalizePath(path)}`
     );
   }
-  // TODO: Add more methods to this class as they're needed. In particular, this
-  // will probably need to hold a reference to the data so it can mutate it.
+  update(props: Record<string, any>) {
+    return new Promise(resolve => {
+      MockFirebase._updateDoc(this.path, props);
+      resolve();
+    });
+  }
 }
 
 // Stub implementation of firebase.auth.User.
-class MockUser {
+export class MockUser {
   constructor(public uid: string, public displayName: string) {}
   getIdToken() {
     return new Promise(resolve => {
@@ -87,18 +96,18 @@ class MockUser {
 }
 
 interface FirestoreBinding {
-  vue: Vue;
-  name: string;
+  vm: Vue;
+  name: string; // data property name
 }
 
 // Holds data needed to simulate (a tiny bit of) Firebase's functionality.
-const MockFirebase = new class {
+export const MockFirebase = new class {
   // User for auth.currentUser.
-  currentUser?: MockUser;
+  currentUser: MockUser | null = null;
   // Firestore documents keyed by path.
   _docs: Record<string, Record<string, any>> = {};
-  // Map from Firestore document path to bound Vues.
-  _docBindings: Record<string, FirestoreBinding[]> = {};
+  // Firestore document paths to bound Vue data props.
+  _bindings: Record<string, FirestoreBinding[]> = {};
 
   constructor() {
     this.reset();
@@ -108,46 +117,90 @@ const MockFirebase = new class {
   reset() {
     this.currentUser = new MockUser('test-uid', 'Test User');
     this._docs = {};
-    this._docBindings = {};
+    this._bindings = {};
   }
 
+  // Sets the document at |path| to |data|.
   setDoc(path: string, data: Record<string, any>) {
-    this._docs[path] = data;
-    const bindings = MockFirebase._docBindings[path];
-    if (bindings)
-      bindings.forEach(b => {
-        // TODO: Should probably pass a deep copy here.
-        b.vue.$data[b.name] = data;
-      });
+    this._docs[path] = deepCopy(data);
+
+    // Update all Vue instance data properties bound to the doc.
+    for (const binding of this._bindings[path] || []) {
+      binding.vm.$data[binding.name] = deepCopy(data);
+    }
+  }
+
+  // Returns the document at |path|. Exposed to let tests check stored data.
+  getDoc(path: string) {
+    return this._docs[path];
+  }
+
+  // Updates portions of the document at |path|. This is used to implement
+  // firebase.firestore.DocumentReference.update.
+  _updateDoc(path: string, props: firebase.firestore.UpdateData) {
+    const doc = this._docs[path] || {};
+    for (let prop of Object.keys(props)) {
+      let obj = doc; // final object to set property on
+      const data = props[prop]; // data to set
+      // Strip off each dotted component from the full property path, walking
+      // deeper into the document and creating new nested objects if needed.
+      for (let i = prop.indexOf('.'); i != -1; i = prop.indexOf('.')) {
+        const first = prop.slice(0, i);
+        obj = obj.hasOwnProperty(first) ? obj[first] : (obj[first] = {});
+        prop = prop.slice(i + 1);
+      }
+      data === mockDeleteSentinel ? delete obj[prop] : (obj[prop] = data);
+    }
+    this.setDoc(path, doc);
   }
 
   // Map of global mocks that should be passed to vue-test-utils's mount() or
   // shallowMount().
   mountMocks: Record<string, any> = {
     $bind: function(name: string, ref: firebase.firestore.DocumentReference) {
-      // Record the binding so we can handle updates later.
-      const bindings = MockFirebase._docBindings[ref.path] || [];
-      bindings.push({ vue: this as Vue, name });
-      MockFirebase._docBindings[ref.path] = bindings;
+      if (!MockFirebase._docs.hasOwnProperty(ref.path)) {
+        return new Promise((resolve, reject) =>
+          reject(`No document at ${ref.path}`)
+        );
+      }
 
-      // TODO: Should probably pass a deep copy here.
-      const data = MockFirebase._docs[ref.path];
+      // Record the binding so we can handle updates later.
+      const vm = this as Vue;
+      vm.$unbind(name);
+      const bindings = MockFirebase._bindings[ref.path] || [];
+      bindings.push({ vm, name });
+      MockFirebase._bindings[ref.path] = bindings;
+
+      // Assign the data to the Vue.
+      const data = deepCopy(MockFirebase._docs[ref.path]);
       (this as Vue).$data[name] = data;
-      return new Promise((resolve, reject) => {
-        data ? resolve(data) : reject(`No document at ${ref.path}`);
-      });
+      return new Promise(resolve => resolve(data));
+    },
+
+    $unbind: function(name: string) {
+      // Unregister the binding so the Vue's data property won't be updated.
+      const vm = this as Vue;
+      for (const path of Object.keys(MockFirebase._bindings)) {
+        MockFirebase._bindings[path] = MockFirebase._bindings[path].filter(
+          b => !(b.vm == vm && b.name == name)
+        );
+      }
+      vm.$data[name] = null;
     },
   };
 }();
 
-export default MockFirebase;
+// Sentinel value for firebase.firestore.FieldValue.delete().
+const mockDeleteSentinel = {};
 
 jest.mock('firebase');
 jest.mock('firebase/app', () => {
-  return {
+  const obj = {
     initializeApp: () => {},
     auth: () => ({
-      currentUser: MockFirebase.currentUser,
+      get currentUser() {
+        return MockFirebase.currentUser;
+      },
     }),
     firestore: () => ({
       collection: (path: string) => new MockCollectionReference(path),
@@ -155,6 +208,11 @@ jest.mock('firebase/app', () => {
       enablePersistence: () => new Promise(resolve => resolve()),
     }),
   };
+  // Also set weird sentinel values that live on the firestore method.
+  (obj.firestore as any).FieldValue = {
+    delete: () => mockDeleteSentinel,
+  };
+  return obj;
 });
 
 // TODO: Is this actually necessary? These modules are imported for their side

@@ -93,7 +93,7 @@ export interface TeamUserData {
   climbs: Record<string, ClimbState>;
 }
 
-// UserDoc represents a document in the 'users' collection.
+// User represents a document in the 'users' collection.
 export interface User {
   name: string;
   team?: string;
