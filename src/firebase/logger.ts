@@ -28,8 +28,7 @@ export const queuedKeySuffix = 'queued';
 export const sendingKeySuffix = 'sending';
 export const lastActiveKeySuffix = 'lastActive';
 
-// Returns true if running under a test.
-const isTestEnv = () => process.env.NODE_ENV == 'test';
+const isTestEnv = process.env.NODE_ENV == 'test';
 
 // Logger sends records to the "Log" Cloud Function.
 export class Logger {
@@ -136,7 +135,7 @@ export class Logger {
     try {
       return JSON.parse(s);
     } catch (err) {
-      if (!isTestEnv()) console.error(`Failed to parse ${key}: ${err}`);
+      if (!isTestEnv) console.error(`Failed to parse ${key}: ${err}`);
       return [];
     }
   }
@@ -192,7 +191,7 @@ export class Logger {
       .catch(err => {
         // On failure, move the records back to the queue.
         this._enqueueRecords(records);
-        if (!isTestEnv()) console.error('Failed sending log records:', err);
+        if (!isTestEnv) console.error('Failed sending log records:', err);
       })
       .finally(() => {
         this._setRecords(sendingKeySuffix, []);
@@ -253,7 +252,7 @@ export class Logger {
       localStorage.removeItem(prefix + queuedKeySuffix);
       localStorage.removeItem(key);
 
-      if (!isTestEnv() && (sending.length || queued.length)) {
+      if (!isTestEnv && (sending.length || queued.length)) {
         console.log(
           `Claimed ${sending.length} in-flight and ${queued.length} queued ` +
             `log record(s) with prefix "${prefix}"`
