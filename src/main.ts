@@ -4,40 +4,47 @@
 
 import { auth, db, logError } from '@/firebase';
 
-// Install global error handlers as soon as possible.
-// This function signature is weird: https://stackoverflow.com/q/20500190/
-window.onerror = function(
-  eventOrMessage: string | Event,
-  src?: string,
-  line?: number
-) {
-  try {
-    const message =
-      eventOrMessage instanceof ErrorEvent
-        ? eventOrMessage.message
-        : eventOrMessage;
-    logError('unhandled_error', { message, src, line });
-  } catch (err) {
-    console.log('Error handler generated error:', err);
-  }
-};
-window.onunhandledrejection = function(event: PromiseRejectionEvent) {
-  try {
-    logError('unhandled_rejection', { reason: event.reason.toString() });
-  } catch (err) {
-    console.log('Rejection handler generated error:', err);
-  }
-};
+const isTestEnv = process.env.NODE_ENV == 'test';
+
+// Install global error handlers as soon as possible. Don't install them when
+// running tests, since we want errors to cause failures.
+if (!isTestEnv) {
+  // This function signature is weird: https://stackoverflow.com/q/20500190/
+  window.onerror = function(
+    eventOrMessage: string | Event,
+    src?: string,
+    line?: number
+  ) {
+    try {
+      const message =
+        eventOrMessage instanceof ErrorEvent
+          ? eventOrMessage.message
+          : eventOrMessage;
+      logError('unhandled_error', { message, src, line });
+    } catch (err) {
+      console.log('Error handler generated error:', err);
+    }
+  };
+  window.onunhandledrejection = function(event: PromiseRejectionEvent) {
+    try {
+      logError('unhandled_rejection', { reason: event.reason.toString() });
+    } catch (err) {
+      console.log('Rejection handler generated error:', err);
+    }
+  };
+}
 
 import Vue from 'vue';
 
-Vue.config.errorHandler = function(err: Error, vm: Vue, info: string) {
-  try {
-    logError('vue_error', err);
-  } catch (e) {
-    console.log('Vue error handler generated error:', err);
-  }
-};
+if (!isTestEnv) {
+  Vue.config.errorHandler = function(err: Error, vm: Vue, info: string) {
+    try {
+      logError('vue_error', err);
+    } catch (e) {
+      console.log('Vue error handler generated error:', err);
+    }
+  };
+}
 
 Vue.config.productionTip = false;
 
