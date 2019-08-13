@@ -59,6 +59,7 @@ export function bindUserAndTeamDocs(
       userSnap => {
         if (!userSnap.team) {
           resolve({ user: userRef, team: null });
+          return;
         }
         const teamRef = db.collection('teams').doc(userSnap.team);
         view.$bind(teamProp, teamRef).then(() => {

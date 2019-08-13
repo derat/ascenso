@@ -9,6 +9,7 @@
         <v-flex>
           <v-form v-model="userNameValid" @submit.prevent>
             <v-text-field
+              ref="userNameField"
               :value="userDoc.name"
               :counter="nameMaxLength"
               :rules="nameRules"
@@ -22,11 +23,12 @@
 
     <Card :title="$t('team')" class="mt-3">
       <!-- User is on a team -->
-      <template v-if="teamDoc.users">
+      <template v-if="teamDoc && teamDoc.users">
         <v-layout row>
           <v-flex>
             <v-form v-model="teamNameValid" @submit.prevent>
               <v-text-field
+                ref="teamNameField"
                 :value="teamDoc.name"
                 :counter="nameMaxLength"
                 :rules="nameRules"
@@ -50,9 +52,18 @@
 
         <v-card-actions class="pa-0">
           <!-- "Show invite code" button and dialog -->
-          <v-dialog v-model="inviteDialogShown" max-width="512px">
+          <v-dialog
+            ref="inviteDialog"
+            v-model="inviteDialogShown"
+            max-width="512px"
+          >
             <template v-slot:activator="{ on }">
-              <v-btn :disabled="teamFull" color="primary" v-on="on">
+              <v-btn
+                :disabled="teamFull"
+                ref="inviteButton"
+                color="primary"
+                v-on="on"
+              >
                 Show invite code
               </v-btn>
             </template>
@@ -78,9 +89,15 @@
           <v-spacer />
 
           <!-- "Leave team" button and dialog -->
-          <v-dialog v-model="leaveDialogShown" max-width="512px">
+          <v-dialog
+            ref="leaveDialog"
+            v-model="leaveDialogShown"
+            max-width="512px"
+          >
             <template v-slot:activator="{ on }">
-              <v-btn flat color="error" v-on="on">Leave team</v-btn>
+              <v-btn ref="leaveButton" flat color="error" v-on="on"
+                >Leave team</v-btn
+              >
             </template>
 
             <DialogCard title="Leave Team">
@@ -97,6 +114,7 @@
                   flat
                   color="error"
                   :disabled="leavingTeam"
+                  ref="confirmLeaveButton"
                   @click="leaveTeam"
                 >
                   Leave team
@@ -318,7 +336,8 @@ export default class Profile extends Mixins(Perf) {
   // Whether the team is currently full.
   get teamFull() {
     return (
-      !!this.teamDoc.users &&
+      this.teamDoc &&
+      this.teamDoc.users &&
       Object.keys(this.teamDoc.users).length >= Profile.teamSize
     );
   }
