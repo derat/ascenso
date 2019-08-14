@@ -3,6 +3,9 @@
 // found in the LICENSE file.
 
 import Vue from 'vue';
+import { deepCopy } from '@/testutil';
+
+type DocumentReference = firebase.firestore.DocumentReference;
 
 // Firestore document path types.
 enum PathType {
@@ -37,11 +40,6 @@ function canonicalizePath(path: string, pathType = PathType.RELATIVE) {
 function pathID(path: string) {
   const parts = path.split('/');
   return parts[parts.length - 1];
-}
-
-// Returns a deep copy of |data| (which must be serializable to JSON).
-function deepCopy(data: any) {
-  return JSON.parse(JSON.stringify(data));
 }
 
 // These aren't really mocks (they're more like stubs or maybe fakes), but their
@@ -80,6 +78,28 @@ class MockDocumentReference {
   update(props: Record<string, any>) {
     return new Promise(resolve => {
       MockFirebase._updateDoc(this.path, props);
+      resolve();
+    });
+  }
+}
+
+// Document update operation that will be executed as part of a MockWriteBatch.
+interface BatchOperation {
+  path: string;
+  props: Record<string, any>;
+}
+
+// Stub implementation of firebase.firestore.WriteBatch.
+class MockWriteBatch {
+  _ops: BatchOperation[] = [];
+
+  update(ref: DocumentReference, props: Record<string, any>) {
+    this._ops.push({ path: ref.path, props });
+  }
+  commit() {
+    return new Promise(resolve => {
+      for (const op of this._ops) MockFirebase._updateDoc(op.path, op.props);
+      this._ops = [];
       resolve();
     });
   }
@@ -132,7 +152,9 @@ export const MockFirebase = new class {
 
   // Returns the document at |path|. Exposed to let tests check stored data.
   getDoc(path: string) {
-    return this._docs[path];
+    return this._docs.hasOwnProperty(path)
+      ? deepCopy(this._docs[path])
+      : undefined;
   }
 
   // Updates portions of the document at |path|. This is used to implement
@@ -157,7 +179,7 @@ export const MockFirebase = new class {
   // Map of global mocks that should be passed to vue-test-utils's mount() or
   // shallowMount().
   mountMocks: Record<string, any> = {
-    $bind: function(name: string, ref: firebase.firestore.DocumentReference) {
+    $bind: function(name: string, ref: DocumentReference) {
       if (!MockFirebase._docs.hasOwnProperty(ref.path)) {
         return new Promise((resolve, reject) =>
           reject(`No document at ${ref.path}`)
@@ -203,6 +225,7 @@ jest.mock('firebase/app', () => {
       },
     }),
     firestore: () => ({
+      batch: () => new MockWriteBatch(),
       collection: (path: string) => new MockCollectionReference(path),
       doc: (path: string) => new MockDocumentReference(path),
       enablePersistence: () => new Promise(resolve => resolve()),
