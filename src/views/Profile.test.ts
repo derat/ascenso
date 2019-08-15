@@ -150,6 +150,31 @@ describe('Routes', () => {
     expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
   });
 
+  it('removes excessive whitespace from user and team names', async () => {
+    await init(joinedUserDoc, nonFullTeamDoc);
+
+    // Set user and team teams with weird spacing.
+    const userField = findRef('userNameField');
+    userField.vm.$emit('change', '\r\n Sissy\t Spacek \n  ');
+    const teamField = findRef('teamNameField');
+    teamField.vm.$emit('change', ' \t Space  \nCadets  \v');
+
+    // Runs of one or more whitespace characters should be replaced by single
+    // spaces in both the text fields and the Firestore docs.
+    const newUserName = 'Sissy Spacek';
+    expect(getValue(userField)).toEqual(newUserName);
+    const expUserDoc = deepCopy(joinedUserDoc);
+    expUserDoc.name = newUserName;
+    expect(MockFirebase.getDoc(userPath)).toEqual(expUserDoc);
+
+    const newTeamName = 'Space Cadets';
+    expect(getValue(teamField)).toEqual(newTeamName);
+    const newTeamDoc = deepCopy(nonFullTeamDoc);
+    newTeamDoc.name = newTeamName;
+    newTeamDoc.users[userID].name = newUserName;
+    expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
+  });
+
   it("doesn't show team info when the user isn't on a team", async () => {
     await init(singleUserDoc);
     expect(findRef('teamNameField').exists()).toBe(false);

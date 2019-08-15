@@ -159,6 +159,9 @@
                 >
                   <!-- The v-if fixes autofocus on reopen. See
                        https://github.com/vuetifyjs/vuetify/issues/1731 -->
+                  <!-- Use type="tel" instead of "number" since the latter
+                       doesn't support supplying a mask:
+                       https://github.com/vuetifyjs/vuetify/issues/3282 -->
                   <v-text-field
                     ref="joinCodeField"
                     v-model="joinInviteCode"
@@ -167,6 +170,7 @@
                     :counter="inviteCodeLength"
                     :rules="joinInviteCodeRules"
                     label="Invite code"
+                    type="tel"
                     class="mt-2"
                     autofocus
                     required
@@ -269,6 +273,11 @@ import DialogCard from '@/components/DialogCard.vue';
 import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';
 
+// Removes excessive/weird whitespace from |name|.
+function cleanName(name: string): string {
+  return name.replace(/\s+/gm, ' ').trim();
+}
+
 @Component({
   components: { Card, DialogCard, Spinner },
 })
@@ -350,8 +359,7 @@ export default class Profile extends Mixins(Perf) {
     return Object.keys(this.teamDoc.users)
       .sort()
       .map(uid => {
-        // TODO: Why does TS require this check?
-        if (!this.teamDoc.users) return '';
+        if (!this.teamDoc.users) return ''; // required by TypeScript
         const data = this.teamDoc.users[uid];
         return data && data.name ? data.name : '';
       });
@@ -366,37 +374,46 @@ export default class Profile extends Mixins(Perf) {
     );
   }
 
-  // Updates the user's name in Firestore when the user name input is blurred.
+  // Updates the user's name in Firestore when the user name input is changed.
   updateUserName(name: string) {
-    if (!this.userRef) throw new Error('No ref to user doc');
-    if (!this.userNameValid) throw new Error('User name is invalid');
-
-    // TODO: Trim whitespace, discard embedded newlines, etc.?
-
-    logInfo('set_user_name', { name: name });
-
-    const batch = db.batch();
-    batch.update(this.userRef, { name: name });
-    if (this.teamRef) {
-      const key = 'users.' + getUser().uid + '.name';
-      batch.update(this.teamRef, { [key]: name });
+    // Clean up the input first.
+    name = cleanName(name);
+    if (!this.userNameValid || !name.length) {
+      this.$emit('error-msg', 'Invalid user name');
+      return;
     }
-    batch.commit().catch(err => {
-      this.$emit('error-msg', `Failed setting user name: {err}`);
+
+    new Promise(resolve => {
+      logInfo('set_user_name', { name: name });
+      if (!this.userRef) throw new Error('No ref to user doc');
+      const batch = db.batch();
+      batch.update(this.userRef, { name: name });
+      if (this.teamRef) {
+        const key = 'users.' + getUser().uid + '.name';
+        batch.update(this.teamRef, { [key]: name });
+      }
+      resolve(batch.commit());
+    }).catch(err => {
+      this.$emit('error-msg', `Failed setting user name: {err.message}`);
       logError('set_user_name_failed', err);
     });
   }
 
-  // Updates the team's name in Firestore when the team name input is blurred.
+  // Updates the team's name in Firestore when the team name input is changed.
   updateTeamName(name: string) {
-    if (!this.teamRef) throw new Error('No ref to team doc');
-    if (!this.teamNameValid) throw new Error('Team name is invalid');
+    // Clean up the input first.
+    name = cleanName(name);
+    if (!this.teamNameValid || !name.length) {
+      this.$emit('error-msg', 'Invalid team name');
+      return;
+    }
 
-    // TODO: Trim whitespace, discard embedded newlines, etc.?
-
-    logInfo('set_team_name', { team: this.teamRef.id, name: name });
-    this.teamRef.update({ name: name }).catch(err => {
-      this.$emit('error-msg', `Failed setting team name: {err}`);
+    new Promise(resolve => {
+      logInfo('set_team_name', { team: this.userDoc.team, name: name });
+      if (!this.teamRef) throw new Error('No ref to team doc');
+      resolve(this.teamRef.update({ name: name }));
+    }).catch(err => {
+      this.$emit('error-msg', `Failed setting team name: {err.message}`);
       logError('set_team_name_failed', err);
     });
   }
@@ -404,47 +421,52 @@ export default class Profile extends Mixins(Perf) {
   // Creates a new team when the "Create" button is clicked in the "Create
   // team" dialog.
   createTeam() {
-    if (!this.userRef) throw new Error('No ref to user doc');
-    if (!this.createTeamValid) throw new Error('Create form is invalid');
+    if (!this.createTeamValid) {
+      this.$emit('error-msg', 'Invalid team information');
+      return;
+    }
+
     if (this.creatingTeam) throw new Error('Already creating team');
-
     this.creatingTeam = true;
-
-    // Generate an ID for a new team document.
-    const teamRef = db.collection('teams').doc();
 
     // We get a string like "0.4948219742736113" and then chop off the left.
     const inviteCode = Math.random()
       .toString()
       .slice(2, 2 + this.inviteCodeLength);
 
-    logInfo('create_team', { name: this.createTeamName, invite: inviteCode });
+    // Generate an ID for a new team document. This works offline.
+    const teamRef = db.collection('teams').doc();
 
-    // Perform a single batched write that creates the team document, creates
-    // an invite document containing the team ID, and updates the user doc to
-    // contain the team ID.
-    const batch = db.batch();
-    batch.set(teamRef, {
-      name: this.createTeamName,
-      users: {
-        [getUser().uid]: {
-          name: this.userDoc.name,
-          climbs: this.userDoc.climbs || {},
+    new Promise(resolve => {
+      logInfo('create_team', { name: this.createTeamName, invite: inviteCode });
+
+      // Perform a single batched write that creates the team document, creates
+      // an invite document containing the team ID, and updates the user doc to
+      // contain the team ID.
+      const batch = db.batch();
+      batch.set(teamRef, {
+        name: this.createTeamName,
+        users: {
+          [getUser().uid]: {
+            name: this.userDoc.name,
+            climbs: this.userDoc.climbs || {},
+          },
         },
-      },
-      invite: inviteCode,
-    });
-    batch.set(db.collection('invites').doc(inviteCode), { team: teamRef.id });
-    batch.update(this.userRef, {
-      team: teamRef.id,
-      // The user's climbs are now stored in the team doc. We do this to avoid
-      // needing to write to both the team and user doc every time the user
-      // completes another climb, and also to prevent needing to let user A
-      // write to teammate B's user doc if A reports a climb performed by B.
-      climbs: firebase.firestore.FieldValue.delete(),
-    });
-    batch
-      .commit()
+        invite: inviteCode,
+      });
+      batch.set(db.collection('invites').doc(inviteCode), { team: teamRef.id });
+
+      if (!this.userRef) throw new Error('No ref to user doc');
+      batch.update(this.userRef, {
+        team: teamRef.id,
+        // The user's climbs are now stored in the team doc. We do this to avoid
+        // needing to write to both the team and user doc every time the user
+        // completes another climb, and also to prevent needing to let user A
+        // write to teammate B's user doc if A reports a climb performed by B.
+        climbs: firebase.firestore.FieldValue.delete(),
+      });
+      resolve(batch.commit());
+    })
       .then(() => {
         // Update the UI to reflect the changes.
         // TODO: Just watch userDoc.team instead?
@@ -459,7 +481,7 @@ export default class Profile extends Mixins(Perf) {
         this.createTeamName = '';
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed creating team: {err}`);
+        this.$emit('error-msg', `Failed creating team: {err.message}`);
         logError('create_team_failed', err);
       })
       .finally(() => {
@@ -469,10 +491,12 @@ export default class Profile extends Mixins(Perf) {
 
   // Joins a team when the "Join" button is clicked in the "Join team" dialog.
   joinTeam() {
-    if (!this.userRef) throw new Error('No ref to user doc');
-    if (!this.joinTeamValid) throw new Error('Join form is invalid');
-    if (this.joiningTeam) throw new Error('Already joining team');
+    if (!this.joinTeamValid) {
+      this.$emit('error-msg', 'Invalid team information');
+      return;
+    }
 
+    if (this.joiningTeam) throw new Error('Already joining team');
     this.joiningTeam = true;
 
     logInfo('join_team', { invite: this.joinInviteCode });
@@ -488,20 +512,18 @@ export default class Profile extends Mixins(Perf) {
       .then(inviteSnap => {
         // Now get the team doc.
         const data = inviteSnap.data();
-        if (!data) throw 'Bad invite code';
+        if (!data) throw new Error('Bad invite code');
         const team = data.team;
-        if (!team) throw 'No team ID in invite';
+        if (!team) throw new Error('No team ID in invite');
         teamRef = db.collection('teams').doc(data.team);
         return teamRef.get();
       })
       .then(teamSnap => {
-        if (!this.userRef) throw 'No ref to user doc';
-        // TODO: Why does TS require this check?
-        if (!teamRef) throw 'No ref to team doc';
+        if (!this.userRef) throw new Error('No ref to user doc');
+        if (!teamRef) throw new Error('No ref to team doc'); // required by TS
         if (Object.keys(teamSnap.get('users')).length >= Profile.teamSize) {
-          throw 'Team is full';
+          throw new Error('Team is full');
         }
-
         teamName = teamSnap.get('name');
 
         // Update the team doc and the user doc.
@@ -521,8 +543,7 @@ export default class Profile extends Mixins(Perf) {
       .then(() => {
         // Update the UI to reflect the change.
         // TODO: Just watch userDoc.team instead?
-        // TODO: Why does TS require this check?
-        if (!teamRef) throw 'No ref to team doc';
+        if (!teamRef) throw new Error('No ref to team doc'); // required by TS
         this.teamRef = teamRef;
         this.$bind('teamDoc', teamRef);
         this.joinDialogShown = false;
@@ -530,7 +551,7 @@ export default class Profile extends Mixins(Perf) {
         this.$emit('success-msg', `Joined "${teamName}"`);
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed joining team: ${err}`);
+        this.$emit('error-msg', `Failed joining team: ${err.message}`);
         logError('join_team_failed', err);
       })
       .finally(() => {
@@ -541,36 +562,35 @@ export default class Profile extends Mixins(Perf) {
   // Leaves the current team when the "Leave team" button is clicked in the
   // "Leave team" dialog.
   leaveTeam() {
-    if (!this.userRef) throw new Error('No reference to user doc');
-    if (!this.teamRef) throw new Error('No reference to team doc');
     if (this.leavingTeam) throw new Error('Already leaving team');
-
     this.leavingTeam = true;
 
     logInfo('leave_team', {});
+    new Promise(resolve => {
+      if (!this.userRef) throw new Error('No reference to user doc');
+      if (!this.teamRef) throw new Error('No reference to team doc');
 
-    const uid = getUser().uid;
+      // Grab the user's climbs from the team doc.
+      const uid = getUser().uid;
+      let climbs: Record<string, ClimbState> = {};
+      const userData = this.teamDoc.users ? this.teamDoc.users[uid] : null;
+      if (userData && userData.climbs) {
+        climbs = userData.climbs;
+      }
 
-    // Grab the user's climbs from the team doc.
-    let climbs: Record<string, ClimbState> = {};
-    const userData = this.teamDoc.users ? this.teamDoc.users[uid] : null;
-    if (userData && userData.climbs) {
-      climbs = userData.climbs;
-    }
-
-    // Perform a batched update that removes the user from the team doc and
-    // removes the team from the user doc.
-    const batch = db.batch();
-    batch.update(this.teamRef, {
-      ['users.' + uid]: firebase.firestore.FieldValue.delete(),
-    });
-    batch.update(this.userRef, {
-      team: firebase.firestore.FieldValue.delete(),
-      // Move the climbs back from the team doc to the user doc.
-      climbs: climbs,
-    });
-    batch
-      .commit()
+      // Perform a batched update that removes the user from the team doc and
+      // removes the team from the user doc.
+      const batch = db.batch();
+      batch.update(this.teamRef, {
+        ['users.' + uid]: firebase.firestore.FieldValue.delete(),
+      });
+      batch.update(this.userRef, {
+        team: firebase.firestore.FieldValue.delete(),
+        // Move the climbs back from the team doc to the user doc.
+        climbs: climbs,
+      });
+      resolve(batch.commit());
+    })
       .then(() => {
         this.$emit('success-msg', `Left "${this.teamDoc.name}"`);
 
@@ -584,7 +604,7 @@ export default class Profile extends Mixins(Perf) {
         this.leaveDialogShown = false;
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed leaving team: {err}`);
+        this.$emit('error-msg', `Failed leaving team: {err.message}`);
         logError('leave_team_failed', err);
       })
       .finally(() => {
@@ -601,7 +621,7 @@ export default class Profile extends Mixins(Perf) {
         this.logReady('profile_loaded');
       },
       err => {
-        this.$emit('error-msg', `Failed loading data: {err}`);
+        this.$emit('error-msg', `Failed loading data: {err.message}`);
         logError('profile_initial_bind_failed', err);
       }
     );
