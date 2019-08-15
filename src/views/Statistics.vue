@@ -40,16 +40,13 @@
 
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
-
-import firebase from 'firebase/app';
-type DocumentReference = firebase.firestore.DocumentReference;
-
-import { db, getUser, bindUserAndTeamDocs, logError } from '@/firebase';
-import { ClimbState, Statistic, IndexedData, User, Team } from '@/models';
+import { db, getUser, logError } from '@/firebase';
+import { ClimbState, Statistic, IndexedData } from '@/models';
 import Card from '@/components/Card.vue';
 import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
+import UserLoader from '@/mixins/UserLoader.ts';
 
 interface StatisticsCard {
   name: string;
@@ -59,22 +56,15 @@ interface StatisticsCard {
 @Component({
   components: { Card, Spinner, StatisticsList },
 })
-export default class Statistics extends Mixins(Perf) {
+export default class Statistics extends Mixins(Perf, UserLoader) {
   readonly indexedData: Partial<IndexedData> = {};
   userCards: StatisticsCard[] = [];
   teamCards: StatisticsCard[] = [];
 
-  climbDataLoaded = false;
   indexedDataLoaded = false;
   haveStats = false;
 
   tab: any = null;
-
-  userRef: DocumentReference | null = null;
-  readonly userDoc: Partial<User> = {};
-
-  teamRef: DocumentReference | null = null;
-  readonly teamDoc: Partial<Team> = {};
 
   // Takes an array where each element is a dict mapping a route to a
   // state (e.g. lead, top rope). Computes the score and other stats based
@@ -126,10 +116,11 @@ export default class Statistics extends Mixins(Perf) {
   }
 
   @Watch('indexedData')
+  @Watch('userLoaded')
   @Watch('userDoc.climbs')
   @Watch('teamDoc.users')
-  updateItems() {
-    if (!this.indexedDataLoaded || !this.climbDataLoaded) return;
+  updateItems(val?: any) {
+    if (!this.indexedDataLoaded || !this.userLoaded) return;
 
     // If the user is on a team, retrieve the user stats from the team
     // climbs, and also fill in team stats.
@@ -155,6 +146,12 @@ export default class Statistics extends Mixins(Perf) {
     if (val) this.logReady('stats_loaded');
   }
 
+  @Watch('userLoadError')
+  onUserLoadError(err: Error) {
+    this.$emit('error-msg', `Failed loading user or team: ${err.message}`);
+    logError('stats_load_user_or_team_failed', err);
+  }
+
   mounted() {
     this.$bind('indexedData', db.collection('global').doc('indexedData'))
       .then(() => {
@@ -165,22 +162,6 @@ export default class Statistics extends Mixins(Perf) {
         this.$emit('error-msg', `Failed loading routes: ${err}`);
         logError('stats_bind_indexed_data_failed', err);
       });
-
-    bindUserAndTeamDocs(this, getUser().uid, 'userDoc', 'teamDoc')
-      .then(result => {
-        this.userRef = result.user;
-        this.teamRef = result.team;
-        this.recordEvent('loadedUserAndTeam');
-        this.climbDataLoaded = true;
-        this.updateItems();
-      })
-      .catch(err => {
-        this.$emit('error-msg', `Failed loading user and team data: ${err}`);
-        logError('stats_bind_user_and_team_failed', err);
-      });
-
-    // TODO: Shouldn't we technically also watch for the user switching teams?
-    // See onTeamChanged() in Routes.vue.
   }
 }
 </script>

@@ -10,9 +10,6 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
 import 'firebase/functions';
-type DocumentReference = firebase.firestore.DocumentReference;
-
-import Vue from 'vue';
 
 import { Logger } from './logger';
 
@@ -35,42 +32,6 @@ export function getUser() {
     throw new Error('No current user');
   }
   return auth.currentUser;
-}
-
-// DocRefs contains references to documents in the 'users' and (optionally)
-// 'teams' collections and is returned by bindUserAndTeamDocs.
-interface DocRefs {
-  user: DocumentReference;
-  team: DocumentReference | null;
-}
-
-// Returns a promise that is satisfied once document snapshot(s) are loaded.
-// The user and team documents (if present) are bound to properties named
-// userProp and teamProp on view.
-export function bindUserAndTeamDocs(
-  view: Vue,
-  userId: string,
-  userProp: string,
-  teamProp: string
-): Promise<DocRefs> {
-  return new Promise((resolve, reject) => {
-    const userRef = db.collection('users').doc(userId);
-    view.$bind(userProp, userRef).then(
-      userSnap => {
-        if (!userSnap.team) {
-          resolve({ user: userRef, team: null });
-          return;
-        }
-        const teamRef = db.collection('teams').doc(userSnap.team);
-        view.$bind(teamProp, teamRef).then(() => {
-          resolve({ user: userRef, team: teamRef });
-        });
-      },
-      err => {
-        reject(err);
-      }
-    );
-  });
 }
 
 enum LogDest {

@@ -25,40 +25,29 @@
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 
 import firebase from 'firebase/app';
-type DocumentReference = firebase.firestore.DocumentReference;
 
-import { db, getUser, logInfo, logError } from '@/firebase';
+import { db, logInfo, logError } from '@/firebase';
 import {
   ClimberInfo,
   ClimbState,
   SetClimbStateEvent,
   SortedData,
-  User,
-  Team,
 } from '@/models';
 import Perf from '@/mixins/Perf.ts';
 import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
+import UserLoader from '@/mixins/UserLoader.ts';
 
 @Component({
   components: { RouteList, Spinner },
 })
-export default class Routes extends Mixins(Perf) {
+export default class Routes extends Mixins(Perf, UserLoader) {
   readonly sortedData: Partial<SortedData> = {};
   // True after information is loaded.
   loadedSortedData = false;
-  loadedUser = false;
 
   // Colors associated with climbers.
   static readonly climbColors = ['red', 'indigo'];
-
-  // Snapshot and reference to doc in /users collection.
-  readonly userDoc: Partial<User> = {};
-  userRef: DocumentReference | null = null;
-
-  // Snapshot and reference to doc in /teams collection.
-  teamDoc: Partial<Team> = {};
-  teamRef: DocumentReference | null = null;
 
   // Sorted UIDs from the team. Empty if the user is not currently on a team.
   get teamMembers(): string[] {
@@ -106,7 +95,18 @@ export default class Routes extends Mixins(Perf) {
   }
 
   get ready() {
-    return this.loadedSortedData && this.loadedUser;
+    return this.loadedSortedData && this.userLoaded;
+  }
+
+  @Watch('ready')
+  onReady(val: boolean) {
+    if (val) this.logReady('routes_loaded');
+  }
+
+  @Watch('userLoadError')
+  onUserLoadError(err: Error) {
+    this.$emit('error-msg', `Failed loading user or team: ${err.message}`);
+    logError('routes_load_user_or_team_failed', err);
   }
 
   mounted() {
@@ -117,43 +117,9 @@ export default class Routes extends Mixins(Perf) {
       },
       err => {
         this.$emit('error-msg', `Failed loading route data: {err}`);
-        logError('routes_bind_sorted_data_failed', err);
+        logError('routes_load_sorted_data_failed', err);
       }
     );
-
-    this.userRef = db.collection('users').doc(getUser().uid);
-    this.$bind('userDoc', this.userRef).then(
-      () => {
-        this.loadedUser = true;
-        this.recordEvent('loadedUser');
-      },
-      err => {
-        this.$emit('error-msg', `Failed loading user data: ${err}`);
-        logError('routes_bind_user_failed', err);
-      }
-    );
-  }
-
-  @Watch('userDoc.team')
-  onTeamChanged() {
-    // When the team ID in the user doc changes, update the reference and
-    // snapshot to the team document accordingly.
-    if (this.userDoc.team) {
-      this.teamRef = db.collection('teams').doc(this.userDoc.team);
-      this.$bind('teamDoc', this.teamRef).catch(err => {
-        this.$emit('error-msg', `Failed loading team data: ${err}`);
-        logError('routes_bind_team_failed', err);
-      });
-    } else {
-      this.$unbind('teamDoc');
-      this.teamDoc = {};
-      this.teamRef = null;
-    }
-  }
-
-  @Watch('ready')
-  onReady(val: boolean) {
-    if (val) this.logReady('routes_loaded');
   }
 }
 </script>
