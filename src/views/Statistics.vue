@@ -156,24 +156,28 @@ export default class Statistics extends Mixins(Perf) {
   }
 
   mounted() {
-    this.$bind('indexedData', db.collection('global').doc('indexedData')).then(
-      () => {
+    this.$bind('indexedData', db.collection('global').doc('indexedData'))
+      .then(() => {
         this.recordEvent('loadedIndexedData'), (this.indexedDataLoaded = true);
         this.updateItems();
-      },
-      err => logError('stats_bind_indexed_data_failed', err)
-    );
+      })
+      .catch(err => {
+        this.$emit('error-msg', `Failed loading routes: ${err}`);
+        logError('stats_bind_indexed_data_failed', err);
+      });
 
-    bindUserAndTeamDocs(this, getUser().uid, 'userDoc', 'teamDoc').then(
-      result => {
+    bindUserAndTeamDocs(this, getUser().uid, 'userDoc', 'teamDoc')
+      .then(result => {
         this.userRef = result.user;
         this.teamRef = result.team;
         this.recordEvent('loadedUserAndTeam');
         this.climbDataLoaded = true;
         this.updateItems();
-      },
-      err => logError('stats_bind_user_and_team_failed', err)
-    );
+      })
+      .catch(err => {
+        this.$emit('error-msg', `Failed loading user and team data: ${err}`);
+        logError('stats_bind_user_and_team_failed', err);
+      });
 
     // TODO: Shouldn't we technically also watch for the user switching teams?
     // See onTeamChanged() in Routes.vue.
