@@ -99,7 +99,10 @@ export default class Routes extends Mixins(Perf) {
     logInfo('set_climb_state', { user: uid, route: ev.route, state: ev.state });
     this.teamRef
       .update({ ['users.' + uid + '.climbs.' + ev.route]: value })
-      .catch(err => logError('set_climb_state_failed', err));
+      .catch(err => {
+        this.$emit('error-msg', `Failed setting climb state: ${err}`);
+        logError('set_climb_state_failed', err);
+      });
   }
 
   get ready() {
@@ -112,7 +115,10 @@ export default class Routes extends Mixins(Perf) {
         this.loadedSortedData = true;
         this.recordEvent('loadedSortedData');
       },
-      err => logError('routes_bind_sorted_data_failed', err)
+      err => {
+        this.$emit('error-msg', `Failed loading route data: {err}`);
+        logError('routes_bind_sorted_data_failed', err);
+      }
     );
 
     this.userRef = db.collection('users').doc(getUser().uid);
@@ -121,7 +127,10 @@ export default class Routes extends Mixins(Perf) {
         this.loadedUser = true;
         this.recordEvent('loadedUser');
       },
-      err => logError('routes_bind_user_failed', err)
+      err => {
+        this.$emit('error-msg', `Failed loading user data: ${err}`);
+        logError('routes_bind_user_failed', err);
+      }
     );
   }
 
@@ -131,9 +140,10 @@ export default class Routes extends Mixins(Perf) {
     // snapshot to the team document accordingly.
     if (this.userDoc.team) {
       this.teamRef = db.collection('teams').doc(this.userDoc.team);
-      this.$bind('teamDoc', this.teamRef).catch(err =>
-        logError('routes_bind_team_failed', err)
-      );
+      this.$bind('teamDoc', this.teamRef).catch(err => {
+        this.$emit('error-msg', `Failed loading team data: ${err}`);
+        logError('routes_bind_team_failed', err);
+      });
     } else {
       this.$unbind('teamDoc');
       this.teamDoc = {};

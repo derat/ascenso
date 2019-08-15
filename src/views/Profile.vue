@@ -381,7 +381,10 @@ export default class Profile extends Mixins(Perf) {
       const key = 'users.' + getUser().uid + '.name';
       batch.update(this.teamRef, { [key]: name });
     }
-    batch.commit().catch(err => logError('set_user_name_failed', err));
+    batch.commit().catch(err => {
+      this.$emit('error-msg', `Failed setting user name: {err}`);
+      logError('set_user_name_failed', err);
+    });
   }
 
   // Updates the team's name in Firestore when the team name input is blurred.
@@ -392,9 +395,10 @@ export default class Profile extends Mixins(Perf) {
     // TODO: Trim whitespace, discard embedded newlines, etc.?
 
     logInfo('set_team_name', { team: this.teamRef.id, name: name });
-    this.teamRef
-      .update({ name: name })
-      .catch(err => logError('set_team_name_failed', err));
+    this.teamRef.update({ name: name }).catch(err => {
+      this.$emit('error-msg', `Failed setting team name: {err}`);
+      logError('set_team_name_failed', err);
+    });
   }
 
   // Creates a new team when the "Create" button is clicked in the "Create
@@ -448,9 +452,16 @@ export default class Profile extends Mixins(Perf) {
         this.$bind('teamDoc', this.teamRef);
         this.createDialogShown = false;
         this.inviteDialogShown = true;
+        this.$emit(
+          'success-msg',
+          `Created and joined "${this.createTeamName}"`
+        );
         this.createTeamName = '';
       })
-      .catch(err => logError('create_team_failed', err))
+      .catch(err => {
+        this.$emit('error-msg', `Failed creating team: {err}`);
+        logError('create_team_failed', err);
+      })
       .finally(() => {
         this.creatingTeam = false;
       });
@@ -466,35 +477,33 @@ export default class Profile extends Mixins(Perf) {
 
     logInfo('join_team', { invite: this.joinInviteCode });
 
-    // We need to access this throughout the promise chain.
+    // We need to access these throughout the promise chain.
     let teamRef: DocumentReference | null;
+    let teamName = '';
 
     // First get the invite doc to find the team ID.
     db.collection('invites')
       .doc(this.joinInviteCode)
       .get()
-      .then(
-        inviteSnap => {
-          // Now get the team doc.
-          const data = inviteSnap.data();
-          if (!data) throw new Error('No data for invite');
-          const team = data.team;
-          if (!team) throw new Error('No team ID in invite');
-          teamRef = db.collection('teams').doc(team);
-          return teamRef.get();
-        },
-        err => {
-          // Rethrow to skip to the final error handler.
-          throw 'Failed to check invite code: ' + err;
-        }
-      )
+      .then(inviteSnap => {
+        // Now get the team doc.
+        const data = inviteSnap.data();
+        if (!data) throw 'Bad invite code';
+        const team = data.team;
+        if (!team) throw 'No team ID in invite';
+        teamRef = db.collection('teams').doc(data.team);
+        return teamRef.get();
+      })
       .then(teamSnap => {
-        if (!this.userRef) throw new Error('No ref to user doc');
+        if (!this.userRef) throw 'No ref to user doc';
         // TODO: Why does TS require this check?
-        if (!teamRef) throw new Error('No ref to team doc');
+        if (!teamRef) throw 'No ref to team doc';
         if (Object.keys(teamSnap.get('users')).length >= Profile.teamSize) {
           throw 'Team is full';
         }
+
+        teamName = teamSnap.get('name');
+
         // Update the team doc and the user doc.
         const batch = db.batch();
         batch.update(teamRef, {
@@ -513,13 +522,17 @@ export default class Profile extends Mixins(Perf) {
         // Update the UI to reflect the change.
         // TODO: Just watch userDoc.team instead?
         // TODO: Why does TS require this check?
-        if (!teamRef) throw new Error('No ref to team doc');
+        if (!teamRef) throw 'No ref to team doc';
         this.teamRef = teamRef;
         this.$bind('teamDoc', teamRef);
         this.joinDialogShown = false;
         this.joinInviteCode = '';
+        this.$emit('success-msg', `Joined "${teamName}"`);
       })
-      .catch(err => logError('join_team_failed', err))
+      .catch(err => {
+        this.$emit('error-msg', `Failed joining team: ${err}`);
+        logError('join_team_failed', err);
+      })
       .finally(() => {
         this.joiningTeam = false;
       });
@@ -558,19 +571,22 @@ export default class Profile extends Mixins(Perf) {
     });
     batch
       .commit()
-      .then(
-        () => {
-          // Update the UI to reflect the change.
-          // TODO: Just watch userDoc.team instead?
-          this.$unbind('teamDoc');
-          // $unbind's 'reset' attribute doesn't seem to work correctly.
-          // Often this.teamDoc ends up being null instead of an empty object.
-          this.teamDoc = {};
-          this.teamRef = null;
-          this.leaveDialogShown = false;
-        },
-        err => logError('leave_team_failed', err)
-      )
+      .then(() => {
+        this.$emit('success-msg', `Left "${this.teamDoc.name}"`);
+
+        // Update the UI to reflect the change.
+        // TODO: Just watch userDoc.team instead?
+        this.$unbind('teamDoc');
+        // $unbind's 'reset' attribute doesn't seem to work correctly.
+        // Often this.teamDoc ends up being null instead of an empty object.
+        this.teamDoc = {};
+        this.teamRef = null;
+        this.leaveDialogShown = false;
+      })
+      .catch(err => {
+        this.$emit('error-msg', `Failed leaving team: {err}`);
+        logError('leave_team_failed', err);
+      })
       .finally(() => {
         this.leavingTeam = false;
       });
@@ -584,7 +600,10 @@ export default class Profile extends Mixins(Perf) {
         this.ready = true;
         this.logReady('profile_loaded');
       },
-      err => logError('profile_initial_bind_failed', err)
+      err => {
+        this.$emit('error-msg', `Failed loading data: {err}`);
+        logError('profile_initial_bind_failed', err);
+      }
     );
   }
 }
