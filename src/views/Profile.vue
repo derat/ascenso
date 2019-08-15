@@ -135,9 +135,15 @@
 
         <v-card-actions class="pa-0">
           <!-- "Join team" button and dialog -->
-          <v-dialog v-model="joinDialogShown" max-width="512px">
+          <v-dialog
+            ref="joinDialog"
+            v-model="joinDialogShown"
+            max-width="512px"
+          >
             <template v-slot:activator="{ on }">
-              <v-btn color="primary" v-on="on">Join team</v-btn>
+              <v-btn ref="joinButton" color="primary" v-on="on"
+                >Join team</v-btn
+              >
             </template>
 
             <DialogCard title="Join Team">
@@ -146,10 +152,15 @@
                   Ask your teammate to give you the {{ inviteCodeLength }}-digit
                   invite code from their profile page.
                 </div>
-                <v-form v-model="joinTeamValid" @submit.prevent="joinTeam">
+                <v-form
+                  ref="joinForm"
+                  v-model="joinTeamValid"
+                  @submit.prevent="joinTeam"
+                >
                   <!-- The v-if fixes autofocus on reopen. See
                        https://github.com/vuetifyjs/vuetify/issues/1731 -->
                   <v-text-field
+                    ref="joinCodeField"
                     v-model="joinInviteCode"
                     v-if="joinDialogShown"
                     :mask="inviteCodeMask"
@@ -166,6 +177,7 @@
               <v-card-actions>
                 <v-spacer />
                 <v-btn
+                  ref="confirmJoinButton"
                   :disabled="!joinTeamValid || joiningTeam"
                   color="primary"
                   flat
@@ -181,9 +193,15 @@
           <v-spacer />
 
           <!-- "Create team" button and dialog -->
-          <v-dialog v-model="createDialogShown" max-width="512px">
+          <v-dialog
+            ref="createDialog"
+            v-model="createDialogShown"
+            max-width="512px"
+          >
             <template v-slot:activator="{ on }">
-              <v-btn color="primary" v-on="on">Create team</v-btn>
+              <v-btn ref="createButton" color="primary" v-on="on"
+                >Create team</v-btn
+              >
             </template>
 
             <DialogCard title="Create Team">
@@ -192,8 +210,13 @@
                   After creating a new team, you'll get an invite code to give
                   to your teammate so they can join.
                 </div>
-                <v-form v-model="createTeamValid" @submit.prevent="createTeam">
+                <v-form
+                  ref="createForm"
+                  v-model="createTeamValid"
+                  @submit.prevent="createTeam"
+                >
                   <v-text-field
+                    ref="createNameField"
                     v-model="createTeamName"
                     v-if="createDialogShown"
                     :counter="nameMaxLength"
@@ -209,6 +232,7 @@
               <v-card-actions>
                 <v-spacer />
                 <v-btn
+                  ref="confirmCreateButton"
                   :disabled="!createTeamValid || creatingTeam"
                   color="primary"
                   flat
@@ -417,18 +441,16 @@ export default class Profile extends Mixins(Perf) {
     });
     batch
       .commit()
-      .then(
-        () => {
-          // Update the UI to reflect the changes.
-          // TODO: Just watch userDoc.team instead?
-          this.teamRef = teamRef;
-          this.$bind('teamDoc', this.teamRef);
-          this.createDialogShown = false;
-          this.inviteDialogShown = true;
-          this.createTeamName = '';
-        },
-        err => logError('create_team_failed', err)
-      )
+      .then(() => {
+        // Update the UI to reflect the changes.
+        // TODO: Just watch userDoc.team instead?
+        this.teamRef = teamRef;
+        this.$bind('teamDoc', this.teamRef);
+        this.createDialogShown = false;
+        this.inviteDialogShown = true;
+        this.createTeamName = '';
+      })
+      .catch(err => logError('create_team_failed', err))
       .finally(() => {
         this.creatingTeam = false;
       });

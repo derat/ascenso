@@ -47,6 +47,12 @@ function pathID(path: string) {
 // error: "The module factory of `jest.mock()` is not allowed to reference any
 // out-of-scope variables."
 
+// Prefix and next ID for automatically-generated Firestore document IDs.
+// We do this instead of generating a UUID to make tests deterministic.
+// It's totally not because generating UUIDs in JS is painful.
+const autogenPrefix = 'auto-doc-';
+let nextAutogenNum = 1;
+
 // Stub implementation of firebase.firestore.CollectionReference.
 class MockCollectionReference {
   path: string;
@@ -57,6 +63,7 @@ class MockCollectionReference {
     this.id = pathID(this.path);
   }
   doc(path: string) {
+    if (path === undefined) path = `${autogenPrefix}${nextAutogenNum++}`;
     return new MockDocumentReference(`${this.path}/${canonicalizePath(path)}`);
   }
 }
@@ -75,6 +82,11 @@ class MockDocumentReference {
       `${this.path}/${canonicalizePath(path)}`
     );
   }
+  get() {
+    return new Promise(resolve => {
+      resolve(new MockDocumentSnapshot(MockFirebase.getDoc(this.path)));
+    });
+  }
   update(props: Record<string, any>) {
     return new Promise(resolve => {
       MockFirebase._updateDoc(this.path, props);
@@ -83,22 +95,51 @@ class MockDocumentReference {
   }
 }
 
-// Document update operation that will be executed as part of a MockWriteBatch.
-interface BatchOperation {
-  path: string;
-  props: Record<string, any>;
+// Stub implementation of firebase.firestore.DocumentSnapshot.
+class MockDocumentSnapshot {
+  _data: Record<string, any>;
+  constructor(data: Record<string, any>) {
+    this._data = data;
+  }
+  data() {
+    return this._data;
+  }
+  get(field: string) {
+    // TODO: Implement dotted field paths if we need them.
+    if (field.indexOf('.') != -1) throw new Error('Field paths unsupported');
+    return this._data[field];
+  }
+}
+
+// Operations that can be executed as part of a MockWriteBatch.
+class BatchSet {
+  constructor(public path: string, public data: Record<string, any>) {}
+}
+class BatchUpdate {
+  constructor(public path: string, public props: Record<string, any>) {}
 }
 
 // Stub implementation of firebase.firestore.WriteBatch.
 class MockWriteBatch {
-  _ops: BatchOperation[] = [];
+  _ops: (BatchUpdate | BatchSet)[] = [];
 
+  set(ref: DocumentReference, data: Record<string, any>) {
+    this._ops.push(new BatchSet(ref.path, data));
+  }
   update(ref: DocumentReference, props: Record<string, any>) {
-    this._ops.push({ path: ref.path, props });
+    this._ops.push(new BatchUpdate(ref.path, props));
   }
   commit() {
     return new Promise(resolve => {
-      for (const op of this._ops) MockFirebase._updateDoc(op.path, op.props);
+      for (const op of this._ops) {
+        if (op instanceof BatchSet) {
+          MockFirebase.setDoc(op.path, op.data);
+        } else if (op instanceof BatchUpdate) {
+          MockFirebase._updateDoc(op.path, op.props);
+        } else {
+          throw new Error(`Invalid type for batch operation ${op}`);
+        }
+      }
       this._ops = [];
       resolve();
     });

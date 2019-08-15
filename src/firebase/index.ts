@@ -79,14 +79,15 @@ enum LogDest {
   NONE,
 }
 
+const isProd = process.env.NODE_ENV == 'production';
+const isDev = process.env.NODE_ENV == 'development';
+const isTest = process.env.NODE_ENV == 'test';
+
 // Modify this to control where logs are sent in dev mode.
 let devLogDest = LogDest.NONE;
 
 // Returns an appropriate function to pass to the default Logger.
 function getLogFunc(): firebase.functions.HttpsCallable {
-  const isProd = process.env.NODE_ENV == 'production';
-  const isDev = process.env.NODE_ENV == 'development';
-
   if (isProd || (isDev && devLogDest == LogDest.STACKDRIVER)) {
     return firebase.functions().httpsCallable('Log');
   }
@@ -137,9 +138,9 @@ export function logError(
   if (errorOrPayload instanceof Error) {
     const e: Error = errorOrPayload;
     log('ERROR', code, { message: e.message, name: e.name, stack: e.stack });
-    console.error(e);
+    if (!isTest) console.error(e);
   } else {
     log('ERROR', code, errorOrPayload);
-    console.error('Error code ' + code + ':', errorOrPayload);
+    if (!isTest) console.error('Error code ' + code + ':', errorOrPayload);
   }
 }
