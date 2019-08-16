@@ -22,12 +22,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-toolbar
-      color="primary"
-      app
-      scroll-off-screen
-      :scroll-threshold="32"
-    >
+    <v-toolbar color="primary" app scroll-off-screen :scroll-threshold="32">
       <v-toolbar-side-icon
         @click.stop="drawer = !drawer"
         color="primary"
@@ -36,7 +31,7 @@
            color here. Oddly, color="primary" gives us a white icon in
            <v-toolbar-side-icon> above, but it gives us black text here. -->
       <v-toolbar-title class="white--text">
-        {{ config.competitionName || 'Loading...' }}
+        {{ competitionName }}
       </v-toolbar-title>
     </v-toolbar>
   </div>
@@ -44,8 +39,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { auth, db } from '@/firebase';
-import { Config } from '@/models';
+import { auth } from '@/firebase';
 
 // An entry in the navigation drawer.
 interface NavItem {
@@ -61,8 +55,8 @@ interface NavItem {
 
 @Component
 export default class Toolbar extends Vue {
-  // global/config doc from Firestore.
-  config: Partial<Config> = {};
+  // Name to display in the toolbar.
+  readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
   // Model for navigation drawer.
   drawer: any = null;
   // Navigation drawer entries.
@@ -84,9 +78,5 @@ export default class Toolbar extends Vue {
       },
     },
   ]);
-
-  mounted() {
-    this.$bind('config', db.doc('global/config'));
-  }
 }
 </script>

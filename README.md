@@ -27,12 +27,9 @@ Heterogeneous singleton documents:
 *   `auth` - Document containing authentication-related information.
     *   `cloudFunctionSHA256` - Hex-encoded SHA256 hash of secret password used
         to restrict HTTP access to Cloud Functions.
-*   `config` - Document containing global configuration:
-    *   `competitionName` - String field containing competition name, e.g. `"My
-        Competition 2019"`.
-    *   `logoURL` - String field containing competition logo URL. The image
-        should ideally be 800 pixels wide or larger and suitable for being
-        displayed on a light background.
+*   `config` - Document containing global configuration. Currently empty, but
+    will eventually contain competition start/end time and other dynamic
+    configuration data.
 *   `indexedData` - Document containing indexed area and route information:
     *   `areas` - Map field containing area information keyed by area ID, e.g.
         `my_area`.

@@ -1,8 +1,0 @@
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Permit read access to public files without authentication.
-    match /public/{allPaths=**} {
-      allow read: if true;
-    }
-  }
-}
