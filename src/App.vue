@@ -4,7 +4,7 @@
 
 <template>
   <v-app>
-    <Toolbar v-if="signedIn" />
+    <Toolbar v-if="signedIn()" />
     <v-content>
       <!-- Ideally, this could be wrapped in <keep-alive include="Routes"> to
            keep the slow-to-render Routes view alive after navigating away from
@@ -58,7 +58,17 @@ export default class App extends Mixins(Perf) {
   // Amount of time to display snackbar before autohiding, in milliseconds.
   snackbarTimeoutMs = 0;
 
-  get signedIn() {
+  // This apparently needs to be a method rather than a computed property (i.e.
+  // don't add the 'get' keyword to make it a getter). Otherwise, it doesn't
+  // seem to pick up changes to auth.currentUser. Another option that seems to
+  // work is explicitly asking Firebase for auth state changes in mounted():
+  //
+  //   auth.onAuthStateChanged(user => {
+  //     this.signedIn = !!user;
+  //   });
+  //
+  // This is a bit less code, though.
+  signedIn() {
     return !!auth.currentUser;
   }
 
