@@ -2,8 +2,22 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import firebase from 'firebase/app';
-type HttpsCallable = firebase.functions.HttpsCallable;
+// LogFunc is called to record log records (typically to Stackdriver).
+// This is a more-tightly-defined version of firebase.functions.HttpsCallable.
+export type LogFunc = (data: LogFuncData) => Promise<LogFuncResult>;
+
+// LogFuncData contains data sent via LogFunc.
+interface LogFuncData {
+  records: LogRecord[];
+  now: number;
+}
+
+// LogFuncResult contains the response from calling a LogFunc.
+// This matches the firebase.functions.HttpsCallableResult type and is exported
+// for testing.
+export interface LogFuncResult {
+  data: any;
+}
 
 // LogRecord describes an individual record object sent to the "Log" Cloud
 // Function. This is exported for testing.
@@ -33,7 +47,7 @@ const isTestEnv = process.env.NODE_ENV == 'test';
 // Logger sends records to the "Log" Cloud Function.
 export class Logger {
   _name: string;
-  _logFunc: HttpsCallable;
+  _logFunc: LogFunc | null = null;
   _intervalMs: number;
   _now: () => number;
   _online: () => boolean;
@@ -48,7 +62,8 @@ export class Logger {
   _handleOnline: () => void;
 
   // |name| identifies the logger and should be constant across app invocations.
-  // |logFunc| invokes the "Log" Cloud Function.
+  // |logFunc| invokes the "Log" Cloud Function. If a promise is passed, records
+  // are sent only after it is resolved.
   // |intervalMs| is the minimum interval between Cloud Function invocations.
   // |nowFunc| is called to get the current time as milliseconds since the
   // epoch; it can be provided by tests to control time.
@@ -56,16 +71,24 @@ export class Logger {
   // provided by tests.
   constructor(
     name: string,
-    logFunc: HttpsCallable,
+    logFunc: LogFunc | Promise<LogFunc>,
     intervalMs = 10_000,
     nowFunc = () => new Date().getTime(),
     onlineFunc = () => navigator.onLine
   ) {
     this._name = name;
-    this._logFunc = logFunc;
     this._intervalMs = intervalMs;
     this._now = nowFunc;
     this._online = onlineFunc;
+
+    Promise.resolve(logFunc)
+      .then(func => {
+        this._logFunc = func;
+        this._scheduleSend();
+      })
+      .catch(err => {
+        console.error(`Failed to get log function: ${err}`);
+      });
 
     // Put a random ID in localStorage key names to prevent a huge mess if the
     // app is open in multiple tabs that are all sharing the same localStorage.
@@ -169,8 +192,14 @@ export class Logger {
   // Records are moved to the 'sending' state while in-flight.
   // Schedules another invocation of itself on failure.
   _sendQueued() {
+    // These really ought to be assertions, but we don't want to throw
+    // exceptions since this code is already invoked in response to errors.
     if (this._currentlySending()) {
       console.error('Already sending log records');
+      return;
+    }
+    if (!this._logFunc) {
+      console.error('No log function');
       return;
     }
 
@@ -203,6 +232,7 @@ export class Logger {
   _scheduleSend() {
     if (this.isSendScheduled() || this._currentlySending()) return;
     if (!this._online()) return;
+    if (!this._logFunc) return;
     if (!this._getRecords(queuedKeySuffix).length) return;
 
     let delayMs = 0;

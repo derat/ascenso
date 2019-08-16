@@ -4,7 +4,7 @@
 
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import { logDebug } from '@/firebase';
+import { logDebug } from '@/log';
 
 @Component
 export default class Perf extends Vue {

@@ -260,7 +260,9 @@ import { Component, Mixins, Watch } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import { db, getUser, logInfo, logError } from '@/firebase';
+import { getUser } from '@/firebase/auth';
+import { db } from '@/firebase/firestore';
+import { logInfo, logError } from '@/log';
 import { ClimbState } from '@/models';
 import Card from '@/components/Card.vue';
 import DialogCard from '@/components/DialogCard.vue';

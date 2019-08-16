@@ -40,7 +40,9 @@
 
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
-import { db, getUser, logError } from '@/firebase';
+import { getUser } from '@/firebase/auth';
+import { db } from '@/firebase/firestore';
+import { logError } from '@/log';
 import { ClimbState, Statistic, IndexedData } from '@/models';
 import Card from '@/components/Card.vue';
 import Perf from '@/mixins/Perf.ts';

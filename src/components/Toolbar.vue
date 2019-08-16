@@ -39,7 +39,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { auth } from '@/firebase';
+import { auth } from '@/firebase/auth';
 
 // An entry in the navigation drawer.
 interface NavItem {
