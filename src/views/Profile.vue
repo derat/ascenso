@@ -3,7 +3,7 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-container v-if="ready" grid-list-md text-ms-center>
+  <v-container v-if="userLoaded" grid-list-md text-ms-center>
     <Card :title="$t('individual')">
       <v-layout row>
         <v-flex>
@@ -255,23 +255,18 @@
 </template>
 
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator';
+import { Component, Mixins, Watch } from 'vue-property-decorator';
 
 import firebase from 'firebase/app';
 type DocumentReference = firebase.firestore.DocumentReference;
 
-import {
-  db,
-  getUser,
-  bindUserAndTeamDocs,
-  logInfo,
-  logError,
-} from '@/firebase';
-import { ClimbState, User, Team } from '@/models';
+import { db, getUser, logInfo, logError } from '@/firebase';
+import { ClimbState } from '@/models';
 import Card from '@/components/Card.vue';
 import DialogCard from '@/components/DialogCard.vue';
 import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';
+import UserLoader from '@/mixins/UserLoader.ts';
 
 // Removes excessive/weird whitespace from |name|.
 function cleanName(name: string): string {
@@ -281,7 +276,7 @@ function cleanName(name: string): string {
 @Component({
   components: { Card, DialogCard, Spinner },
 })
-export default class Profile extends Mixins(Perf) {
+export default class Profile extends Mixins(Perf, UserLoader) {
   // Maximum length of user and team names.
   readonly nameMaxLength = 50;
 
@@ -334,17 +329,6 @@ export default class Profile extends Mixins(Perf) {
   readonly inviteCodeLength = 6;
   // Number of users on a full team.
   static readonly teamSize = 2;
-
-  // Snapshot and reference for team document.
-  teamDoc: Partial<Team> = {};
-  teamRef: DocumentReference | null = null;
-
-  // Snapshot and reference for user document.
-  userDoc: Partial<User> = {};
-  userRef: DocumentReference | null = null;
-
-  // Whether view is ready to be initially displayed.
-  ready = false;
 
   // Input mask passed to <v-text-input> for invite code.
   get inviteCodeMask() {
@@ -468,10 +452,6 @@ export default class Profile extends Mixins(Perf) {
       resolve(batch.commit());
     })
       .then(() => {
-        // Update the UI to reflect the changes.
-        // TODO: Just watch userDoc.team instead?
-        this.teamRef = teamRef;
-        this.$bind('teamDoc', this.teamRef);
         this.createDialogShown = false;
         this.inviteDialogShown = true;
         this.$emit(
@@ -541,11 +521,6 @@ export default class Profile extends Mixins(Perf) {
         return batch.commit();
       })
       .then(() => {
-        // Update the UI to reflect the change.
-        // TODO: Just watch userDoc.team instead?
-        if (!teamRef) throw new Error('No ref to team doc'); // required by TS
-        this.teamRef = teamRef;
-        this.$bind('teamDoc', teamRef);
         this.joinDialogShown = false;
         this.joinInviteCode = '';
         this.$emit('success-msg', `Joined "${teamName}"`);
@@ -566,6 +541,10 @@ export default class Profile extends Mixins(Perf) {
     this.leavingTeam = true;
 
     logInfo('leave_team', {});
+
+    // Grab this before leaving so we can use it in a message later.
+    const teamName = this.teamDoc.name;
+
     new Promise(resolve => {
       if (!this.userRef) throw new Error('No reference to user doc');
       if (!this.teamRef) throw new Error('No reference to team doc');
@@ -592,15 +571,7 @@ export default class Profile extends Mixins(Perf) {
       resolve(batch.commit());
     })
       .then(() => {
-        this.$emit('success-msg', `Left "${this.teamDoc.name}"`);
-
-        // Update the UI to reflect the change.
-        // TODO: Just watch userDoc.team instead?
-        this.$unbind('teamDoc');
-        // $unbind's 'reset' attribute doesn't seem to work correctly.
-        // Often this.teamDoc ends up being null instead of an empty object.
-        this.teamDoc = {};
-        this.teamRef = null;
+        this.$emit('success-msg', `Left "${teamName}"`);
         this.leaveDialogShown = false;
       })
       .catch(err => {
@@ -612,19 +583,15 @@ export default class Profile extends Mixins(Perf) {
       });
   }
 
-  mounted() {
-    bindUserAndTeamDocs(this, getUser().uid, 'userDoc', 'teamDoc').then(
-      result => {
-        this.userRef = result.user;
-        this.teamRef = result.team;
-        this.ready = true;
-        this.logReady('profile_loaded');
-      },
-      err => {
-        this.$emit('error-msg', `Failed loading data: {err.message}`);
-        logError('profile_initial_bind_failed', err);
-      }
-    );
+  @Watch('userLoaded')
+  onUserLoaded(val: boolean) {
+    if (val) this.logReady('profile_loaded');
+  }
+
+  @Watch('userLoadError')
+  onUserLoadError(err: Error) {
+    this.$emit('error-msg', `Failed loading data: ${err.message}`);
+    logError('profile_load_failed', err);
   }
 }
 </script>
