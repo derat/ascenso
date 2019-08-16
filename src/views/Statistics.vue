@@ -40,15 +40,16 @@
 
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
-import { getUser } from '@/firebase/auth';
-import { db } from '@/firebase/firestore';
+
+import { getFirestore } from '@/firebase';
 import { logError } from '@/log';
 import { ClimbState, Statistic, IndexedData } from '@/models';
+
 import Card from '@/components/Card.vue';
-import Perf from '@/mixins/Perf.ts';
+import Perf from '@/mixins/Perf';
 import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
-import UserLoader from '@/mixins/UserLoader.ts';
+import UserLoader from '@/mixins/UserLoader';
 
 interface StatisticsCard {
   name: string;
@@ -128,11 +129,10 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
     // climbs, and also fill in team stats.
     if (this.teamDoc && this.teamDoc.users) {
       const users = this.teamDoc.users;
-      const userId = getUser().uid;
       const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
 
       this.userCards = this.computeStats(
-        users[userId].climbs ? [users[userId].climbs] : []
+        users[this.user.uid].climbs ? [users[this.user.uid].climbs] : []
       );
 
       this.teamCards = this.computeStats(userClimbs);
@@ -155,7 +155,10 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
   }
 
   mounted() {
-    this.$bind('indexedData', db.collection('global').doc('indexedData'))
+    getFirestore()
+      .then(db =>
+        this.$bind('indexedData', db.collection('global').doc('indexedData'))
+      )
       .then(() => {
         this.recordEvent('loadedIndexedData'), (this.indexedDataLoaded = true);
         this.updateItems();

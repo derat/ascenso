@@ -7,7 +7,7 @@ import Vue from 'vue';
 import Vuetify from 'vuetify';
 
 import ClimbDropdown from './ClimbDropdown.vue';
-import { ClimbState } from '@/models.ts';
+import { ClimbState } from '@/models';
 
 Vue.use(Vuetify);
 

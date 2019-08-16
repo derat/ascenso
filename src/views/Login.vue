@@ -30,14 +30,12 @@
 
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
-import firebase from 'firebase/app';
-import firebaseui from 'firebaseui';
 
-import { auth, getUser } from '@/firebase/auth';
-import { db } from '@/firebase/firestore';
 import { logInfo } from '@/log';
+import { getAuth, getFirebase, getFirebaseUI, getFirestore } from '@/firebase';
+
 import Card from '@/components/Card.vue';
-import Perf from '@/mixins/Perf.ts';
+import Perf from '@/mixins/Perf';
 import Spinner from '@/components/Spinner.vue';
 
 @Component({
@@ -54,42 +52,51 @@ export default class Login extends Mixins(Perf) {
   }
 
   mounted() {
-    // See https://github.com/firebase/firebaseui-web/issues/293.
-    let ui = firebaseui.auth.AuthUI.getInstance();
-    if (!ui) {
-      ui = new firebaseui.auth.AuthUI(auth);
-    }
+    Promise.all([getAuth(), getFirebase(), getFirebaseUI()]).then(
+      ([auth, firebase, firebaseui]) => {
+        // See https://github.com/firebase/firebaseui-web/issues/293.
+        let ui = firebaseui.auth.AuthUI.getInstance();
+        if (!ui) ui = new firebaseui.auth.AuthUI(auth);
 
-    this.pendingRedirect = ui.isPendingRedirect();
-    ui.start('#firebaseui-auth-container', {
-      signInOptions: [
-        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-        firebase.auth.EmailAuthProvider.PROVIDER_ID,
-      ],
-      callbacks: {
-        signInSuccessWithAuthResult: () => {
-          const user = getUser();
-          const ref = db.collection('users').doc(user.uid);
-          ref.get().then(snap => {
-            if (snap.exists) {
-              // If the user has logged in before, send them to the routes view.
-              this.$router.replace('routes');
-            } else {
-              // Otherwise, create the doc using their default name and send
-              // them to the profile view.
-              logInfo('create_user', { name: user.displayName });
-              ref.set({ name: user.displayName }, { merge: true }).then(() => {
-                this.$router.replace('profile');
+        this.pendingRedirect = ui.isPendingRedirect();
+
+        ui.start('#firebaseui-auth-container', {
+          signInOptions: [
+            firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+            firebase.auth.EmailAuthProvider.PROVIDER_ID,
+          ],
+          callbacks: {
+            signInSuccessWithAuthResult: () => {
+              Promise.all([getAuth(), getFirestore()]).then(([auth, db]) => {
+                const user = auth.currentUser;
+                if (!user) throw new Error('Not logged in');
+                const ref = db.collection('users').doc(user.uid);
+                ref.get().then(snap => {
+                  if (snap.exists) {
+                    // If the user has logged in before, send them to the routes
+                    // view.
+                    this.$router.replace('routes');
+                  } else {
+                    // Otherwise, create the doc using their default name and send
+                    // them to the profile view.
+                    logInfo('create_user', { name: user.displayName });
+                    ref
+                      .set({ name: user.displayName }, { merge: true })
+                      .then(() => {
+                        this.$router.replace('profile');
+                      });
+                  }
+                });
               });
-            }
-          });
 
-          // Don't redirect automatically; we handle that above.
-          return false;
-        },
-        uiShown: () => this.recordEvent('loginShown'),
-      },
-    });
+              // Don't redirect automatically; we handle that above.
+              return false;
+            },
+            uiShown: () => this.recordEvent('loginShown'),
+          },
+        });
+      }
+    );
   }
 
   @Watch('ready')

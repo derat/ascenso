@@ -24,9 +24,7 @@
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 
-import firebase from 'firebase/app';
-
-import { db } from '@/firebase/firestore';
+import { getFirestore } from '@/firebase';
 import { logInfo, logError } from '@/log';
 import {
   ClimberInfo,
@@ -34,10 +32,11 @@ import {
   SetClimbStateEvent,
   SortedData,
 } from '@/models';
-import Perf from '@/mixins/Perf.ts';
+
+import Perf from '@/mixins/Perf';
 import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
-import UserLoader from '@/mixins/UserLoader.ts';
+import UserLoader from '@/mixins/UserLoader';
 
 @Component({
   components: { RouteList, Spinner },
@@ -73,22 +72,28 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   // Updates team document in response to 'set-climb-state' events from RouteList
   // component.
   onSetClimbState(ev: SetClimbStateEvent) {
-    if (!this.teamRef) throw new Error('No ref to team doc');
     if (ev.index >= this.teamMembers.length) {
       throw new Error('Invalid team member index ' + ev.index);
     }
+    const uid = this.teamMembers[ev.index];
+
+    logInfo('set_climb_state', {
+      user: uid,
+      route: ev.route,
+      state: ev.state,
+    });
 
     // Just delete the map entry instead of recording a not-climbed state.
     const value =
       ev.state == ClimbState.NOT_CLIMBED
-        ? firebase.firestore.FieldValue.delete()
+        ? this.firebase.firestore.FieldValue.delete()
         : ev.state;
 
-    const uid = this.teamMembers[ev.index];
-
-    logInfo('set_climb_state', { user: uid, route: ev.route, state: ev.state });
+    if (!this.teamRef) throw new Error('No ref to team doc');
     this.teamRef
-      .update({ ['users.' + uid + '.climbs.' + ev.route]: value })
+      .update({
+        ['users.' + uid + '.climbs.' + ev.route]: value,
+      })
       .catch(err => {
         this.$emit('error-msg', `Failed setting climb state: ${err}`);
         logError('set_climb_state_failed', err);
@@ -111,16 +116,19 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   }
 
   mounted() {
-    this.$bind('sortedData', db.collection('global').doc('sortedData')).then(
-      () => {
-        this.loadedSortedData = true;
-        this.recordEvent('loadedSortedData');
-      },
-      err => {
-        this.$emit('error-msg', `Failed loading route data: {err}`);
-        logError('routes_load_sorted_data_failed', err);
-      }
-    );
+    // We can't use this.firestore yet.
+    getFirestore().then(db => {
+      this.$bind('sortedData', db.collection('global').doc('sortedData')).then(
+        () => {
+          this.loadedSortedData = true;
+          this.recordEvent('loadedSortedData');
+        },
+        err => {
+          this.$emit('error-msg', `Failed loading route data: {err}`);
+          logError('routes_load_sorted_data_failed', err);
+        }
+      );
+    });
   }
 }
 </script>
