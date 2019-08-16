@@ -10,11 +10,7 @@
       <v-layout row justify-center>
         <!-- These widths are chosen to match those of the <Card> below. -->
         <v-flex xs12 sm8 md6>
-          <v-img
-            :src="config.logoURL || '/logo-800.png'"
-            :alt="config.competitionName"
-            contain
-          />
+          <v-img :src="logoURL" :alt="competitionName" contain />
         </v-flex>
       </v-layout>
       <Card class="mt-2">
@@ -38,7 +34,6 @@ import firebase from 'firebase/app';
 import firebaseui from 'firebaseui';
 
 import { auth, db, getUser, logInfo } from '@/firebase';
-import { Config } from '@/models';
 import Card from '@/components/Card.vue';
 import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';
@@ -47,20 +42,16 @@ import Spinner from '@/components/Spinner.vue';
   components: { Card, Spinner },
 })
 export default class Login extends Mixins(Perf) {
-  config: Partial<Config> = {};
-  loadedDoc = false;
+  readonly logoURL = process.env.VUE_APP_LOGO_URL;
+  readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
+
   pendingRedirect = false;
 
   get ready() {
-    return this.loadedDoc && !this.pendingRedirect;
+    return !this.pendingRedirect;
   }
 
   mounted() {
-    this.$bind('config', db.collection('global').doc('config')).then(() => {
-      this.loadedDoc = true;
-      this.recordEvent('loadedConfig');
-    });
-
     // See https://github.com/firebase/firebaseui-web/issues/293.
     let ui = firebaseui.auth.AuthUI.getInstance();
     if (!ui) {

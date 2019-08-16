@@ -2,8 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '@/firebase/init'; // needs to be imported before firebase/index.ts
-import { auth, db, logError } from '@/firebase';
+import { auth, logError } from '@/firebase';
 
 const isTestEnv = process.env.NODE_ENV == 'test';
 
@@ -60,8 +59,6 @@ Vue.use(firestorePlugin);
 
 import './plugins/vuetify';
 
-import { Config } from '@/models';
-
 import App from '@/App.vue';
 import i18n from '@/plugins/i18n';
 import router from '@/router';
@@ -79,14 +76,3 @@ auth.onAuthStateChanged(() => {
     }).$mount('#app');
   }
 });
-
-// Set the page title.
-db.doc('global/config')
-  .get()
-  .then(snap => {
-    const data: Partial<Config> | undefined = snap.data();
-    if (!data) {
-      throw new Error('No config data');
-    }
-    document.title = data.competitionName || 'Unnamed';
-  });

@@ -1,5 +1,11 @@
-.firebaserc
 .firebase/
 dist/
 node_modules/
-src/firebase/config.ts
+
+# Site configuration and assets.
+.env.local
+.firebaserc
+public/assets
+
+# Repositories containing site configuration.
+*-private/

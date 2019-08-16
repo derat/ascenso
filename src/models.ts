@@ -45,11 +45,6 @@ export class SetClimbStateEvent {
   ) {}
 }
 
-// Config represents the global/config Firestore doc.
-export interface Config {
-  competitionName: string;
-}
-
 // Area contains information about a climbing area.
 // It appears in the global/indexedData and global/SortedData Firestore docs.
 export interface Area {
