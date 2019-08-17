@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+  <msapplication>
+    <tile>
+      <square150x150logo src="{{ VUE_APP_MS_TILE_150_URL }}"/>
+      <TileColor>{{ VUE_APP_MS_TILE_COLOR }}</TileColor>
+    </tile>
+  </msapplication>
+</browserconfig>
