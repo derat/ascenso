@@ -6,13 +6,9 @@
 // different views.
 
 import VueRouter from 'vue-router';
+import { getAuth } from '@/firebase';
 
-import { auth } from '@/firebase/auth';
-
-// Lazily load the Login view since it imports firebaseui, which is 200+ KB.
-// See https://alexjover.com/blog/lazy-load-in-vue-using-webpack-s-code-splitting/
-const Login = () => import('@/views/Login.vue');
-
+import Login from '@/views/Login.vue';
 import Profile from '@/views/Profile.vue';
 import Routes from '@/views/Routes.vue';
 import Scoreboard from '@/views/Scoreboard.vue';
@@ -58,17 +54,19 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const user = auth.currentUser;
-  const needsAuth = to.matched.some(record => record.meta.auth);
-  const isLoginPage = to.matched.some(record => record.name == 'login');
+  getAuth().then(auth => {
+    const loggedIn = !!auth.currentUser;
+    const needsAuth = to.matched.some(record => record.meta.auth);
+    const isLoginPage = to.matched.some(record => record.name == 'login');
 
-  if (needsAuth && !user) {
-    next('login');
-  } else if (isLoginPage && user) {
-    next('routes');
-  } else {
-    next();
-  }
+    if (needsAuth && !loggedIn) {
+      next('login');
+    } else if (isLoginPage && loggedIn) {
+      next('routes');
+    } else {
+      next();
+    }
+  });
 });
 
 export default router;

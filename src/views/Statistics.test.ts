@@ -9,14 +9,17 @@ import Vue from 'vue';
 import Vuetify from 'vuetify';
 Vue.use(Vuetify);
 
-import { ClimbState, Statistic } from '@/models.ts';
+import flushPromises from 'flush-promises';
+
+import { ClimbState, Statistic } from '@/models';
+
 import Statistics from './Statistics.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
 
 describe('Statistics', () => {
   let wrapper: Wrapper<Vue>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     MockFirebase.reset();
 
     const uid = 'test-user';
@@ -47,6 +50,7 @@ describe('Statistics', () => {
     wrapper = shallowMount(Statistics, {
       mocks: MockFirebase.mountMocks,
     });
+    await flushPromises();
   });
 
   it('displays statistics for a team', () => {

@@ -257,18 +257,14 @@
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 
-import firebase from 'firebase/app';
-type DocumentReference = firebase.firestore.DocumentReference;
-
-import { getUser } from '@/firebase/auth';
-import { db } from '@/firebase/firestore';
 import { logInfo, logError } from '@/log';
 import { ClimbState } from '@/models';
+
 import Card from '@/components/Card.vue';
 import DialogCard from '@/components/DialogCard.vue';
-import Perf from '@/mixins/Perf.ts';
+import Perf from '@/mixins/Perf';
 import Spinner from '@/components/Spinner.vue';
-import UserLoader from '@/mixins/UserLoader.ts';
+import UserLoader from '@/mixins/UserLoader';
 
 // Removes excessive/weird whitespace from |name|.
 function cleanName(name: string): string {
@@ -372,10 +368,10 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     new Promise(resolve => {
       logInfo('set_user_name', { name: name });
       if (!this.userRef) throw new Error('No ref to user doc');
-      const batch = db.batch();
+      const batch = this.firestore.batch();
       batch.update(this.userRef, { name: name });
       if (this.teamRef) {
-        const key = 'users.' + getUser().uid + '.name';
+        const key = 'users.' + this.user.uid + '.name';
         batch.update(this.teamRef, { [key]: name });
       }
       resolve(batch.commit());
@@ -420,27 +416,29 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .toString()
       .slice(2, 2 + this.inviteCodeLength);
 
-    // Generate an ID for a new team document. This works offline.
-    const teamRef = db.collection('teams').doc();
+    logInfo('create_team', { name: this.createTeamName, invite: inviteCode });
 
     new Promise(resolve => {
-      logInfo('create_team', { name: this.createTeamName, invite: inviteCode });
+      // Generate an ID for a new team document. This works offline.
+      const teamRef = this.firestore.collection('teams').doc();
 
       // Perform a single batched write that creates the team document, creates
       // an invite document containing the team ID, and updates the user doc to
       // contain the team ID.
-      const batch = db.batch();
+      const batch = this.firestore.batch();
       batch.set(teamRef, {
         name: this.createTeamName,
         users: {
-          [getUser().uid]: {
+          [this.user.uid]: {
             name: this.userDoc.name,
             climbs: this.userDoc.climbs || {},
           },
         },
         invite: inviteCode,
       });
-      batch.set(db.collection('invites').doc(inviteCode), { team: teamRef.id });
+      batch.set(this.firestore.collection('invites').doc(inviteCode), {
+        team: teamRef.id,
+      });
 
       if (!this.userRef) throw new Error('No ref to user doc');
       batch.update(this.userRef, {
@@ -449,7 +447,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         // needing to write to both the team and user doc every time the user
         // completes another climb, and also to prevent needing to let user A
         // write to teammate B's user doc if A reports a climb performed by B.
-        climbs: firebase.firestore.FieldValue.delete(),
+        climbs: this.firebase.firestore.FieldValue.delete(),
       });
       resolve(batch.commit());
     })
@@ -484,11 +482,12 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     logInfo('join_team', { invite: this.joinInviteCode });
 
     // We need to access these throughout the promise chain.
-    let teamRef: DocumentReference | null;
+    let teamRef: firebase.firestore.DocumentReference | null;
     let teamName = '';
 
     // First get the invite doc to find the team ID.
-    db.collection('invites')
+    this.firestore
+      .collection('invites')
       .doc(this.joinInviteCode)
       .get()
       .then(inviteSnap => {
@@ -497,28 +496,30 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         if (!data) throw new Error('Bad invite code');
         const team = data.team;
         if (!team) throw new Error('No team ID in invite');
-        teamRef = db.collection('teams').doc(data.team);
+        teamRef = this.firestore.collection('teams').doc(data.team);
         return teamRef.get();
       })
       .then(teamSnap => {
+        // These checks are required by TypeScript.
         if (!this.userRef) throw new Error('No ref to user doc');
-        if (!teamRef) throw new Error('No ref to team doc'); // required by TS
+        if (!teamRef) throw new Error('No ref to team doc');
+
         if (Object.keys(teamSnap.get('users')).length >= Profile.teamSize) {
           throw new Error('Team is full');
         }
         teamName = teamSnap.get('name');
 
         // Update the team doc and the user doc.
-        const batch = db.batch();
+        const batch = this.firestore.batch();
         batch.update(teamRef, {
-          ['users.' + getUser().uid]: {
+          ['users.' + this.user.uid]: {
             name: this.userDoc.name,
             climbs: this.userDoc.climbs || {},
           },
         });
         batch.update(this.userRef, {
           team: teamRef.id,
-          climbs: firebase.firestore.FieldValue.delete(),
+          climbs: this.firebase.firestore.FieldValue.delete(),
         });
         return batch.commit();
       })
@@ -548,11 +549,11 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     const teamName = this.teamDoc.name;
 
     new Promise(resolve => {
-      if (!this.userRef) throw new Error('No reference to user doc');
-      if (!this.teamRef) throw new Error('No reference to team doc');
+      if (!this.userRef) throw new Error('No user ref');
+      if (!this.teamRef) throw new Error('No team ref');
 
       // Grab the user's climbs from the team doc.
-      const uid = getUser().uid;
+      const uid = this.user.uid;
       let climbs: Record<string, ClimbState> = {};
       const userData = this.teamDoc.users ? this.teamDoc.users[uid] : null;
       if (userData && userData.climbs) {
@@ -561,12 +562,12 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
       // Perform a batched update that removes the user from the team doc and
       // removes the team from the user doc.
-      const batch = db.batch();
+      const batch = this.firestore.batch();
       batch.update(this.teamRef, {
-        ['users.' + uid]: firebase.firestore.FieldValue.delete(),
+        ['users.' + uid]: this.firebase.firestore.FieldValue.delete(),
       });
       batch.update(this.userRef, {
-        team: firebase.firestore.FieldValue.delete(),
+        team: this.firebase.firestore.FieldValue.delete(),
         // Move the climbs back from the team doc to the user doc.
         climbs: climbs,
       });

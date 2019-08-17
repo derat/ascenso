@@ -9,6 +9,8 @@ import Vue from 'vue';
 import Vuetify from 'vuetify';
 Vue.use(Vuetify);
 
+import flushPromises from 'flush-promises';
+
 import {
   ClimbState,
   ClimberInfo,
@@ -17,6 +19,7 @@ import {
   Team,
   User,
 } from '@/models.ts';
+
 import Routes from './Routes.vue';
 import RouteList from '@/components/RouteList.vue';
 
@@ -63,7 +66,7 @@ const teamDoc: Team = {
 describe('Routes', () => {
   let wrapper: Wrapper<Vue>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     MockFirebase.reset();
     MockFirebase.currentUser = new MockUser(testUID, testName);
     MockFirebase.setDoc('global/sortedData', sortedData);
@@ -71,6 +74,7 @@ describe('Routes', () => {
     MockFirebase.setDoc(`teams/${teamID}`, teamDoc);
 
     wrapper = mount(Routes, { mocks: MockFirebase.mountMocks });
+    await flushPromises();
   });
 
   it('displays all areas', () => {
@@ -96,7 +100,7 @@ describe('Routes', () => {
     );
   });
 
-  it('updates climb states', () => {
+  it('updates climb states', async () => {
     // Simulate the first climber leading the third route and the second climber
     // undoing their lead of the second route.
     const routeLists = wrapper.findAll(RouteList).wrappers;
@@ -108,6 +112,7 @@ describe('Routes', () => {
       'set-climb-state',
       new SetClimbStateEvent(1, 'r2', ClimbState.NOT_CLIMBED)
     );
+    await flushPromises();
 
     const expected = JSON.parse(JSON.stringify(teamDoc));
     expected.users[testUID].climbs.r3 = ClimbState.LEAD;

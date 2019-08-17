@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { auth } from '@/firebase/auth';
 import { logError } from '@/log';
+import { getAuth } from '@/firebase';
 
 const isTestEnv = process.env.NODE_ENV == 'test';
 
@@ -68,12 +68,14 @@ import router from '@/router';
 // authenticated or not. Otherwise, router.beforeEach may end up trying to
 // inspect Firebase's auth state before it's been initialized.
 let app: Vue | null = null;
-auth.onAuthStateChanged(() => {
-  if (!app) {
-    app = new Vue({
-      router,
-      i18n,
-      render: h => h(App),
-    }).$mount('#app');
-  }
+getAuth().then(auth => {
+  auth.onAuthStateChanged(() => {
+    if (!app) {
+      app = new Vue({
+        router,
+        i18n,
+        render: h => h(App),
+      }).$mount('#app');
+    }
+  });
 });

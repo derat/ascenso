@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import { Logger, LogFunc } from './logger';
+import { getAuth, getFunctions } from '@/firebase';
 
 enum LogDest {
   STACKDRIVER,
@@ -20,11 +21,9 @@ let devLogDest = LogDest.NONE;
 // Returns an appropriate function to pass to the default Logger.
 function getLogFunc(): LogFunc | Promise<LogFunc> {
   if (isProd || (isDev && devLogDest == LogDest.STACKDRIVER)) {
-    // Import the module asynchronously and return a promise so that importing
-    // this module doesn't require synchronously loading bulky Firebase code.
-    return import('@/firebase/functions').then(fn =>
-      fn.functions.httpsCallable('Log')
-    );
+    // Return a promise so that importing this module doesn't require
+    // synchronously loading bulky Firebase code.
+    return getFunctions().then(functions => functions.httpsCallable('Log'));
   }
   if (isDev && devLogDest == LogDest.CONSOLE) {
     return (data?: any) => {
@@ -40,11 +39,9 @@ const defaultLogger = new Logger('log', getLogFunc());
 // Helper function that sends a log message to Stackdriver.
 // See the Logger class's log method for more details.
 function log(severity: string, code: string, payload: Record<string, any>) {
-  // Import the module asynchronously so that importing this module doesn't
-  // require synchronously loading bulky Firebase code.
-  import('@/firebase/auth')
+  getAuth()
     .then(auth => {
-      const user = auth.getUser();
+      const user = auth.currentUser;
       if (!user) {
         defaultLogger.log(severity, code, payload);
         return;

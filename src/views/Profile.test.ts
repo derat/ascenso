@@ -13,8 +13,8 @@ import i18n from '@/plugins/i18n';
 
 import flushPromises from 'flush-promises';
 
-import { ClimbState, Team, User } from '@/models.ts';
-import { deepCopy } from '@/testutil.ts';
+import { ClimbState, Team, User } from '@/models';
+import { deepCopy } from '@/testutil';
 import Profile from './Profile.vue';
 
 // Hardcoded test data to insert into Firestore.
@@ -53,7 +53,7 @@ const fullTeamDoc: Team = {
 const invitePath = `invites/${teamInvite}`;
 const inviteDoc = { team: teamID };
 
-describe('Routes', () => {
+describe('Profile', () => {
   let wrapper: Wrapper<Vue>;
 
   beforeEach(() => {
@@ -114,6 +114,7 @@ describe('Routes', () => {
 
     const newName = 'Some Other Name';
     field.vm.$emit('change', newName);
+    await flushPromises();
 
     expect(getValue(field)).toEqual(newName);
     const newUserDoc = deepCopy(singleUserDoc);
@@ -125,6 +126,7 @@ describe('Routes', () => {
     await init(joinedUserDoc, nonFullTeamDoc);
     const newName = 'Some Other Name';
     findRef('userNameField').vm.$emit('change', newName);
+    await flushPromises();
 
     // The name should be updated both in the user doc and in the team doc.
     const newUserDoc = deepCopy(joinedUserDoc);
@@ -143,6 +145,7 @@ describe('Routes', () => {
 
     const newName = 'New Team Name';
     field.vm.$emit('change', newName);
+    await flushPromises();
 
     expect(getValue(field)).toEqual(newName);
     const newTeamDoc = deepCopy(nonFullTeamDoc);
@@ -158,6 +161,7 @@ describe('Routes', () => {
     userField.vm.$emit('change', '\r\n Sissy\t Spacek \n  ');
     const teamField = findRef('teamNameField');
     teamField.vm.$emit('change', ' \t Space  \nCadets  \v');
+    await flushPromises();
 
     // Runs of one or more whitespace characters should be replaced by single
     // spaces in both the text fields and the Firestore docs.

@@ -258,11 +258,19 @@ const mockDeleteSentinel = {};
 
 jest.mock('firebase');
 jest.mock('firebase/app', () => {
-  const obj = {
-    initializeApp: () => {},
+  // This implementation is gross, since we'll return a new object each time
+  // e.g. firebase.firestore() is called. I think we can get away with it for
+  // now since all of these are just wrappers around groups of methods, though.
+  const app = {
+    initializeApp: () => app,
     auth: () => ({
       get currentUser() {
         return MockFirebase.currentUser;
+      },
+      onAuthStateChanged: (observer: any) => {
+        new Promise(() => {
+          observer(MockFirebase.currentUser);
+        });
       },
     }),
     firestore: () => ({
@@ -272,11 +280,13 @@ jest.mock('firebase/app', () => {
       enablePersistence: () => new Promise(resolve => resolve()),
     }),
   };
-  // Also set weird sentinel values that live on the firestore method.
-  (obj.firestore as any).FieldValue = {
+
+  // Also set weird sentinel value that lives on the firestore method.
+  (app.firestore as any).FieldValue = {
     delete: () => mockDeleteSentinel,
   };
-  return obj;
+
+  return app;
 });
 
 // TODO: Is this actually necessary? These modules are imported for their side

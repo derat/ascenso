@@ -39,7 +39,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { auth } from '@/firebase/auth';
+import { getAuth } from '@/firebase';
 
 // An entry in the navigation drawer.
 interface NavItem {
@@ -69,11 +69,13 @@ export default class Toolbar extends Vue {
       text: 'Sign out',
       icon: 'exit_to_app',
       method: () => {
-        auth.signOut().then(() => {
-          // It makes no sense to me, but this.$router produces an exception
-          // here: "TypeError: Cannot read property '_router' of undefined".
-          // this.$root.$router works, though...
-          this.$root.$router.replace('login');
+        getAuth().then(auth => {
+          auth.signOut().then(() => {
+            // It makes no sense to me, but this.$router produces an exception
+            // here: "TypeError: Cannot read property '_router' of undefined".
+            // this.$root.$router works, though...
+            this.$root.$router.replace('login');
+          });
         });
       },
     },

@@ -8,7 +8,7 @@ import Vuetify from 'vuetify';
 
 import ClimbDropdown from './ClimbDropdown.vue';
 import RouteList from './RouteList.vue';
-import { ClimbState, ClimberInfo, SetClimbStateEvent } from '@/models.ts';
+import { ClimbState, ClimberInfo, SetClimbStateEvent } from '@/models';
 
 Vue.use(Vuetify);
 
