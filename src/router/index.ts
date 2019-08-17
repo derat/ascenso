@@ -7,7 +7,7 @@
 
 import VueRouter from 'vue-router';
 
-import { auth } from '@/firebase';
+import { auth } from '@/firebase/auth';
 
 // Lazily load the Login view since it imports firebaseui, which is 200+ KB.
 // See https://alexjover.com/blog/lazy-load-in-vue-using-webpack-s-code-splitting/

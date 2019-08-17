@@ -39,7 +39,7 @@
 
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator';
-import { auth } from '@/firebase';
+import { auth } from '@/firebase/auth';
 
 import Perf from '@/mixins/Perf.ts';
 import Toolbar from '@/components/Toolbar.vue';

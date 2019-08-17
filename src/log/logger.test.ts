@@ -2,13 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import firebase from 'firebase/app';
-type HttpsCallable = firebase.functions.HttpsCallable;
-type HttpsCallableResult = firebase.functions.HttpsCallableResult;
-
 import {
-  LogRecord,
   Logger,
+  LogFunc,
+  LogFuncResult,
+  LogRecord,
   makeKeyPrefix,
   queuedKeySuffix,
   sendingKeySuffix,
@@ -36,8 +34,8 @@ function newRecord(time: number, code: string): LogRecord {
 // Logger and tests.
 class Endpoint {
   // Resolve and reject functions for the promise returned to Logger via _log().
-  _logResolve?: (data: HttpsCallableResult) => void;
-  _logReject?: (data: HttpsCallableResult) => void;
+  _logResolve?: (data: LogFuncResult) => void;
+  _logReject?: (data: LogFuncResult) => void;
   // Resolve function for the promise returned via handleCall().
   _handleCallResolve?: (data?: CloudFuncData) => void;
 
@@ -49,7 +47,7 @@ class Endpoint {
   // Implementation of the "Log" Cloud Function. Saves the supplied data so it
   // can be passed to the test and returns a promise that will be fulfilled once
   // the test has called handleCall.
-  _log(data?: any): Promise<HttpsCallableResult> {
+  _log(data?: any): Promise<LogFuncResult> {
     return new Promise((resolve, reject) => {
       if (this._logResolve) {
         throw new Error('Log function called again before handleCall');
@@ -95,7 +93,7 @@ class Endpoint {
   }
 
   // Returns the Cloud Function callable that should be passed to Logger.
-  getLogFunc(): HttpsCallable {
+  getLogFunc(): LogFunc {
     return this._log.bind(this);
   }
 }
@@ -129,10 +127,12 @@ describe('Logger', () => {
   });
 
   // Creates a new Logger with the supplied logging interval.
-  function createLogger(intervalMs: number) {
+  // The |logFunc| argument can be supplied to pass a promised logging function
+  // to the Logger instead of passing |endpoint|'s function.
+  function createLogger(intervalMs: number, logFunc?: Promise<LogFunc>) {
     logger = new Logger(
       name,
-      endpoint.getLogFunc(),
+      logFunc || endpoint.getLogFunc(),
       intervalMs,
       () => now,
       () => online
@@ -305,6 +305,29 @@ describe('Logger', () => {
     callListeners('online');
 
     // The record should be sent now.
+    endpoint.handleCall(true).then(data => {
+      expect(data).toEqual(new CloudFuncData(now, [rec]));
+      expect(logger.isSendScheduled()).toBe(false);
+      done();
+    });
+  });
+
+  it('defers logging when passed a promise', done => {
+    // Give the logger a promise for a log function.
+    createLogger(
+      5,
+      new Promise(resolve => {
+        resolve(endpoint.getLogFunc());
+      })
+    );
+
+    // Sending shouldn't be scheduled initially since the logger doesn't have a
+    // log function yet (since it's still waiting on the promise).
+    const rec = newRecord(now, 'code');
+    sendRecord(rec);
+    expect(logger.isSendScheduled()).toBe(false);
+
+    // After the promise is resolved, the record should be sent.
     endpoint.handleCall(true).then(data => {
       expect(data).toEqual(new CloudFuncData(now, [rec]));
       expect(logger.isSendScheduled()).toBe(false);

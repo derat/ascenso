@@ -33,7 +33,9 @@ import { Component, Mixins, Watch } from 'vue-property-decorator';
 import firebase from 'firebase/app';
 import firebaseui from 'firebaseui';
 
-import { auth, db, getUser, logInfo } from '@/firebase';
+import { auth, getUser } from '@/firebase/auth';
+import { db } from '@/firebase/firestore';
+import { logInfo } from '@/log';
 import Card from '@/components/Card.vue';
 import Perf from '@/mixins/Perf.ts';
 import Spinner from '@/components/Spinner.vue';

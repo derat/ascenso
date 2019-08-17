@@ -4,7 +4,8 @@
 
 import Vue from 'vue';
 import { Component, Watch } from 'vue-property-decorator';
-import { db, getUser } from '@/firebase';
+import { getUser } from '@/firebase/auth';
+import { db } from '@/firebase/firestore';
 import { User, Team } from '@/models';
 
 type DocumentReference = firebase.firestore.DocumentReference;

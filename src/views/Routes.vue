@@ -26,7 +26,8 @@ import { Component, Mixins, Watch } from 'vue-property-decorator';
 
 import firebase from 'firebase/app';
 
-import { db, logInfo, logError } from '@/firebase';
+import { db } from '@/firebase/firestore';
+import { logInfo, logError } from '@/log';
 import {
   ClimberInfo,
   ClimbState,
