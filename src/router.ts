@@ -11,7 +11,6 @@ import { getAuth } from '@/firebase';
 import Login from '@/views/Login.vue';
 import Profile from '@/views/Profile.vue';
 import Routes from '@/views/Routes.vue';
-import Scoreboard from '@/views/Scoreboard.vue';
 import Statistics from '@/views/Statistics.vue';
 
 const router = new VueRouter({
@@ -32,12 +31,6 @@ const router = new VueRouter({
       name: 'routes',
       path: '/routes',
       component: Routes,
-      meta: { auth: true },
-    },
-    {
-      name: 'scores',
-      path: '/scores',
-      component: Scoreboard,
       meta: { auth: true },
     },
     {
