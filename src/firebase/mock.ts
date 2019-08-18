@@ -272,6 +272,12 @@ jest.mock('firebase/app', () => {
           observer(MockFirebase.currentUser);
         });
       },
+      signOut: () => {
+        MockFirebase.currentUser = null;
+        return new Promise(resolve => {
+          resolve();
+        });
+      },
     }),
     firestore: () => ({
       batch: () => new MockWriteBatch(),

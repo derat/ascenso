@@ -68,7 +68,7 @@
               </v-btn>
             </template>
 
-            <DialogCard title="Invite Code">
+            <DialogCard title="Invite code">
               <v-card-text>
                 <div class="invite-code mb-2">{{ teamDoc.invite }}</div>
                 <div>
@@ -100,7 +100,7 @@
               >
             </template>
 
-            <DialogCard title="Leave Team">
+            <DialogCard title="Leave team">
               <v-card-text>
                 Are you sure you want to leave your team?
               </v-card-text>
@@ -146,7 +146,7 @@
               >
             </template>
 
-            <DialogCard title="Join Team">
+            <DialogCard title="Join team">
               <v-card-text>
                 <div>
                   Ask your teammate to give you the {{ inviteCodeLength }}-digit
@@ -208,7 +208,7 @@
               >
             </template>
 
-            <DialogCard title="Create Team">
+            <DialogCard title="Create team">
               <v-card-text>
                 <div>
                   After creating a new team, you'll get an invite code to give
