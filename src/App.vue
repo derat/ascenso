@@ -15,6 +15,7 @@
       <router-view
         @success-msg="onMessage($event, 'success', 3000)"
         @error-msg="onMessage($event, 'error', 6000)"
+        @warning-msg="onMessage($event, 'warning', 6000)"
         @info-msg="onMessage($event, 'info', 3000)"
       />
 

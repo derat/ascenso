@@ -24,7 +24,11 @@
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 
-import { getFirestore } from '@/firebase';
+import {
+  getFirestore,
+  getFirestorePersistence,
+  FirestorePersistence,
+} from '@/firebase';
 import { logInfo, logError } from '@/log';
 import {
   ClimberInfo,
@@ -122,6 +126,12 @@ export default class Routes extends Mixins(Perf, UserLoader) {
         () => {
           this.loadedSortedData = true;
           this.recordEvent('loadedSortedData');
+
+          // Display a warning to the user if offline Firestore is unavailable.
+          // TODO: Would it be better to just display this once?
+          if (getFirestorePersistence() == FirestorePersistence.DISABLED) {
+            this.$emit('warning-msg', 'Offline mode unsupported');
+          }
         },
         err => {
           this.$emit('error-msg', `Failed loading route data: {err}`);

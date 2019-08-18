@@ -21,8 +21,20 @@ export function getAuth(): Promise<firebase.auth.Auth> {
   ]).then(([init, _]) => init.app.auth());
 }
 
-// Tracks whether first-time Firestore setup has been performed.
-let initializedFirestore = false;
+// Firestore persistence state.
+export enum FirestorePersistence {
+  UNINITIALIZED,
+  INITIALIZING,
+  ENABLED,
+  DISABLED,
+}
+
+let persistence = FirestorePersistence.UNINITIALIZED;
+
+// Returns the current state of Firestore persistence (i.e. offline support).
+export function getFirestorePersistence() {
+  return persistence;
+}
 
 // Loads Cloud Firestore asynchronously.
 export function getFirestore(): Promise<firebase.firestore.Firestore> {
@@ -30,20 +42,22 @@ export function getFirestore(): Promise<firebase.firestore.Firestore> {
     import(/* webpackChunkName: "firebase-init" */ './init'),
     import(/* webpackChunkName: "firebase-firestore" */ 'firebase/firestore'),
   ]).then(([init, _]) => {
-    if (!initializedFirestore) {
-      // Enable persistence the first time the module is loaded:
-      // https://firebase.google.com/docs/firestore/manage-data/enable-offline
+    // Enable persistence the first time the module is loaded:
+    // https://firebase.google.com/docs/firestore/manage-data/enable-offline
+    if (persistence == FirestorePersistence.UNINITIALIZED) {
+      persistence = FirestorePersistence.INITIALIZING;
       init.app
         .firestore()
-        .enablePersistence()
+        .enablePersistence({ synchronizeTabs: true })
+        .then(() => {
+          persistence = FirestorePersistence.ENABLED;
+        })
         .catch(err => {
+          persistence = FirestorePersistence.DISABLED;
           import('@/log').then(log => {
-            // 'failed-precondition' means that multiple tabs are open.
-            // 'unimplemented' means a lack of browser support.
             log.logError('firestore_persistence_failed', err);
           });
         });
-      initializedFirestore = true;
     }
 
     return init.app.firestore();
