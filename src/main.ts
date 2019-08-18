@@ -64,6 +64,8 @@ import App from '@/App.vue';
 import i18n from '@/plugins/i18n';
 import router from '@/router';
 
+import '@/register-service-worker';
+
 // Defer Vue initialization until Firebase has determined if the user has
 // authenticated or not. Otherwise, router.beforeEach may end up trying to
 // inspect Firebase's auth state before it's been initialized.
