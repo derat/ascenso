@@ -41,4 +41,36 @@ module.exports = {
       openAnalyzer: false,
     },
   },
+  pwa: {
+    // See https://www.npmjs.com/package/@vue/cli-plugin-pwa.
+    // The model here is weird: all of this is just used to inject tags into
+    // index.html (apart from |workboxOptions|, which is used to generate
+    // service-worker.js). We're still on the hook for supplying the
+    // manifest.json file ourselves.
+    name: process.env.VUE_APP_COMPETITION_NAME,
+    manifestPath: 'manifest.json',
+    workboxOptions: {
+      // Serve the index for non-precached URLs.
+      navigateFallback: '/index.html',
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
+          handler: 'cacheFirst',
+          method: 'GET',
+        },
+      ],
+    },
+    // We could just declare all of the following values ourselves in
+    // public/index.html, but cli-plugin-pwa insists on inserting them there.
+    themeColor: '#1e88e5', // colors.blue.darken1
+    msTileColor: '#ffc40d',
+    iconPaths: {
+      favicon32: process.env.VUE_APP_FAVICON_32_PATH,
+      favicon16: process.env.VUE_APP_FAVICON_16_PATH,
+      appleTouchIcon: process.env.VUE_APP_APPLE_TOUCH_ICON_PATH,
+      maskIcon: process.env.VUE_APP_APPLE_MASK_PATH,
+      msTileImage: process.env.VUE_APP_MS_TILE_150_PATH,
+    },
+    // TODO: Enable Apple's partial PWA support?
+  },
 };
