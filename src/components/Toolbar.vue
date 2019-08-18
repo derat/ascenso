@@ -62,8 +62,7 @@ export default class Toolbar extends Vue {
   // Navigation drawer entries.
   navItems: readonly NavItem[] = Object.freeze([
     { text: 'Routes', icon: 'view_list', route: 'routes' },
-    { text: 'Scoreboard', icon: 'assessment', route: 'scores' },
-    { text: 'Statistics', icon: 'score', route: 'stats' },
+    { text: 'Statistics', icon: 'assessment', route: 'stats' },
     { text: 'Profile', icon: 'person', route: 'profile' },
     {
       text: 'Sign out',
