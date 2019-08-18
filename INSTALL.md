@@ -42,16 +42,16 @@ npm install
 
 A file named `.env.local` must be created in the root of the repository to
 provide site-specific configuration to the app. See the checked-in, fallback
-`.env` file for details.
+[.env](./.env) file for details.
 
 ### .firebaserc
 
-The checked-in `firebase.json` file configures Firebase Hosting to use a `prod`
-target that deploys to a site with a name that differs from the default (i.e.
-`<project ID>.web.app`). Sometimes a desired name won't be available as a
-Firebase (or Google Cloud) Project ID, but will still be available as a Firebase
-Hosting site name. It's possible to add an additional site in Firebase Hosting
-in this scenario.
+The checked-in [firebase.json](./firebase.json) file configures Firebase Hosting
+to use a `prod` target that deploys to a site with a name that differs from the
+default (i.e. `<project ID>.web.app`). Sometimes a desired name won't be
+available as a Firebase (or Google Cloud) Project ID, but will still be
+available as a Firebase Hosting site name. It's possible to add an additional
+site in Firebase Hosting in this scenario.
 
 With a project ID of `myapp-1234` and a desired site name of `myapp`, use a
 `.firebaserc` similar to the following to deploy the app to `myapp.web.app`
@@ -98,7 +98,7 @@ Also add an object similar to the following to the `hosting` list in
     {
       "source": "**",
       "destination": "https://myapp.web.app/",
-      "type": 301
+      "type": 302
     }
   ]
 }
