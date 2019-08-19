@@ -83,21 +83,15 @@ class MockDocumentReference {
     );
   }
   get() {
-    return new Promise(resolve => {
-      resolve(new MockDocumentSnapshot(MockFirebase.getDoc(this.path)));
-    });
+    return Promise.resolve(
+      new MockDocumentSnapshot(MockFirebase.getDoc(this.path))
+    );
   }
   set(data: Record<string, any>) {
-    return new Promise(resolve => {
-      MockFirebase.setDoc(this.path, data);
-      resolve();
-    });
+    return Promise.resolve(MockFirebase.setDoc(this.path, data));
   }
   update(props: Record<string, any>) {
-    return new Promise(resolve => {
-      MockFirebase._updateDoc(this.path, props);
-      resolve();
-    });
+    return Promise.resolve(MockFirebase._updateDoc(this.path, props));
   }
 }
 
@@ -159,9 +153,7 @@ class MockWriteBatch {
 export class MockUser {
   constructor(public uid: string, public displayName: string) {}
   getIdToken() {
-    return new Promise(resolve => {
-      resolve('token');
-    });
+    return Promise.resolve('token');
   }
 }
 
@@ -231,9 +223,7 @@ export const MockFirebase = new class {
   mountMocks: Record<string, any> = {
     $bind: function(name: string, ref: DocumentReference) {
       if (!MockFirebase._docs.hasOwnProperty(ref.path)) {
-        return new Promise((resolve, reject) =>
-          reject(`No document at ${ref.path}`)
-        );
+        return Promise.reject(`No document at ${ref.path}`);
       }
 
       // Record the binding so we can handle updates later.
@@ -246,7 +236,7 @@ export const MockFirebase = new class {
       // Assign the data to the Vue.
       const data = deepCopy(MockFirebase._docs[ref.path]);
       (this as Vue).$data[name] = data;
-      return new Promise(resolve => resolve(data));
+      return Promise.resolve(data);
     },
 
     $unbind: function(name: string) {
@@ -280,22 +270,21 @@ jest.mock('firebase/app', () => {
         return MockFirebase.currentUser;
       },
       onAuthStateChanged: (observer: any) => {
-        new Promise(() => {
+        new Promise(resolve => {
           observer(MockFirebase.currentUser);
+          resolve();
         });
       },
       signOut: () => {
         MockFirebase.currentUser = null;
-        return new Promise(resolve => {
-          resolve();
-        });
+        return Promise.resolve();
       },
     }),
     firestore: () => ({
       batch: () => new MockWriteBatch(),
       collection: (path: string) => new MockCollectionReference(path),
       doc: (path: string) => new MockDocumentReference(path),
-      enablePersistence: () => new Promise(resolve => resolve()),
+      enablePersistence: () => Promise.resolve(),
     }),
   };
 
