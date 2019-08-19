@@ -17,6 +17,7 @@ const (
 	indexedDataDocPath = "global/indexedData"
 	sortedDataDocPath  = "global/sortedData"
 	teamCollectionPath = "teams"
+	userCollectionPath = "users"
 )
 
 // getDoc fetches a snapshot of the document at ref and decodes it into out,
@@ -159,4 +160,15 @@ type team struct {
 		// Climbs contains a map from route ID (see route.ID) to state.
 		Climbs map[string]climbState `firestore:"climbs"`
 	} `firestore:"users"`
+}
+
+// user contains information about a user.
+// It correponds to documents in the collection at userCollectionPath.
+type user struct {
+	// Name contains the user's name.
+	Name string `firestore:"name"`
+	// Climbs contains the user's climbs. It's only used if the user isn't on a team.
+	Climbs map[string]climbState `firestore:"climbs"`
+	// Team contains the user's team ID. It's empty if they aren't on a team.
+	Team string `firestore:"team"`
 }

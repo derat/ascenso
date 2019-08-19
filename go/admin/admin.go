@@ -48,6 +48,10 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 
 		action := r.FormValue("action")
 		switch action {
+		case "clearScores":
+			handleClearScores(ctx, w, r, client)
+		case "emptyTeams":
+			handleEmptyTeams(ctx, w, r, client)
 		case "routes":
 			handlePostRoutes(ctx, w, r, client)
 		case "scores":
@@ -77,49 +81,83 @@ func checkPassword(ctx context.Context, client *firestore.Client, password strin
 const getHTML = `
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Admin</title>
-  <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 14px;
-    }
-    .input-row {
-      display: flex;
-      padding: 5px;
-      align-items: baseline;
-    }
-    .label {
-      min-width: 100px;
-    }
-  </style>
-</head>
-<body>
-  <form enctype="multipart/form-data" method="POST">
-    <h1>Admin</h1>
+  <head>
+    <title>Admin</title>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+      }
+      .input-row {
+        display: flex;
+        padding: 5px;
+        align-items: baseline;
+      }
+      .label {
+        min-width: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <form enctype="multipart/form-data" method="POST">
+      <h1>Admin</h1>
 
-	<div class="input-row">
-      <span class="label">Password</span>
-      <input name="password" type="password" />
-    </div>
+      <p>A password must be supplied to perform any admin operations.</p>
+      <div class="input-row">
+        <span class="label">Password</span>
+        <input name="password" type="password" />
+      </div>
 
-    <h2>View scores</h2>
-    <div class="input-row">
-      <button name="action" value="scores" type="submit">View</button>
-    </div>
+      <h2>View scores</h2>
+      <p>View a scoreboard listing all teams.</p>
+      <div class="input-row">
+        <button name="action" value="scores" type="submit">View scores</button>
+      </div>
 
-    <h2>Update routes</h2>
-    <div class="input-row">
-      <span class="label">Areas CSV</span>
-      <input name="areas" type="file" accept=".csv" />
-    </div>
-    <div class="input-row">
-      <span class="label">Routes CSV</span>
-      <input name="routes" type="file" accept=".csv" />
-    </div>
-    <div class="input-row">
-      <button name="action" value="routes" type="submit">Upload</button>
-    </div>
-  </form>
-</body>
+      <h2>Update routes</h2>
+      <p>
+        Upload new area and route data in CSV format and use it to replace the
+        existing data.
+      </p>
+      <div class="input-row">
+        <span class="label">Areas CSV</span>
+        <input name="areas" type="file" accept=".csv" />
+      </div>
+      <div class="input-row">
+        <span class="label">Routes CSV</span>
+        <input name="routes" type="file" accept=".csv" />
+      </div>
+      <div class="input-row">
+        <button name="action" value="routes" type="submit">
+          Update routes
+        </button>
+      </div>
+
+      <h2>Delete empty teams</h2>
+      <p>Delete all teams that don't have any members.</p>
+      <div class="input-row">
+        <button name="action" value="emptyTeams" type="submit">
+          Delete empty teams
+        </button>
+      </div>
+
+      <h2>Clear scores</h2>
+      <p>Clear scores for all teams and users.</p>
+      <div class="input-row">
+        <span class="label">Confirm</span>
+        <input
+          name="confirm"
+          type="text"
+          autocomplete="off"
+          placeholder="Type 'REALLY CLEAR SCORES'"
+          style="min-width: 15em"
+        />
+      </div>
+      <div class="input-row">
+        <button name="action" value="clearScores" type="submit">
+          Clear scores
+        </button>
+      </div>
+    </form>
+  </body>
 </html>`
