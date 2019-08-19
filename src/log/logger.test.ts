@@ -314,12 +314,7 @@ describe('Logger', () => {
 
   it('defers logging when passed a promise', done => {
     // Give the logger a promise for a log function.
-    createLogger(
-      5,
-      new Promise(resolve => {
-        resolve(endpoint.getLogFunc());
-      })
-    );
+    createLogger(5, Promise.resolve(endpoint.getLogFunc()));
 
     // Sending shouldn't be scheduled initially since the logger doesn't have a
     // log function yet (since it's still waiting on the promise).

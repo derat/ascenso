@@ -26,12 +26,14 @@ function getLogFunc(): LogFunc | Promise<LogFunc> {
     return getFunctions().then(functions => functions.httpsCallable('Log'));
   }
   if (isDev && devLogDest == LogDest.CONSOLE) {
-    return (data?: any) => {
-      console.log(data);
-      return new Promise(resolve => resolve({ data: {} }));
+    return data => {
+      for (const rec of data.records) {
+        console.log(`${rec.severity} ${rec.code}:`, rec.payload);
+      }
+      return Promise.resolve({ data: {} });
     };
   }
-  return () => new Promise(resolve => resolve({ data: {} }));
+  return () => Promise.resolve({ data: {} });
 }
 
 const defaultLogger = new Logger('log', getLogFunc());
