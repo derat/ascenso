@@ -7,44 +7,9 @@
 
 import VueRouter from 'vue-router';
 import { getAuth } from '@/firebase';
+import routes from './routes';
 
-import Login from '@/views/Login.vue';
-import Profile from '@/views/Profile.vue';
-import Routes from '@/views/Routes.vue';
-import Statistics from '@/views/Statistics.vue';
-
-const router = new VueRouter({
-  mode: 'history',
-  routes: [
-    {
-      name: 'login',
-      path: '/login',
-      component: Login,
-    },
-    {
-      name: 'profile',
-      path: '/profile',
-      component: Profile,
-      meta: { auth: true },
-    },
-    {
-      name: 'routes',
-      path: '/routes',
-      component: Routes,
-      meta: { auth: true },
-    },
-    {
-      name: 'stats',
-      path: '/stats',
-      component: Statistics,
-      meta: { auth: true },
-    },
-    {
-      path: '*',
-      redirect: '/login',
-    },
-  ],
-});
+const router = new VueRouter({ mode: 'history', routes });
 
 router.beforeEach((to, from, next) => {
   getAuth().then(auth => {

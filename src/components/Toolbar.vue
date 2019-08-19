@@ -4,26 +4,36 @@
 
 <template>
   <div>
-    <v-navigation-drawer v-model="drawer" app>
+    <v-navigation-drawer ref="drawer" v-model="drawer" app>
       <v-list>
-        <v-list-tile
-          v-for="item in navItems"
-          :key="item.text"
-          :to="item.route ? { name: item.route } : ''"
-          v-on="item.method ? { click: item.method } : null"
-        >
-          <v-list-tile-action>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-tile-action>
-          <v-list-tile-content>
-            <v-list-tile-title>{{ item.text }}</v-list-tile-title>
-          </v-list-tile-content>
-        </v-list-tile>
+        <template v-for="(item, index) in navItems">
+          <v-divider
+            v-if="item.divider"
+            :key="`divider-${index}`"
+            class="my-2"
+          />
+          <!-- Note that v-list-tile extends router-link:
+               https://stackoverflow.com/q/47586022. -->
+          <v-list-tile
+            v-else
+            :key="item.text"
+            :to="item.route ? { name: item.route } : ''"
+            v-on="item.method ? { click: item.method } : null"
+          >
+            <v-list-tile-action>
+              <v-icon>{{ item.icon }}</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-content>
+              <v-list-tile-title>{{ item.text }}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </template>
       </v-list>
     </v-navigation-drawer>
 
     <v-toolbar color="primary" app scroll-off-screen :scroll-threshold="32">
       <v-toolbar-side-icon
+        ref="toolbarIcon"
         @click.stop="drawer = !drawer"
         color="primary"
       ></v-toolbar-side-icon>
@@ -34,50 +44,87 @@
         {{ competitionName }}
       </v-toolbar-title>
     </v-toolbar>
+
+    <!-- "Sign out" dialog -->
+    <v-dialog
+      ref="signOutDialog"
+      v-model="signOutDialogShown"
+      max-width="320px"
+    >
+      <DialogCard title="Sign out">
+        <v-card-text>
+          Are you sure you want to sign out?
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn flat @click="signOutDialogShown = false">
+            Cancel
+          </v-btn>
+          <v-spacer />
+          <v-btn flat color="error" ref="confirmSignOutButton" @click="signOut">
+            Sign out
+          </v-btn>
+        </v-card-actions>
+      </DialogCard>
+    </v-dialog>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { getAuth } from '@/firebase';
+import DialogCard from '@/components/DialogCard.vue';
 
 // An entry in the navigation drawer.
 interface NavItem {
+  // If true, display a divider instead of an item.
+  divider?: boolean;
   // Title to display.
-  text: string;
+  text?: string;
   // Material icon name to use.
-  icon: string;
+  icon?: string;
   // vue-router route name to navigate to when clicked.
   route?: string;
-  // Anonymous function to invoke when clicked.
+  // Method on Toolbar component to invoke when clicked.
+  // Note that things seem to go haywire if you try to pass an anonymous
+  // function here instead -- just define a method on Toolbar and pass an
+  // unbound reference to it.
   method?: () => void;
 }
 
-@Component
+@Component({
+  components: { DialogCard },
+})
 export default class Toolbar extends Vue {
   // Name to display in the toolbar.
   readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
   // Model for navigation drawer.
   drawer: any = null;
+  // Whether the "Sign out" dialog is shown.
+  signOutDialogShown = false;
+
   // Navigation drawer entries.
   navItems: readonly NavItem[] = Object.freeze([
     { text: 'Routes', icon: 'view_list', route: 'routes' },
     { text: 'Statistics', icon: 'assessment', route: 'stats' },
     { text: 'Profile', icon: 'person', route: 'profile' },
-    {
-      text: 'Sign out',
-      icon: 'exit_to_app',
-      method: () => {
-        getAuth().then(auth => {
-          auth.signOut().then(() => {
-            // It makes no sense to me, but this.$router produces an exception
-            // here: "TypeError: Cannot read property '_router' of undefined".
-            // this.$root.$router works, though...
-            this.$root.$router.replace('login');
-          });
-        });
-      },
-    },
+    { divider: true },
+    { text: 'Sign out', icon: 'exit_to_app', method: this.onSignOutNav },
   ]);
+
+  // Handles the "Sign out" navigation drawer item being clicked.
+  onSignOutNav() {
+    this.signOutDialogShown = true;
+    this.drawer = null;
+  }
+
+  // Handles the "Sign out" button being clicked in the "Sign out" dialog.
+  signOut() {
+    getAuth().then(auth => {
+      auth.signOut().then(() => {
+        this.$router.replace('login');
+      });
+    });
+  }
 }
 </script>

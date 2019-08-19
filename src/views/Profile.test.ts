@@ -14,7 +14,7 @@ import i18n from '@/plugins/i18n';
 import flushPromises from 'flush-promises';
 
 import { ClimbState, Team, User } from '@/models';
-import { deepCopy } from '@/testutil';
+import { deepCopy, getValue } from '@/testutil';
 import Profile from './Profile.vue';
 
 // Hardcoded test data to insert into Firestore.
@@ -91,14 +91,6 @@ describe('Profile', () => {
   // the element via a 'ref' attribute in the template.
   function findRef(ref: string): Wrapper<Vue> {
     return wrapper.find({ ref });
-  }
-
-  // Returns the 'value' attribute from the Vuetify component wrapped by |w|.
-  // TODO: Is there any way to avoid this 'as any' cast? I'm not
-  // sure that there are TypeScript types for all Vuetify components:
-  // https://github.com/vuetifyjs/vuetify/issues/5962
-  function getValue(w: Wrapper<Vue>): any {
-    return (w.vm as any).value;
   }
 
   // Validates the v-form component wrapped by |w|.
