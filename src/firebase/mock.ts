@@ -87,6 +87,12 @@ class MockDocumentReference {
       resolve(new MockDocumentSnapshot(MockFirebase.getDoc(this.path)));
     });
   }
+  set(data: Record<string, any>) {
+    return new Promise(resolve => {
+      MockFirebase.setDoc(this.path, data);
+      resolve();
+    });
+  }
   update(props: Record<string, any>) {
     return new Promise(resolve => {
       MockFirebase._updateDoc(this.path, props);
@@ -97,7 +103,7 @@ class MockDocumentReference {
 
 // Stub implementation of firebase.firestore.DocumentSnapshot.
 class MockDocumentSnapshot {
-  _data: Record<string, any>;
+  _data: Record<string, any> | undefined;
   constructor(data: Record<string, any>) {
     this._data = data;
   }
@@ -107,7 +113,10 @@ class MockDocumentSnapshot {
   get(field: string) {
     // TODO: Implement dotted field paths if we need them.
     if (field.indexOf('.') != -1) throw new Error('Field paths unsupported');
-    return this._data[field];
+    return this._data ? this._data[field] : undefined;
+  }
+  get exists() {
+    return this._data !== undefined;
   }
 }
 
@@ -256,6 +265,9 @@ export const MockFirebase = new class {
 // Sentinel value for firebase.firestore.FieldValue.delete().
 const mockDeleteSentinel = {};
 
+export const MockEmailAuthProviderID = 'email';
+export const MockGoogleAuthProviderID = 'google';
+
 jest.mock('firebase');
 jest.mock('firebase/app', () => {
   // This implementation is gross, since we'll return a new object each time
@@ -292,6 +304,14 @@ jest.mock('firebase/app', () => {
     delete: () => mockDeleteSentinel,
   };
 
+  // Set some random const properties on the auth method.
+  (app.auth as any).EmailAuthProvider = {
+    PROVIDER_ID: MockEmailAuthProviderID,
+  };
+  (app.auth as any).GoogleAuthProvider = {
+    PROVIDER_ID: MockGoogleAuthProviderID,
+  };
+
   return app;
 });
 
@@ -300,3 +320,46 @@ jest.mock('firebase/app', () => {
 jest.mock('firebase/auth');
 jest.mock('firebase/firestore');
 jest.mock('firebase/functions');
+
+// Mock implementation of firebaseui.auth.AuthUI.
+export const MockAuthUI = new class {
+  // Return value for isPendingRedirect(). This is false when the page is first
+  // loaded and then true when redirecting back to it after authentication has
+  // been performed.
+  pendingRedirect = false;
+  // Container element ID passed to start().
+  containerID: string | null = null;
+  // Configuration object passed to start().
+  config: Record<string, any> | null = null;
+
+  constructor() {
+    this.reset();
+  }
+
+  // Resets data to defaults.
+  reset() {
+    this.pendingRedirect = false;
+    this.containerID = null;
+    this.config = null;
+  }
+
+  isPendingRedirect() {
+    return this.pendingRedirect;
+  }
+
+  start(id: string, config: object) {
+    this.containerID = id;
+    this.config = config;
+  }
+}();
+
+jest.mock('firebaseui', () => {
+  return {
+    auth: {
+      AuthUI: {
+        // Pretend like an instance has already been created.
+        getInstance: () => MockAuthUI,
+      },
+    },
+  };
+});

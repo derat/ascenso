@@ -3,10 +3,10 @@
      found in the LICENSE file. -->
 
 <template>
-  <div id="container">
+  <div id="wrapper">
     <!-- We use v-show rather than v-if here so that FirebaseUI can find the
          auth container in the DOM immediately. -->
-    <v-container v-show="ready" grid-list-md text-ms-center>
+    <v-container ref="container" v-show="ready" grid-list-md text-ms-center>
       <v-layout row justify-center>
         <!-- These widths are chosen to match those of the <Card> below. -->
         <v-flex xs12 sm8 md6>
@@ -108,7 +108,7 @@ export default class Login extends Mixins(Perf) {
 
 <style src="firebaseui/dist/firebaseui.css"></style>
 <style scoped>
-#container {
+#wrapper {
   /* Needed in order for spinner to be vertically centered. */
   display: inline;
 }
