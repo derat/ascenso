@@ -48,6 +48,7 @@ if (!isTestEnv) {
 }
 
 Vue.config.productionTip = false;
+Vue.config.devtools = false;
 
 // Uncomment to turn on performance tracing.
 //Vue.config.performance = true;
