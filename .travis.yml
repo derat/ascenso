@@ -2,8 +2,12 @@ matrix:
   include:
     - language: node_js
       node_js: lts/*
+      install:
+        - npm install
+        - firebase setup:emulators:firestore
       script:
         - npm run test:unit
+        - npm run test:firestore
     - language: go
       # Cloud Functions currently uses a Go runtime based on 1.11.6:
       # https://cloud.google.com/functions/docs/concepts/go-runtime
