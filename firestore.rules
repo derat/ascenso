@@ -1,12 +1,46 @@
+// Copyright 2019 Daniel Erat and Niniane Wang. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 rules_version = '2';
+
+// Documentation about this format:
+//   https://firebase.google.com/docs/database/security
+//   https://firebase.google.com/docs/rules
+//   https://firebase.google.com/docs/reference/rules/rules
+//
+// Basic stuff to keep in mind:
+// - resource.data is a Map containing the doc's data before an update.
+// - request.resource.data is a Map containing the doc's data after an update.
+// - getAfter() returns a Map containing a doc's data after the current
+//   transaction or batched write finishes.
+// - Field existence checks take this form:
+//     "key" in request.resource.data
+// - Null checks should only be used when checking non-document data like
+//   |request.auth|. I think.
+// - Be careful about quoting the left-hand operand to 'in':
+//     "uid" in doc: checks for a field named "uid"
+//     uid in doc:   checks for a field named after the value in variable |uid|
+
+// Returns true if the user is logged in.
+function loggedIn() {
+  return request.auth != null && request.auth.uid != null;
+}
+
+// Returns true if |name| is a valid user or team name.
+function nameValid(name) {
+  // The 50 here matches nameMaxLength in src/views/Profile.vue.
+  return name != "" && name.size() <= 50;
+}
+
+// Returns true if |code| is a properly-formatted team invitation code.
+function inviteCodeValid(code) {
+  // The 6 here matches inviteCodeLength in src/views/Profile.vue.
+  return code.size() == 6 && int(code) >= 0;
+}
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Returns true if the user is logged in.
-    function loggedIn() {
-      return request.auth != null && request.auth.uid != null;
-    }
-
     // Let anyone get /global/config.
     match /global/config {
       allow get: if true;
@@ -18,26 +52,133 @@ service cloud.firestore {
     }
 
     // Give users full access to their own docs.
-    // TODO: Validate fields here.
     match /users/{uid} {
-      allow get, write: if loggedIn() && request.auth.uid == uid;
+      // Returns true if |doc| contains valid data.
+      function userDocValid(doc) {
+        return "name" in doc && nameValid(doc.name);
+      }
+
+      // Returns true if |uid| will be listed in the doc for team ID |team|
+      // after the current transaction or batched write completes.
+      function teamHasUser(team) {
+        return uid in getAfter(
+            /databases/$(database)/documents/teams/$(team)).data.users;
+      }
+
+      // Returns true if |newDoc| contains valid team-related data.
+      // |oldDoc| should contain the previous version of the document.
+      function checkUserDocTeam(newDoc, oldDoc) {
+        return
+            ( // Valid cases for the team in the updated document:
+              // - User won't be on a team after update.
+              !("team" in newDoc) ||
+              // - User will be on the same team as before.
+              ("team" in oldDoc && newDoc.team == oldDoc.team) ||
+              // - New team, and user is listed in the new team's doc.
+              teamHasUser(newDoc.team)
+            ) &&
+            ( // Valid cases for the team in the original document:
+              // - User wasn't on a team before.
+              !("team" in oldDoc) ||
+              // - User didn't leave their team.
+              ("team" in newDoc && newDoc.team == oldDoc.team) ||
+              // - User left and is no longer listed in old team's doc.
+              !teamHasUser(oldDoc.team)
+            );
+      }
+
+      // Let the user get their own document.
+      allow get: if loggedIn() && request.auth.uid == uid;
+
+      // When the user is created, they shouldn't be on a team yet.
+      allow create:
+        if loggedIn() && request.auth.uid == uid &&
+            userDocValid(request.resource.data) &&
+            !("team" in request.resource.data);
+
+      // For updates, we additionally check the team field.
+      allow update:
+        if loggedIn() && request.auth.uid == uid &&
+            userDocValid(request.resource.data) &&
+            checkUserDocTeam(request.resource.data, resource.data);
     }
 
-    match /teams/{tid} {
-      // Let all logged-in users create new teams.
-      allow create: if loggedIn();
+    match /teams/{team} {
+      // Returns true if |doc| is a valid team doc.
+      // Also checks that |uid| is a member of the team and has valid data.
+      function teamDocValid(doc, uid) {
+        return "name" in doc && nameValid(doc.name) &&
+            "invite" in doc && inviteCodeValid(doc.invite) &&
+            "users" in doc && doc.users.size() <= 2 &&
+            uid in doc.users &&
+            "name" in doc.users[uid] && nameValid(doc.users[uid].name) &&
+            "climbs" in doc.users[uid];
+      }
 
-      // Let team members access their team, and let all logged-in
-      // users access update incomplete teams (to add themselves).
-      allow get, update:
+      // Users can only read docs describing their own teams or non-full teams.
+      allow get: if loggedIn() &&
+          (
+            request.auth.uid in resource.data.users ||
+            resource.data.users.size() < 2
+          );
+
+      // All logged-in users can create new teams.
+      allow create:
         if loggedIn() &&
-            (request.auth.uid in resource.data.users ||
-             resource.data.users.size() < 2);
+            teamDocValid(request.resource.data, request.auth.uid) &&
+            // User is only member of new team.
+            request.resource.data.users.size() == 1 &&
+            request.auth.uid in request.resource.data.users &&
+            // User and invite docs reference team.
+            getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.team == team &&
+            getAfter(/databases/$(database)/documents/invites/$(request.resource.data.invite)).data.team == team;
+
+      // Users can add themselves to incomplete teams.
+      allow update:
+        if loggedIn() &&
+            teamDocValid(request.resource.data, request.auth.uid) &&
+            // Old team isn't full and doesn't contain user.
+            resource.data.users.size() < 2 &&
+            !(request.auth.uid in resource.data.users) &&
+            // New team has one more member and contains user.
+            request.resource.data.users.size() == resource.data.users.size() + 1 &&
+            request.auth.uid in request.resource.data.users &&
+            // User data is valid; other fields unchanged.
+            request.resource.data.name == resource.data.name &&
+            request.resource.data.invite == resource.data.invite &&
+            // User doc is updated to point at team.
+            getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.team == team;
+
+      // Let users update their team docs as long as they don't change the users
+      // on the team or its invite code.
+      allow update:
+        if loggedIn() &&
+            teamDocValid(request.resource.data, request.auth.uid) &&
+            request.auth.uid in resource.data.users &&
+            request.resource.data.users.keys().hasOnly(resource.data.users.keys()) &&
+            request.resource.data.invite == resource.data.invite;
+
+      // Let users remove themselves from their team if they don't make any
+      // other changes to the doc.
+      allow update:
+        if loggedIn() && // skip teamDocValid() since it expects user on team
+            request.auth.uid in resource.data.users &&
+            !(request.auth.uid in request.resource.data.users) &&
+            request.resource.data.users.size() == resource.data.users.size() - 1 &&
+            request.resource.data.name == resource.data.name &&
+            request.resource.data.invite == resource.data.invite &&
+            // User doc updated not to reference team.
+            !("team" in getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data);
     }
 
-    match /invites/{iid} {
-      // Let all logged-in users create or read invites.
-      allow create, get: if loggedIn();
+    match /invites/{invite} {
+      // Let all logged-in users read or create invites. When creating a doc, it
+      // must point at a team that points back at the invite doc.
+      allow get: if loggedIn();
+      allow create: if loggedIn() &&
+        inviteCodeValid(invite) &&
+        "team" in request.resource.data &&
+        getAfter(/databases/$(database)/documents/teams/$(request.resource.data.team)).data.invite == invite;
     }
 
     // Access to everything else is denied by default.

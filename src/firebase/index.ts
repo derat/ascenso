@@ -8,7 +8,7 @@
 // Loads the core Firebase library asynchronously.
 // Outside code should only call this if it needs access to Firebase's weird
 // constant values, e.g. firebase.auth.GoogleAuthProvider or
-// firebase.firestore.FieldValue.Delete().
+// firebase.firestore.FieldValue.delete().
 export function getFirebase() {
   return import(/* webpackChunkName: "firebase-app" */ 'firebase/app');
 }
