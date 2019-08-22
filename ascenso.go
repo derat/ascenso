@@ -11,6 +11,7 @@ import (
 
 	"ascenso/go/admin"
 	"ascenso/go/log"
+	"ascenso/go/test"
 )
 
 // Admin is the entry point into the "Admin" Cloud Function.
@@ -23,4 +24,10 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 // The actual implementation lives in the log package.
 func Log(w http.ResponseWriter, r *http.Request) {
 	log.HandleRequest(context.Background(), w, r)
+}
+
+// Test is the entry point into the "Test" Cloud Function.
+// The actual implementation lives in the test package.
+func Test(w http.ResponseWriter, r *http.Request) {
+	test.HandleRequest(context.Background(), w, r)
 }

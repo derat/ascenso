@@ -41,6 +41,7 @@ func handleEmptyTeams(ctx context.Context, w http.ResponseWriter, r *http.Reques
 			continue
 		}
 
+		// TODO: The invite doc also needs to be deleted.
 		log.Printf("Deleting %s (%+v)", ref.Path, team)
 		if _, err := ref.Delete(ctx); err != nil {
 			http.Error(w, fmt.Sprintf("Failed deleting team: %v", err), http.StatusInternalServerError)
