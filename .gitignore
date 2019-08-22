@@ -3,7 +3,7 @@ dist/
 node_modules/
 
 # Site configuration and assets.
-.env.local
+.env
 .firebaserc
 public/assets
 
