@@ -83,6 +83,23 @@ describe('Login', () => {
     expect(wrapper.vm.$route.name).toBe('profile');
   });
 
+  it('uses default name if display name is unset', async () => {
+    // Simulate the display name being unset, which happens during email signin.
+    const user = MockFirebase.currentUser!;
+    user.displayName = null;
+    MockAuthUI.pendingRedirect = true;
+    await flushPromises();
+
+    MockAuthUI.config!.callbacks!.signInSuccessWithAuthResult!();
+    await flushPromises();
+
+    // The Firestore rules don't permit missing names, so the view should use a
+    // fallback.
+    expect(MockFirebase.getDoc(`users/${user.uid}`)).toEqual({
+      name: 'Unknown Climber',
+    });
+  });
+
   it('goes to routes view after subsequent logins', async () => {
     MockAuthUI.pendingRedirect = true;
     await flushPromises();
