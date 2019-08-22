@@ -15,14 +15,16 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
+
+	"ascenso/go/db"
 )
 
 // handlePostScores handles a "scores" POST request.
 // It reads teams' scores from Cloud Firestore and writes an HTML scoreboard document to w.
 func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
 	// First, load the indexed data so we can look up the points for each route.
-	var indexed indexedData
-	if err := getDoc(ctx, client.Doc(indexedDataDocPath), &indexed); err != nil {
+	var indexed db.IndexedData
+	if err := db.GetDoc(ctx, client.Doc(db.IndexedDataDocPath), &indexed); err != nil {
 		http.Error(w, fmt.Sprintf("Failed getting indexed data: %v", err),
 			http.StatusInternalServerError)
 		return
@@ -30,7 +32,7 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 	// Iterate over all of the teams.
 	var teams []teamSummary
-	it := client.Collection(teamCollectionPath).DocumentRefs(ctx)
+	it := client.Collection(db.TeamCollectionPath).DocumentRefs(ctx)
 	for {
 		ref, err := it.Next()
 		if err == iterator.Done {
@@ -39,20 +41,20 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 			http.Error(w, fmt.Sprintf("Failed getting team ref: %v", err), http.StatusInternalServerError)
 			return
 		}
-		var teamData team
-		if err := getDoc(ctx, ref, &teamData); err != nil {
+		var team db.Team
+		if err := db.GetDoc(ctx, ref, &team); err != nil {
 			http.Error(w, fmt.Sprintf("Failed getting team doc: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		if len(teamData.Users) == 0 {
+		if len(team.Users) == 0 {
 			continue
 		}
 
-		summary := teamSummary{Name: teamData.Name}
+		summary := teamSummary{Name: team.Name}
 
 		// Iterate over the team's members.
-		for _, u := range teamData.Users {
+		for _, u := range team.Users {
 			score, climbs := computeScore(u.Climbs, indexed.Routes)
 			summary.Score += score
 			summary.NumClimbs += climbs
@@ -74,7 +76,7 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 // computeScore iterates over the supplied climbs and returns the user's total score
 // and number of climbs.
-func computeScore(climbs map[string]climbState, routes map[string]route) (points, count int) {
+func computeScore(climbs map[string]db.ClimbState, routes map[string]db.Route) (points, count int) {
 	if climbs == nil || routes == nil {
 		return 0, 0
 	}
@@ -84,10 +86,10 @@ func computeScore(climbs map[string]climbState, routes map[string]route) (points
 		if !ok {
 			continue
 		}
-		if state == lead {
+		if state == db.Lead {
 			points += rt.Lead
 			count++
-		} else if state == topRope {
+		} else if state == db.TopRope {
 			points += rt.TR
 			count++
 		}

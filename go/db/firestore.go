@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package admin
+// Package db contains Firestore-related constants, types, and helper functions.
+package db
 
 import (
 	"context"
@@ -13,16 +14,16 @@ import (
 
 const (
 	// Document paths in Cloud Firestore.
-	authDocPath        = "global/auth"
-	indexedDataDocPath = "global/indexedData"
-	sortedDataDocPath  = "global/sortedData"
-	teamCollectionPath = "teams"
-	userCollectionPath = "users"
+	AuthDocPath        = "global/auth"
+	IndexedDataDocPath = "global/indexedData"
+	SortedDataDocPath  = "global/sortedData"
+	TeamCollectionPath = "teams"
+	UserCollectionPath = "users"
 )
 
-// getDoc fetches a snapshot of the document at ref and decodes it into out,
+// GetDoc fetches a snapshot of the document at ref and decodes it into out,
 // which should be a pointer to a struct representing the document.
-func getDoc(ctx context.Context, ref *firestore.DocumentRef, out interface{}) error {
+func GetDoc(ctx context.Context, ref *firestore.DocumentRef, out interface{}) error {
 	snap, err := ref.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed getting snapshot for %v: %v", ref.Path, err)
@@ -33,22 +34,22 @@ func getDoc(ctx context.Context, ref *firestore.DocumentRef, out interface{}) er
 	return nil
 }
 
-// sortedData holds sorted area and then route data.
+// SortedData holds sorted area and then route data.
 // This format is structured to be easy to display in the app's routes view.
 // It corresponds to the document at sortedDataDocPath.
-type sortedData struct {
+type SortedData struct {
 	// Areas contains areas in the order in which they were seen.
 	// Each area's Routes field contains routes in the order in which they were seen.
 	// The area.ID field is unset.
-	Areas []area `firestore:"areas"`
+	Areas []Area `firestore:"areas"`
 }
 
 // newSortedData constructs a sortedData struct from the supplied areas and routes.
 // An error is returned if any areas don't contain routes or any routes
 // reference undefined areas.
-func newSortedData(areas []area, routes []route) (sortedData, error) {
+func NewSortedData(areas []Area, routes []Route) (SortedData, error) {
 	// Build a map from area ID to slice of routes, clearing area IDs as we go.
-	areaRoutes := make(map[string][]route)
+	areaRoutes := make(map[string][]Route)
 	for _, r := range routes {
 		id := r.Area
 		r.Area = ""
@@ -56,12 +57,12 @@ func newSortedData(areas []area, routes []route) (sortedData, error) {
 	}
 
 	// Copy areas, assign routes, and clear area IDs.
-	sd := sortedData{Areas: make([]area, len(areas))}
+	sd := SortedData{Areas: make([]Area, len(areas))}
 	copy(sd.Areas, areas)
 	for i := range sd.Areas {
 		id := sd.Areas[i].ID
 		if _, ok := areaRoutes[id]; !ok {
-			return sortedData{}, fmt.Errorf("no routes defined for area %q", id)
+			return SortedData{}, fmt.Errorf("no routes defined for area %q", id)
 		}
 		sd.Areas[i].Routes = areaRoutes[id]
 		sd.Areas[i].ID = ""
@@ -74,29 +75,29 @@ func newSortedData(areas []area, routes []route) (sortedData, error) {
 		for id := range areaRoutes {
 			missing = append(missing, id)
 		}
-		return sortedData{}, fmt.Errorf("routes defined for undefined area(s) %q", missing)
+		return SortedData{}, fmt.Errorf("routes defined for undefined area(s) %q", missing)
 	}
 
 	return sd, nil
 }
 
-// indexedData contains areas and routes optimized for lookup by ID.
+// IndexedData contains areas and routes optimized for lookup by ID.
 // It corresponds to the document at indexedDataDocPath.
-type indexedData struct {
+type IndexedData struct {
 	// Areas contains all areas keyed by unique area ID, i.e. area.ID.
 	// The area.ID and area.Routes fields are unset.
-	Areas map[string]area `firestore:"areas"`
+	Areas map[string]Area `firestore:"areas"`
 	// Routes contains all routes keyed by unique route ID, i.e. route.ID.
 	// The route.ID field is unset.
-	Routes map[string]route `firestore:"routes"`
+	Routes map[string]Route `firestore:"routes"`
 }
 
 // newIndexedData constructs an indexedData struct from the supplied areas and routes.
 // The area.ID and route.ID fields are cleared (since those IDs are already used as keys).
-func newIndexedData(areas []area, routes []route) indexedData {
-	indexed := indexedData{
-		Areas:  make(map[string]area),
-		Routes: make(map[string]route),
+func NewIndexedData(areas []Area, routes []Route) IndexedData {
+	indexed := IndexedData{
+		Areas:  make(map[string]Area),
+		Routes: make(map[string]Route),
 	}
 	for _, a := range areas {
 		id := a.ID
@@ -111,18 +112,18 @@ func newIndexedData(areas []area, routes []route) indexedData {
 	return indexed
 }
 
-// area contains information about an area consisting of multiple routes.
-type area struct {
+// Area contains information about an area consisting of multiple routes.
+type Area struct {
 	// ID contains a short name uniquely identifying the area, e.g. "el_bloque".
 	ID string `firestore:"id,omitempty"`
 	// Name contains the full area name, e.g. "El Bloque".
 	Name string `firestore:"name"`
 	// Routes optionally contains sorted routes.
-	Routes []route `firestore:"routes,omitempty"`
+	Routes []Route `firestore:"routes,omitempty"`
 }
 
-// route contains information about an individual route.
-type route struct {
+// Route contains information about an individual route.
+type Route struct {
 	// ID contains a short name uniquely identifying the route, e.g. "night_vision".
 	ID string `firestore:"id,omitempty"`
 	// Name contains the full route name, e.g. "Night Vision".
@@ -138,17 +139,17 @@ type route struct {
 }
 
 // climbState describes whether and how a route was climbed.
-type climbState int
+type ClimbState int
 
 const (
-	notClimbed climbState = iota
-	lead
-	topRope
+	NotClimbed ClimbState = iota
+	Lead
+	TopRope
 )
 
-// team contains information about a team.
-// It correponds to documents in the collection at teamCollectionPath.
-type team struct {
+// Team contains information about a team.
+// It correponds to documents in the collection at TeamCollectionPath.
+type Team struct {
 	// Name contains the team's name.
 	Name string `firestore:"name"`
 	// Invite contains the team's invitation code.
@@ -158,17 +159,17 @@ type team struct {
 		// Name contains the user's name.
 		Name string `firestore:"name"`
 		// Climbs contains a map from route ID (see route.ID) to state.
-		Climbs map[string]climbState `firestore:"climbs"`
+		Climbs map[string]ClimbState `firestore:"climbs"`
 	} `firestore:"users"`
 }
 
-// user contains information about a user.
-// It correponds to documents in the collection at userCollectionPath.
-type user struct {
+// User contains information about a user.
+// It correponds to documents in the collection at UserCollectionPath.
+type User struct {
 	// Name contains the user's name.
 	Name string `firestore:"name"`
 	// Climbs contains the user's climbs. It's only used if the user isn't on a team.
-	Climbs map[string]climbState `firestore:"climbs"`
+	Climbs map[string]ClimbState `firestore:"climbs"`
 	// Team contains the user's team ID. It's empty if they aren't on a team.
 	Team string `firestore:"team"`
 }

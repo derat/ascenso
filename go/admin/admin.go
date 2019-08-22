@@ -15,6 +15,8 @@ import (
 	"strings"
 
 	"cloud.google.com/go/firestore"
+
+	"ascenso/go/db"
 )
 
 const maxRequestBytes = 10 << 20 // memory for parsing HTTP requests
@@ -69,7 +71,7 @@ func checkPassword(ctx context.Context, client *firestore.Client, password strin
 	var data struct {
 		Hash string `firestore:"cloudFunctionSHA256"`
 	}
-	if err := getDoc(ctx, client.Doc(authDocPath), &data); err != nil {
+	if err := db.GetDoc(ctx, client.Doc(db.AuthDocPath), &data); err != nil {
 		return false, err
 	}
 

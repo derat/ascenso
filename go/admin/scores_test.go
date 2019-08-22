@@ -7,11 +7,13 @@ package admin
 import (
 	"bytes"
 	"testing"
+
+	"ascenso/go/db"
 )
 
 func TestComputeScore(t *testing.T) {
-	type cm map[string]climbState
-	type rm map[string]route
+	type cm map[string]db.ClimbState
+	type rm map[string]db.Route
 
 	const (
 		r1 = "1"
@@ -19,8 +21,8 @@ func TestComputeScore(t *testing.T) {
 	)
 
 	routes := rm{
-		r1: route{Lead: 10, TR: 5},
-		r2: route{Lead: 6, TR: 3},
+		r1: db.Route{Lead: 10, TR: 5},
+		r2: db.Route{Lead: 6, TR: 3},
 	}
 
 	for _, tc := range []struct {
@@ -33,9 +35,9 @@ func TestComputeScore(t *testing.T) {
 		{cm{}, nil, 0, 0},
 		{cm{}, rm{}, 0, 0},
 		{cm{}, routes, 0, 0},
-		{cm{r1: lead}, routes, 10, 1},
-		{cm{r1: lead, r2: topRope}, routes, 13, 2},
-		{cm{r1: lead, "bogus": lead}, routes, 10, 1},
+		{cm{r1: db.Lead}, routes, 10, 1},
+		{cm{r1: db.Lead, r2: db.TopRope}, routes, 13, 2},
+		{cm{r1: db.Lead, "bogus": db.Lead}, routes, 10, 1},
 	} {
 		points, count := computeScore(tc.climbs, tc.routes)
 		if points != tc.points || count != tc.count {

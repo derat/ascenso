@@ -13,6 +13,8 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/firestore"
+
+	"ascenso/go/db"
 )
 
 // handlePostRoutes handles a "routes" POST request.
@@ -43,19 +45,19 @@ func handlePostRoutes(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	}
 
 	// Generate documents and write to Cloud Firestore.
-	sd, err := newSortedData(areas, routes)
+	sd, err := db.NewSortedData(areas, routes)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed sorting data: %v", err), http.StatusBadRequest)
 		return
 	}
-	if _, err := client.Doc(sortedDataDocPath).Set(ctx, sd); err != nil {
-		http.Error(w, fmt.Sprintf("Failed writing to %v: %v", sortedDataDocPath, err),
+	if _, err := client.Doc(db.SortedDataDocPath).Set(ctx, sd); err != nil {
+		http.Error(w, fmt.Sprintf("Failed writing to %v: %v", db.SortedDataDocPath, err),
 			http.StatusInternalServerError)
 		return
 	}
 
-	if _, err := client.Doc(indexedDataDocPath).Set(ctx, newIndexedData(areas, routes)); err != nil {
-		http.Error(w, fmt.Sprintf("Failed writing to %v: %v", indexedDataDocPath, err),
+	if _, err := client.Doc(db.IndexedDataDocPath).Set(ctx, db.NewIndexedData(areas, routes)); err != nil {
+		http.Error(w, fmt.Sprintf("Failed writing to %v: %v", db.IndexedDataDocPath, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -65,10 +67,10 @@ func handlePostRoutes(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 // readAreas reads and returns areas in CSV format from r.
 // The input must begin with a row specifying "id" and "name" columns.
-func readAreas(r io.Reader) ([]area, error) {
-	var areas []area
+func readAreas(r io.Reader) ([]db.Area, error) {
+	var areas []db.Area
 	if err := readCSV(r, func() map[string]interface{} {
-		areas = append(areas, area{})
+		areas = append(areas, db.Area{})
 		a := &areas[len(areas)-1]
 		return map[string]interface{}{
 			"id":   &a.ID,
@@ -83,10 +85,10 @@ func readAreas(r io.Reader) ([]area, error) {
 // readRoutes reads and returns routes in CSV format from r.
 // The input must begin with a row specifying "id", "name", "area", "grade",
 // "lead", and "tr" columns.
-func readRoutes(r io.Reader) ([]route, error) {
-	var routes []route
+func readRoutes(r io.Reader) ([]db.Route, error) {
+	var routes []db.Route
 	if err := readCSV(r, func() map[string]interface{} {
-		routes = append(routes, route{})
+		routes = append(routes, db.Route{})
 		rt := &routes[len(routes)-1]
 		return map[string]interface{}{
 			"id":    &rt.ID,

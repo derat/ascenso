@@ -5,6 +5,7 @@
 package admin
 
 import (
+	"ascenso/go/db"
 	"reflect"
 	"strings"
 	"testing"
@@ -12,10 +13,10 @@ import (
 
 func TestReadAreas(t *testing.T) {
 	for _, tc := range []struct {
-		in  string // input CSV data (including header row)
-		out []area // expected output; nil if error is expected
+		in  string    // input CSV data (including header row)
+		out []db.Area // expected output; nil if error is expected
 	}{
-		{"id,name\na1,A1\na2,A2\n", []area{{"a1", "A1", nil}, {"a2", "A2", nil}}},
+		{"id,name\na1,A1\na2,A2\n", []db.Area{{ID: "a1", Name: "A1"}, {ID: "a2", Name: "A2"}}},
 		{"", nil},                         // empty data, i.e. no header row
 		{"id,name\na1\n", nil},            // missing name column in data
 		{"id\na1\n", nil},                 // missing name column in header/data
@@ -36,18 +37,18 @@ func TestReadAreas(t *testing.T) {
 
 func TestReadRoutes(t *testing.T) {
 	for _, tc := range []struct {
-		in  string  // input CSV data (including header row)
-		out []route // expected output; nil if error is expected
+		in  string     // input CSV data (including header row)
+		out []db.Route // expected output; nil if error is expected
 	}{
 		{
 			in: "id,name,area,grade,lead,tr\n" +
 				"r1,R1,a1,5.8,10,5\n" +
 				"r2,R2,a2,5.10a,8,4\n" +
 				"r3,R3,a1,5.12d,20,10\n",
-			out: []route{
-				{"r1", "R1", "a1", "5.8", 10, 5},
-				{"r2", "R2", "a2", "5.10a", 8, 4},
-				{"r3", "R3", "a1", "5.12d", 20, 10},
+			out: []db.Route{
+				{ID: "r1", Name: "R1", Area: "a1", Grade: "5.8", Lead: 10, TR: 5},
+				{ID: "r2", Name: "R2", Area: "a2", Grade: "5.10a", Lead: 8, TR: 4},
+				{ID: "r3", Name: "R3", Area: "a1", Grade: "5.12d", Lead: 20, TR: 10},
 			},
 		},
 		{"", nil}, // empty data, i.e. no header row
@@ -70,14 +71,14 @@ func TestReadRoutes(t *testing.T) {
 }
 
 func TestNewSortedData(t *testing.T) {
-	a1 := area{"a1", "A1", nil}
-	a2 := area{"a2", "A2", nil}
-	r1 := route{"r1", "R1", "a1", "5.8", 10, 5}
-	r2 := route{"r2", "R2", "a1", "5.9", 12, 6}
-	r3 := route{"r3", "R3", "a2", "5.10a", 16, 8}
+	a1 := db.Area{ID: "a1", Name: "A1"}
+	a2 := db.Area{ID: "a2", Name: "A2"}
+	r1 := db.Route{ID: "r1", Name: "R1", Area: "a1", Grade: "5.8", Lead: 10, TR: 5}
+	r2 := db.Route{ID: "r2", Name: "R2", Area: "a1", Grade: "5.9", Lead: 12, TR: 6}
+	r3 := db.Route{ID: "r3", Name: "R3", Area: "a2", Grade: "5.10a", Lead: 16, TR: 8}
 
 	// makeArea returns a copy of a with its ID field cleared and rs assigned to its Routes field.
-	makeArea := func(a area, rs ...route) area {
+	makeArea := func(a db.Area, rs ...db.Route) db.Area {
 		a.ID = ""
 		for _, r := range rs {
 			r.Area = ""
@@ -87,16 +88,17 @@ func TestNewSortedData(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		desc   string      // human-readable description of test case
-		areas  []area      // input areas
-		routes []route     // input routes
-		out    *sortedData // expected output; nil if error is expected
+		desc   string         // human-readable description of test case
+		areas  []db.Area      // input areas
+		routes []db.Route     // input routes
+		out    *db.SortedData // expected output; nil if error is expected
 	}{
-		{"good", []area{a1, a2}, []route{r1, r2, r3}, &sortedData{[]area{makeArea(a1, r1, r2), makeArea(a2, r3)}}},
-		{"route refers to nonexistent area", []area{a1}, []route{r1, r2, r3}, nil},
-		{"area doesn't have any routes", []area{a1, a2}, []route{r1, r2}, nil},
+		{"good", []db.Area{a1, a2}, []db.Route{r1, r2, r3},
+			&db.SortedData{Areas: []db.Area{makeArea(a1, r1, r2), makeArea(a2, r3)}}},
+		{"route refers to nonexistent area", []db.Area{a1}, []db.Route{r1, r2, r3}, nil},
+		{"area doesn't have any routes", []db.Area{a1, a2}, []db.Route{r1, r2}, nil},
 	} {
-		if data, err := newSortedData(tc.areas, tc.routes); err != nil {
+		if data, err := db.NewSortedData(tc.areas, tc.routes); err != nil {
 			if tc.out != nil {
 				t.Errorf("newSortedData (%q) failed: %v", tc.desc, err)
 			}
