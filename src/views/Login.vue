@@ -31,7 +31,7 @@
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 
-import { logInfo } from '@/log';
+import { logError, logInfo } from '@/log';
 import { getAuth, getFirebase, getFirebaseUI, getFirestore } from '@/firebase';
 
 import Card from '@/components/Card.vue';
@@ -77,13 +77,19 @@ export default class Login extends Mixins(Perf) {
                     // view.
                     this.$router.replace('routes');
                   } else {
-                    // Otherwise, create the doc using their default name and send
-                    // them to the profile view.
-                    logInfo('create_user', { name: user.displayName });
+                    // Otherwise, create the doc using their display name and
+                    // send them to the profile view. Note that the name is null
+                    // when using the email provider.
+                    const name = user.displayName || 'Unknown Climber';
+                    logInfo('create_user', { name });
                     ref
-                      .set({ name: user.displayName }, { merge: true })
+                      .set({ name }, { merge: true })
                       .then(() => {
                         this.$router.replace('profile');
+                      })
+                      .catch(err => {
+                        this.$emit('error-msg', `Failed creating user: ${err}`);
+                        logError('create_user_failed', err);
                       });
                   }
                 });

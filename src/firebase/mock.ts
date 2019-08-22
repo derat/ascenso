@@ -151,7 +151,7 @@ class MockWriteBatch {
 
 // Stub implementation of firebase.auth.User.
 export class MockUser {
-  constructor(public uid: string, public displayName: string) {}
+  constructor(public uid: string, public displayName: string | null) {}
   getIdToken() {
     return Promise.resolve('token');
   }
