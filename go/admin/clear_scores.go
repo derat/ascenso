@@ -12,6 +12,8 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
+
+	"ascenso/go/db"
 )
 
 // handleClearScores handles an "clearScores" POST request.
@@ -23,7 +25,7 @@ func handleClearScores(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 
 	// First, iterate over team documents.
-	it := client.Collection(teamCollectionPath).DocumentRefs(ctx)
+	it := client.Collection(db.TeamCollectionPath).DocumentRefs(ctx)
 	for {
 		ref, err := it.Next()
 		if err == iterator.Done {
@@ -32,22 +34,22 @@ func handleClearScores(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			http.Error(w, fmt.Sprintf("Failed getting team ref: %v", err), http.StatusInternalServerError)
 			return
 		}
-		var teamData team
-		if err := getDoc(ctx, ref, &teamData); err != nil {
+		var team db.Team
+		if err := db.GetDoc(ctx, ref, &team); err != nil {
 			http.Error(w, fmt.Sprintf("Failed getting team doc: %v", err), http.StatusInternalServerError)
 			return
 		}
 
 		// Reset all of the "climbs" maps from the nested user data.
 		var updates []firestore.Update
-		for uid := range teamData.Users {
+		for uid := range team.Users {
 			updates = append(updates, firestore.Update{
 				Path:  "users." + uid + ".climbs",
-				Value: map[string]climbState{},
+				Value: map[string]db.ClimbState{},
 			})
 		}
 		if len(updates) > 0 {
-			log.Printf("Clearing scores from team doc %s (%+v)", ref.Path, teamData)
+			log.Printf("Clearing scores from team doc %s (%+v)", ref.Path, team)
 			if _, err := ref.Update(ctx, updates); err != nil {
 				http.Error(w, fmt.Sprintf("Failed updating team: %v", err), http.StatusInternalServerError)
 				return
@@ -56,7 +58,7 @@ func handleClearScores(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Next, iterate over user documents.
-	it = client.Collection(userCollectionPath).DocumentRefs(ctx)
+	it = client.Collection(db.UserCollectionPath).DocumentRefs(ctx)
 	for {
 		ref, err := it.Next()
 		if err == iterator.Done {
@@ -65,21 +67,21 @@ func handleClearScores(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			http.Error(w, fmt.Sprintf("Failed getting user ref: %v", err), http.StatusInternalServerError)
 			return
 		}
-		var userData user
-		if err := getDoc(ctx, ref, &userData); err != nil {
+		var user db.User
+		if err := db.GetDoc(ctx, ref, &user); err != nil {
 			http.Error(w, fmt.Sprintf("Failed getting user doc: %v", err), http.StatusInternalServerError)
 			return
 		}
 
 		// Clear the "climbs" map at the top level of the document.
-		var newClimbs interface{} = map[string]climbState{}
+		var newClimbs interface{} = map[string]db.ClimbState{}
 		// If the user is on a team, we delete the map (since their climbs are
 		// stored in the team doc).
-		if userData.Team != "" {
+		if user.Team != "" {
 			newClimbs = firestore.Delete
 		}
 
-		log.Printf("Clearing score from user doc %s (%+v)", ref.Path, userData)
+		log.Printf("Clearing score from user doc %s (%+v)", ref.Path, user)
 		if _, err := ref.Update(ctx, []firestore.Update{{Path: "climbs", Value: newClimbs}}); err != nil {
 			http.Error(w, fmt.Sprintf("Failed updating user: %v", err), http.StatusInternalServerError)
 			return
