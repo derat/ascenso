@@ -41,9 +41,16 @@ func handleEmptyTeams(ctx context.Context, w http.ResponseWriter, r *http.Reques
 			continue
 		}
 
-		// TODO: The invite doc also needs to be deleted.
+		batch := client.Batch()
 		log.Printf("Deleting %s (%+v)", ref.Path, team)
-		if _, err := ref.Delete(ctx); err != nil {
+		batch.Delete(ref)
+
+		// Also delete the team's invite doc so it won't be orphaned.
+		inviteRef := client.Collection(db.InviteCollectionPath).Doc(team.Invite)
+		log.Printf("Deleting %s", inviteRef.Path)
+		batch.Delete(inviteRef)
+
+		if _, err := batch.Commit(ctx); err != nil {
 			http.Error(w, fmt.Sprintf("Failed deleting team: %v", err), http.StatusInternalServerError)
 			return
 		}
