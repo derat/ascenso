@@ -17,8 +17,11 @@ const (
 	AuthDocPath        = "global/auth"
 	IndexedDataDocPath = "global/indexedData"
 	SortedDataDocPath  = "global/sortedData"
-	TeamCollectionPath = "teams"
-	UserCollectionPath = "users"
+
+	// Collection paths in Cloud Firestore.
+	InviteCollectionPath = "invites"
+	TeamCollectionPath   = "teams"
+	UserCollectionPath   = "users"
 )
 
 // GetDoc fetches a snapshot of the document at ref and decodes it into out,
