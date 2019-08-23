@@ -1,13 +1,56 @@
+env:
+  global:
+    # These environment variables are public; see .env.example.
+    # Private variables are set in the "Environment Variables" section of the
+    # Travis settings page.
+    - E2E_URL=http://localhost:8080/
+    - VUE_APP_APPLE_MASK_COLOR=#d50000
+    - VUE_APP_APPLE_MASK_PATH=assets-fallback/safari-pinned-tab.svg
+    - VUE_APP_APPLE_TOUCH_ICON_PATH=assets-fallback/apple-touch-icon.png
+    - VUE_APP_COMPETITION_NAME=Ascenso
+    - VUE_APP_FAVICON_16_PATH=assets-fallback/favicon-16x16.png
+    - VUE_APP_FAVICON_32_PATH=assets-fallback/favicon-32x32.png
+    - VUE_APP_FAVICON_URL=/assets-fallback/favicon.ico
+    - VUE_APP_LOGO_URL=/assets-fallback/logo.png
+    - VUE_APP_LOG_TO_CONSOLE=1
+    - VUE_APP_MANIFEST_ICON_192_URL=/assets-fallback/android-chrome-192x192.png
+    - VUE_APP_MANIFEST_ICON_512_URL=/assets-fallback/android-chrome-512x512.png
+    - VUE_APP_MANIFEST_SHORT_NAME=Ascenso
+    - VUE_APP_META_DESCRIPTION=Ascenso
+    - VUE_APP_MS_TILE_150_PATH=assets-fallback/mstile-150x150.png
+    - VUE_APP_MS_TILE_COLOR=#ffc40d
+
 matrix:
   include:
     - language: node_js
       node_js: lts/*
+      addons:
+        apt:
+          sources:
+            - google-chrome
+          packages:
+            - awscli
+            - google-chrome-stable
       install:
         - npm install
         - firebase setup:emulators:firestore
       script:
         - npm run test:unit
         - npm run test:firestore
+        # E2E testing always uses the same account, so it's important to limit
+        # concurrency to 1 on the project's Travis settings to ensure that
+        # instances don't step on each others toes.
+        - npm run test:e2e:auto
+      after_script:
+        # The ARTIFACT_ENDPOINT_URL (e.g. "https://storage.googleapis.com") and
+        # ARTIFACT_DEST_URL (e.g. "s3://my-bucket/artifacts") environment
+        # variables must be set in the project's Travis settings page.
+        # AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must also be set; these
+        # variables are read directly by the aws command.
+        - >
+          aws s3 --endpoint-url=$ARTIFACT_ENDPOINT_URL
+          cp --recursive .test_artifacts
+          $ARTIFACT_DEST_URL/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
     - language: go
       # Cloud Functions currently uses a Go runtime based on 1.11.6:
       # https://cloud.google.com/functions/docs/concepts/go-runtime

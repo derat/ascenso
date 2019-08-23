@@ -15,8 +15,10 @@ const isProd = process.env.NODE_ENV == 'production';
 const isDev = process.env.NODE_ENV == 'development';
 const isTest = process.env.NODE_ENV == 'test';
 
-// Modify this to control where logs are sent in dev mode.
-let devLogDest = LogDest.NONE;
+// This environment variable is used to increase logging in Travis.
+let devLogDest = process.env.VUE_APP_LOG_TO_CONSOLE
+  ? LogDest.CONSOLE
+  : LogDest.NONE;
 
 // Returns an appropriate function to pass to the default Logger.
 function getLogFunc(): LogFunc | Promise<LogFunc> {
@@ -28,7 +30,9 @@ function getLogFunc(): LogFunc | Promise<LogFunc> {
   if (isDev && devLogDest == LogDest.CONSOLE) {
     return data => {
       for (const rec of data.records) {
-        console.log(`${rec.severity} ${rec.code}:`, rec.payload);
+        console.log(
+          `${rec.severity} ${rec.code}: ${JSON.stringify(rec.payload)}`
+        );
       }
       return Promise.resolve({ data: {} });
     };
