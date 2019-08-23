@@ -8,7 +8,17 @@
       <v-layout row>
         <v-flex>
           <v-form v-model="userNameValid" @submit.prevent>
+            <!-- It's exceedingly unfortunate that all of these elements have
+                 nearly-identical 'id' and 'ref' attributes. Refs are nice since
+                 they still work if there are multiple instances of a component,
+                 but we need IDs to be able to access elements from end-to-end
+                 tests -- refs are only used by Vue and don't even end up in the
+                 DOM. Ideally we could also use IDs in unit tests and not define
+                 refs, but vue-test-utils' Wrapper class frequently fails to
+                 find elements by ID while still being able to find them by ref.
+                 Sigh. -->
             <v-text-field
+              id="profile-user-name-field"
               ref="userNameField"
               :value="userDoc.name"
               :counter="nameMaxLength"
@@ -28,6 +38,7 @@
           <v-flex>
             <v-form v-model="teamNameValid" @submit.prevent>
               <v-text-field
+                id="profile-team-name-field"
                 ref="teamNameField"
                 :value="teamDoc.name"
                 :counter="nameMaxLength"
@@ -59,8 +70,9 @@
           >
             <template v-slot:activator="{ on }">
               <v-btn
-                :disabled="teamFull"
+                id="profile-invite-button"
                 ref="inviteButton"
+                :disabled="teamFull"
                 color="primary"
                 v-on="on"
               >
@@ -70,7 +82,9 @@
 
             <DialogCard title="Invite code">
               <v-card-text>
-                <div class="invite-code mb-2">{{ teamDoc.invite }}</div>
+                <div class="invite-code mb-2">
+                  {{ teamDoc.invite }}
+                </div>
                 <div>
                   Your teammate can enter this code in their profile to join
                   your team. Don't show it to anyone else.
@@ -79,7 +93,12 @@
 
               <v-card-actions>
                 <v-spacer />
-                <v-btn flat color="primary" @click="inviteDialogShown = false">
+                <v-btn
+                  id="profile-invite-dismiss-button"
+                  flat
+                  color="primary"
+                  @click="inviteDialogShown = false"
+                >
                   Dismiss
                 </v-btn>
               </v-card-actions>
@@ -95,7 +114,12 @@
             max-width="512px"
           >
             <template v-slot:activator="{ on }">
-              <v-btn ref="leaveButton" flat color="error" v-on="on"
+              <v-btn
+                id="profile-leave-button"
+                ref="leaveButton"
+                flat
+                color="error"
+                v-on="on"
                 >Leave team</v-btn
               >
             </template>
@@ -111,10 +135,11 @@
                 </v-btn>
                 <v-spacer />
                 <v-btn
+                  id="profile-leave-confirm-button"
+                  ref="leaveConfirmButton"
                   flat
                   color="error"
                   :disabled="leavingTeam"
-                  ref="confirmLeaveButton"
                   @click="leaveTeam"
                 >
                   Leave team
@@ -141,7 +166,11 @@
             max-width="512px"
           >
             <template v-slot:activator="{ on }">
-              <v-btn ref="joinButton" color="primary" v-on="on"
+              <v-btn
+                id="profile-join-button"
+                ref="joinButton"
+                color="primary"
+                v-on="on"
                 >Join team</v-btn
               >
             </template>
@@ -163,6 +192,7 @@
                        doesn't support supplying a mask:
                        https://github.com/vuetifyjs/vuetify/issues/3282 -->
                   <v-text-field
+                    id="profile-join-code-field"
                     ref="joinCodeField"
                     v-model="joinInviteCode"
                     v-if="joinDialogShown"
@@ -181,7 +211,8 @@
               <v-card-actions>
                 <v-spacer />
                 <v-btn
-                  ref="confirmJoinButton"
+                  id="profile-join-confirm-button"
+                  ref="joinConfirmButton"
                   :disabled="!joinTeamValid || joiningTeam"
                   color="primary"
                   flat
@@ -203,7 +234,11 @@
             max-width="512px"
           >
             <template v-slot:activator="{ on }">
-              <v-btn ref="createButton" color="primary" v-on="on"
+              <v-btn
+                id="profile-create-button"
+                ref="createButton"
+                color="primary"
+                v-on="on"
                 >Create team</v-btn
               >
             </template>
@@ -220,6 +255,7 @@
                   @submit.prevent="createTeam"
                 >
                   <v-text-field
+                    id="profile-create-name-field"
                     ref="createNameField"
                     v-model="createTeamName"
                     v-if="createDialogShown"
@@ -236,7 +272,8 @@
               <v-card-actions>
                 <v-spacer />
                 <v-btn
-                  ref="confirmCreateButton"
+                  id="profile-create-confirm-button"
+                  ref="createConfirmButton"
                   :disabled="!createTeamValid || creatingTeam"
                   color="primary"
                   flat

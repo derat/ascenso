@@ -222,7 +222,7 @@ describe('Profile', () => {
     expect(button.exists()).toBe(true);
     button.trigger('click');
     expect(getValue(dialog)).toBeTruthy();
-    findRef('confirmLeaveButton').trigger('click');
+    findRef('leaveConfirmButton').trigger('click');
     await flushPromises();
     expect(getValue(dialog)).toBeFalsy();
 
@@ -244,7 +244,7 @@ describe('Profile', () => {
     expect(getValue(dialog)).toBeFalsy();
     findRef('createButton').trigger('click');
     expect(getValue(dialog)).toBeTruthy();
-    const confirmButton = findRef('confirmCreateButton');
+    const confirmButton = findRef('createConfirmButton');
     expect(confirmButton.attributes('disabled')).toBeTruthy();
 
     // Create a new team and wait for async Firestore writes to finish.
@@ -301,7 +301,7 @@ describe('Profile', () => {
     expect(getValue(dialog)).toBeFalsy();
     findRef('joinButton').trigger('click');
     expect(getValue(dialog)).toBeTruthy();
-    const confirmButton = findRef('confirmJoinButton');
+    const confirmButton = findRef('joinConfirmButton');
     expect(confirmButton.attributes('disabled')).toBeTruthy();
 
     // Enter the invite code and click the join button.
@@ -336,7 +336,7 @@ describe('Profile', () => {
     findRef('joinButton').trigger('click');
     wrapper.vm.$data.joinInviteCode = teamInvite;
     validateForm(findRef('joinForm'));
-    findRef('confirmJoinButton').trigger('click');
+    findRef('joinConfirmButton').trigger('click');
     await flushPromises();
 
     // The dialog should still be shown and the docs should be unchanged.
@@ -356,7 +356,7 @@ describe('Profile', () => {
     findRef('joinButton').trigger('click');
     wrapper.vm.$data.joinInviteCode = '987654';
     validateForm(findRef('joinForm'));
-    findRef('confirmJoinButton').trigger('click');
+    findRef('joinConfirmButton').trigger('click');
     await flushPromises();
 
     // The dialog should still be shown and the user doc should be unchanged.
