@@ -294,12 +294,9 @@ jest.mock('firebase/app', () => {
   };
 
   // Set some random const properties on the auth method.
-  (app.auth as any).EmailAuthProvider = {
-    PROVIDER_ID: MockEmailAuthProviderID,
-  };
-  (app.auth as any).GoogleAuthProvider = {
-    PROVIDER_ID: MockGoogleAuthProviderID,
-  };
+  const authAny = app.auth as any;
+  authAny.EmailAuthProvider = { PROVIDER_ID: MockEmailAuthProviderID };
+  authAny.GoogleAuthProvider = { PROVIDER_ID: MockGoogleAuthProviderID };
 
   return app;
 });
@@ -348,6 +345,9 @@ jest.mock('firebaseui', () => {
       AuthUI: {
         // Pretend like an instance has already been created.
         getInstance: () => MockAuthUI,
+      },
+      CredentialHelper: {
+        NONE: {},
       },
     },
   };
