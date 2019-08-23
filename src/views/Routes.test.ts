@@ -119,8 +119,7 @@ describe('Routes', () => {
     expected.users[otherUID].climbs = {};
 
     // The team doc in Firestore should be updated.
-    const teamData: Partial<Team> = MockFirebase.getDoc(`teams/${teamID}`);
-    expect(teamData).toEqual(expected);
+    expect(MockFirebase.getDoc(`teams/${teamID}`)).toEqual(expected);
 
     // Check that one of the RouteLists also got the updated climb states.
     expect(

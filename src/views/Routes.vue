@@ -134,7 +134,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
           }
         },
         err => {
-          this.$emit('error-msg', `Failed loading route data: {err}`);
+          this.$emit('error-msg', `Failed loading route data: ${err}`);
           logError('routes_load_sorted_data_failed', err);
         }
       );
