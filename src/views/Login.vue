@@ -6,23 +6,22 @@
   <div id="wrapper">
     <!-- We use v-show rather than v-if here so that FirebaseUI can find the
          auth container in the DOM immediately. -->
-    <v-container ref="container" v-show="ready" grid-list-md text-ms-center>
+    <v-container
+      class="container"
+      ref="container"
+      v-show="ready"
+      grid-list-md
+      text-ms-center
+    >
       <v-layout row justify-center>
         <!-- These widths are chosen to match those of the <Card> below. -->
         <v-flex xs12 sm8 md6>
           <v-img :src="logoURL" :alt="competitionName" contain />
         </v-flex>
       </v-layout>
-      <Card class="mt-2">
-        <v-container class="pa-0 pt-2">
-          <v-layout row justify-center>
-            <div class="instructions">Please sign in to continue:</div>
-          </v-layout>
-          <v-layout row justify-center>
-            <div id="firebaseui-auth-container"></div>
-          </v-layout>
-        </v-container>
-      </Card>
+      <v-layout row justify-center class="mt-4">
+        <div id="firebaseui-auth-container"></div>
+      </v-layout>
     </v-container>
     <Spinner v-if="!ready" />
   </div>
@@ -45,10 +44,17 @@ export default class Login extends Mixins(Perf) {
   readonly logoURL = process.env.VUE_APP_LOGO_URL;
   readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
 
+  // True when an OAuth-based flow has redirected back to this view after
+  // getting user confirmation.
   pendingRedirect = false;
 
+  // True when signin is complete and process is finishing (e.g.
+  // checking/creating the user doc in Firestore).
+  completingLogin = false;
+
   get ready() {
-    return !this.pendingRedirect;
+    // Hide the login elements when we don't need anything else from the user.
+    return !this.pendingRedirect && !this.completingLogin;
   }
 
   mounted() {
@@ -61,12 +67,19 @@ export default class Login extends Mixins(Perf) {
         this.pendingRedirect = ui.isPendingRedirect();
 
         ui.start('#firebaseui-auth-container', {
+          // Disable the account chooser, which is ugly and doesn't seem to work
+          // correctly with this logic (i.e. after signing out and trying to
+          // sign in with email, I just see a spinner):
+          // https://stackoverflow.com/q/37369929.
+          credentialHelper: firebaseui.auth.CredentialHelper.NONE,
           signInOptions: [
             firebase.auth.GoogleAuthProvider.PROVIDER_ID,
             firebase.auth.EmailAuthProvider.PROVIDER_ID,
           ],
           callbacks: {
             signInSuccessWithAuthResult: () => {
+              this.completingLogin = true;
+
               Promise.all([getAuth(), getFirestore()]).then(([auth, db]) => {
                 const user = auth.currentUser;
                 if (!user) throw new Error('Not logged in');
@@ -114,11 +127,18 @@ export default class Login extends Mixins(Perf) {
 
 <style src="firebaseui/dist/firebaseui.css"></style>
 <style scoped>
+.container {
+  /* This is a hack. FirebaseUI's email auth widget seems to be rendered in a
+   * white elevated card on big desktop displays, but just on a flat white
+   * background on mobile. To make it look decent in both cases, we place it on
+   * top of a white background. */
+  background-color: white;
+  /* Increase the container height to make sure there isn't a weird gray area
+   * underneath it. */
+  min-height: 100%;
+}
 #wrapper {
   /* Needed in order for spinner to be vertically centered. */
   display: inline;
-}
-.instructions {
-  font-size: 16px;
 }
 </style>
