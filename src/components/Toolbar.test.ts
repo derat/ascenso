@@ -63,7 +63,7 @@ describe('Toolbar', () => {
 
     // Click the confirm button in the dialog.
     expect(getValue(dialog)).toBeTruthy();
-    findRef('confirmSignOutButton').trigger('click');
+    findRef('signOutConfirmButton').trigger('click');
     await flushPromises();
 
     // The user should be signed out and we should navigate to the login view.

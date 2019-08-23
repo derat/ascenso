@@ -16,6 +16,7 @@
                https://stackoverflow.com/q/47586022. -->
           <v-list-tile
             v-else
+            :id="item.id"
             :key="item.text"
             :to="item.route ? { name: item.route } : ''"
             v-on="item.method ? { click: item.method } : null"
@@ -33,6 +34,7 @@
 
     <v-toolbar color="primary" app scroll-off-screen :scroll-threshold="32">
       <v-toolbar-side-icon
+        id="toolbar-menu-icon"
         ref="toolbarIcon"
         @click.stop="drawer = !drawer"
         color="primary"
@@ -61,7 +63,7 @@
             Cancel
           </v-btn>
           <v-spacer />
-          <v-btn flat color="error" ref="confirmSignOutButton" @click="signOut">
+          <v-btn flat color="error" ref="signOutConfirmButton" @click="signOut">
             Sign out
           </v-btn>
         </v-card-actions>
@@ -105,11 +107,31 @@ export default class Toolbar extends Vue {
 
   // Navigation drawer entries.
   navItems: readonly NavItem[] = Object.freeze([
-    { text: 'Routes', icon: 'view_list', route: 'routes' },
-    { text: 'Statistics', icon: 'assessment', route: 'stats' },
-    { text: 'Profile', icon: 'person', route: 'profile' },
+    {
+      id: 'toolbar-nav-routes',
+      text: 'Routes',
+      icon: 'view_list',
+      route: 'routes',
+    },
+    {
+      id: 'toolbar-nav-stats',
+      text: 'Statistics',
+      icon: 'assessment',
+      route: 'stats',
+    },
+    {
+      id: 'toolbar-nav-profile',
+      text: 'Profile',
+      icon: 'person',
+      route: 'profile',
+    },
     { divider: true },
-    { text: 'Sign out', icon: 'exit_to_app', method: this.onSignOutNav },
+    {
+      id: 'toolbar-nav-sign-out',
+      text: 'Sign out',
+      icon: 'exit_to_app',
+      method: this.onSignOutNav,
+    },
   ]);
 
   // Handles the "Sign out" navigation drawer item being clicked.
