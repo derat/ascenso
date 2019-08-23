@@ -7,6 +7,11 @@ import { deepCopy } from '@/testutil';
 
 type DocumentReference = firebase.firestore.DocumentReference;
 
+// Firestore document data as property names to values.
+// This also gets used for describing document updates,
+// i.e. the keys may be dotted properties.
+type DocData = Record<string, any>;
+
 // Firestore document path types.
 enum PathType {
   DOCUMENT,
@@ -87,18 +92,18 @@ class MockDocumentReference {
       new MockDocumentSnapshot(MockFirebase.getDoc(this.path))
     );
   }
-  set(data: Record<string, any>) {
+  set(data: DocData) {
     return Promise.resolve(MockFirebase.setDoc(this.path, data));
   }
-  update(props: Record<string, any>) {
+  update(props: DocData) {
     return Promise.resolve(MockFirebase._updateDoc(this.path, props));
   }
 }
 
 // Stub implementation of firebase.firestore.DocumentSnapshot.
 class MockDocumentSnapshot {
-  _data: Record<string, any> | undefined;
-  constructor(data: Record<string, any>) {
+  _data: DocData | undefined;
+  constructor(data: DocData | undefined) {
     this._data = data;
   }
   data() {
@@ -116,20 +121,20 @@ class MockDocumentSnapshot {
 
 // Operations that can be executed as part of a MockWriteBatch.
 class BatchSet {
-  constructor(public path: string, public data: Record<string, any>) {}
+  constructor(public path: string, public data: DocData) {}
 }
 class BatchUpdate {
-  constructor(public path: string, public props: Record<string, any>) {}
+  constructor(public path: string, public props: DocData) {}
 }
 
 // Stub implementation of firebase.firestore.WriteBatch.
 class MockWriteBatch {
   _ops: (BatchUpdate | BatchSet)[] = [];
 
-  set(ref: DocumentReference, data: Record<string, any>) {
+  set(ref: DocumentReference, data: DocData) {
     this._ops.push(new BatchSet(ref.path, data));
   }
-  update(ref: DocumentReference, props: Record<string, any>) {
+  update(ref: DocumentReference, props: DocData) {
     this._ops.push(new BatchUpdate(ref.path, props));
   }
   commit() {
@@ -166,8 +171,12 @@ interface FirestoreBinding {
 export const MockFirebase = new class {
   // User for auth.currentUser.
   currentUser: MockUser | null = null;
+  // May be set by tests to inject additional logic into getDoc().
+  // If null is returned, getDoc() returns the document as usual.
+  getDocHook: ((path: string) => DocData | null) | null = null;
+
   // Firestore documents keyed by path.
-  _docs: Record<string, Record<string, any>> = {};
+  _docs: Record<string, DocData> = {};
   // Firestore document paths to bound Vue data props.
   _bindings: Record<string, FirestoreBinding[]> = {};
 
@@ -178,12 +187,13 @@ export const MockFirebase = new class {
   // Resets data to defaults.
   reset() {
     this.currentUser = new MockUser('test-uid', 'Test User');
+    this.getDocHook = null;
     this._docs = {};
     this._bindings = {};
   }
 
   // Sets the document at |path| to |data|.
-  setDoc(path: string, data: Record<string, any>) {
+  setDoc(path: string, data: DocData) {
     this._docs[path] = deepCopy(data);
 
     // Update all Vue instance data properties bound to the doc.
@@ -192,8 +202,14 @@ export const MockFirebase = new class {
     }
   }
 
-  // Returns the document at |path|. Exposed to let tests check stored data.
-  getDoc(path: string) {
+  // Returns the document at |path|. Primarily used to simulate actual document
+  // fetches, but exposed publicly to let tests check stored data.
+  getDoc(path: string): DocData | undefined {
+    if (this.getDocHook) {
+      const data = this.getDocHook(path);
+      if (data != null) return data;
+    }
+
     return this._docs.hasOwnProperty(path)
       ? deepCopy(this._docs[path])
       : undefined;

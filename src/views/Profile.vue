@@ -413,7 +413,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       }
       resolve(batch.commit());
     }).catch(err => {
-      this.$emit('error-msg', `Failed setting user name: {err.message}`);
+      this.$emit('error-msg', `Failed setting user name: ${err.message}`);
       logError('set_user_name_failed', err);
     });
   }
@@ -432,7 +432,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       if (!this.teamRef) throw new Error('No ref to team doc');
       resolve(this.teamRef.update({ name: name }));
     }).catch(err => {
-      this.$emit('error-msg', `Failed setting team name: {err.message}`);
+      this.$emit('error-msg', `Failed setting team name: ${err.message}`);
       logError('set_team_name_failed', err);
     });
   }
@@ -448,46 +448,45 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     if (this.creatingTeam) throw new Error('Already creating team');
     this.creatingTeam = true;
 
-    // We get a string like "0.4948219742736113" and then chop off the left.
-    const inviteCode = Math.random()
-      .toString()
-      .slice(2, 2 + this.inviteCodeLength);
+    this.findUnusedInviteCode()
+      .then((inviteCode: string) => {
+        logInfo('create_team', {
+          name: this.createTeamName,
+          invite: inviteCode,
+        });
 
-    logInfo('create_team', { name: this.createTeamName, invite: inviteCode });
+        // Generate an ID for a new team document. This works offline.
+        const teamRef = this.firestore.collection('teams').doc();
 
-    new Promise(resolve => {
-      // Generate an ID for a new team document. This works offline.
-      const teamRef = this.firestore.collection('teams').doc();
-
-      // Perform a single batched write that creates the team document, creates
-      // an invite document containing the team ID, and updates the user doc to
-      // contain the team ID.
-      const batch = this.firestore.batch();
-      batch.set(teamRef, {
-        name: this.createTeamName,
-        users: {
-          [this.user.uid]: {
-            name: this.userDoc.name,
-            climbs: this.userDoc.climbs || {},
+        // Perform a single batched write that creates the team document, creates
+        // an invite document containing the team ID, and updates the user doc to
+        // contain the team ID.
+        const batch = this.firestore.batch();
+        batch.set(teamRef, {
+          name: this.createTeamName,
+          users: {
+            [this.user.uid]: {
+              name: this.userDoc.name,
+              climbs: this.userDoc.climbs || {},
+            },
           },
-        },
-        invite: inviteCode,
-      });
-      batch.set(this.firestore.collection('invites').doc(inviteCode), {
-        team: teamRef.id,
-      });
+          invite: inviteCode,
+        });
+        batch.set(this.firestore.collection('invites').doc(inviteCode), {
+          team: teamRef.id,
+        });
 
-      if (!this.userRef) throw new Error('No ref to user doc');
-      batch.update(this.userRef, {
-        team: teamRef.id,
-        // The user's climbs are now stored in the team doc. We do this to avoid
-        // needing to write to both the team and user doc every time the user
-        // completes another climb, and also to prevent needing to let user A
-        // write to teammate B's user doc if A reports a climb performed by B.
-        climbs: this.firebase.firestore.FieldValue.delete(),
-      });
-      resolve(batch.commit());
-    })
+        if (!this.userRef) throw new Error('No ref to user doc');
+        batch.update(this.userRef, {
+          team: teamRef.id,
+          // The user's climbs are now stored in the team doc. We do this to avoid
+          // needing to write to both the team and user doc every time the user
+          // completes another climb, and also to prevent needing to let user A
+          // write to teammate B's user doc if A reports a climb performed by B.
+          climbs: this.firebase.firestore.FieldValue.delete(),
+        });
+        return batch.commit();
+      })
       .then(() => {
         this.createDialogShown = false;
         this.inviteDialogShown = true;
@@ -498,7 +497,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         this.createTeamName = '';
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed creating team: {err.message}`);
+        this.$emit('error-msg', `Failed creating team: ${err.message}`);
         logError('create_team_failed', err);
       })
       .finally(() => {
@@ -615,11 +614,31 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         this.leaveDialogShown = false;
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed leaving team: {err.message}`);
+        this.$emit('error-msg', `Failed leaving team: ${err.message}`);
         logError('leave_team_failed', err);
       })
       .finally(() => {
         this.leavingTeam = false;
+      });
+  }
+
+  // Helper method for createTeam() that returns a promise for a new, unused
+  // invite code.
+  findUnusedInviteCode(remainingTries: number = 9): Promise<string> {
+    // We get a string like "0.4948219742736113" and then chop off the left.
+    const code = Math.random()
+      .toString()
+      .slice(2, 2 + this.inviteCodeLength);
+
+    // Check if the code is already taken. If it is, call ourselves again.
+    return this.firestore
+      .collection('invites')
+      .doc(code)
+      .get()
+      .then(snap => {
+        if (!snap.exists) return code;
+        if (remainingTries == 0) throw new Error("Can't find unused code");
+        return this.findUnusedInviteCode(remainingTries - 1);
       });
   }
 

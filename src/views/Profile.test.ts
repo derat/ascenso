@@ -293,6 +293,66 @@ describe('Profile', () => {
     );
   });
 
+  it('retries until it finds an unused invite code', async () => {
+    await init(singleUserDoc);
+
+    // Report that the first five invite docs checked already exist.
+    const numFailures = 5;
+    let remainingFailures = numFailures;
+    let lastPath: string | undefined;
+
+    MockFirebase.getDocHook = path => {
+      if (!path.startsWith('invites/')) return null;
+
+      if (remainingFailures) {
+        remainingFailures--;
+        return { team: 'team-id' };
+      }
+      if (lastPath && path != lastPath) {
+        throw new Error(`${path} checked after success for ${lastPath}`);
+      }
+      lastPath = path;
+      return null;
+    };
+
+    findRef('createButton').trigger('click');
+    const name = 'The Team';
+    wrapper.vm.$data.createTeamName = name;
+    validateForm(findRef('createForm'));
+    findRef('createConfirmButton').trigger('click');
+    await flushPromises();
+
+    // The team should be created using the last invite code that was checked.
+    const userDoc = MockFirebase.getDoc(userPath) as User;
+    const newTeamID = userDoc.team;
+    expect(userDoc).toEqual({ name: singleUserDoc.name, team: newTeamID });
+    const teamDoc = MockFirebase.getDoc(`teams/${newTeamID}`) as Team;
+    const invite = teamDoc.invite;
+    expect(teamDoc).toEqual({ name, invite, users: nonFullTeamDoc.users });
+    const invitePath = `invites/${invite}`;
+    expect(MockFirebase.getDoc(invitePath)).toEqual({ team: newTeamID });
+    expect(lastPath).toEqual(invitePath);
+    expect(wrapper.emitted('error-msg')).toBeUndefined();
+  });
+
+  it('gives up when unable to find an unused invite code', async () => {
+    await init(singleUserDoc);
+
+    // Return a document for all paths in the invites collection.
+    MockFirebase.getDocHook = path =>
+      path.startsWith('invites/') ? { team: 'team-id' } : null;
+
+    findRef('createButton').trigger('click');
+    wrapper.vm.$data.createTeamName = 'New Team';
+    validateForm(findRef('createForm'));
+    findRef('createConfirmButton').trigger('click');
+    await flushPromises();
+
+    // The user shouldn't be on a team, and an error should be shown.
+    expect(MockFirebase.getDoc(userPath)).toEqual(singleUserDoc);
+    expect(wrapper.emitted('error-msg')).toHaveLength(1);
+  });
+
   it('supports joining an existing team', async () => {
     await init(singleUserDoc, emptyTeamDoc);
 
