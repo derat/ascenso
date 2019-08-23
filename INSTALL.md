@@ -7,12 +7,14 @@ In the [Firebase Console]:
 *   Open the `Authentication` page and enable the `Google` and `Email/Password`
     methods in the `Sign-in method` tab. Under the `Authorized domains` section,
     add any additional hostnames that will be used to access the site.
-*   Open the `Database` page and create a Cloud Firestore database with
+*   Open the `Database` page and create a [Cloud Firestore] database with
     fully-restricted permissions.
-*   Open the `Hosting` page and enable hosting. Add an additional site if using
-    the non-default-site configuration described below.
+*   Open the `Hosting` page and enable [Firebase Hosting]. Add an additional
+    site if using the non-default-site configuration described below.
 
 [Firebase Console]: https://console.firebase.google.com/
+[Cloud Firestore]: https://firebase.google.com/docs/firestore
+[Firebase Hosting]: https://firebase.google.com/docs/hosting
 
 ## Google Cloud Platform Console
 
@@ -38,11 +40,11 @@ directory:
 npm install
 ```
 
-### .env.local
+### .env
 
-A file named `.env.local` must be created in the root of the repository to
-provide site-specific configuration to the app. See the checked-in, fallback
-[.env](./.env) file for details.
+A file named `.env` must be created in the root of the repository to provide
+site-specific configuration to the app. See the checked-in
+[.env.example](./.env.example) file for details.
 
 ### .firebaserc
 
@@ -109,12 +111,10 @@ You can delete this redirect-related configuration from `.firebaserc` and
 
 See the [Firebase Hosting] docs for more details.
 
-[Firebase Hosting]: https://firebase.google.com/docs/hosting
-
 ### Deploy the site
 
-Compile the site into the `dist` directory and deploy from there to Firebase
-Hosting:
+Compile the site into the `dist` directory and deploy from there to [Firebase
+Hosting]:
 
 ```sh
 npm run build
@@ -123,7 +123,7 @@ firebase deploy --only hosting
 
 ### Deploy Cloud Firestore Rules
 
-Deploy Cloud Firestore security rules from `firestore.rules`:
+Deploy [Cloud Firestore] security rules from `firestore.rules`:
 
 ```sh
 firebase deploy --only firestore:rules
@@ -131,16 +131,16 @@ firebase deploy --only firestore:rules
 
 ### Deploy Cloud Functions
 
-Deploy Cloud Functions:
+Deploy [Cloud Functions]:
 
 ```sh
-gcloud --project <PROJECT_ID> functions deploy Admin --runtime go111 --trigger-http
-gcloud --project <PROJECT_ID> functions deploy Log --runtime go111 --trigger-http
+./deploy_cloud_function.sh Admin
+./deploy_cloud_function.sh Log
 ```
 
-`PROJECT_ID` should contain the Firebase project ID, e.g. `myapp-1234`. Without
-the `--project` flag, this command uses the `gcloud` command's default project,
-which may be changed by running `gcloud config set project <PROJECT_ID>`.
+There is also a `Test` Cloud Function that is used only for end-to-end testing.
+
+[Cloud Functions]: https://firebase.google.com/docs/functions
 
 ## Cloud Firestore data
 
