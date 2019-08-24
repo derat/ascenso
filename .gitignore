@@ -10,6 +10,9 @@ public/assets
 # Repositories containing site configuration.
 *-private/
 
-# Junk created by Firestore emulator (used for tests).
+# Junk created during testing.
+.e2e_js/
+.e2e_out/
+chromedriver.log
 firebase-debug.log
 firestore-debug.log
