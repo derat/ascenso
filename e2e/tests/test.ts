@@ -50,7 +50,7 @@ module.exports = {
     browser
       .perform(() => console.log('Logging in'))
       .url(process.env.E2E_URL)
-      .waitForElementVisible(LOGIN_START_BUTTON, 10_000)
+      .waitForElementVisible(LOGIN_START_BUTTON)
       .click(LOGIN_START_BUTTON)
       .waitForElementVisible(LOGIN_EMAIL_INPUT)
       .setValue(LOGIN_EMAIL_INPUT, process.env.E2E_EMAIL)
@@ -60,7 +60,11 @@ module.exports = {
       .setValue(LOGIN_PASSWORD_INPUT, process.env.E2E_PASSWORD)
       .waitForElementVisible(LOGIN_NEXT_BUTTON)
       .click(LOGIN_NEXT_BUTTON)
-      .waitForElementVisible(PROFILE_USER_NAME_FIELD, 10_000)
+      // Timeouts here may indicate that another test instance already signed in
+      // with the E2E test user account after this instance deleted the user
+      // from Firestore, so we were sent to the routes page instead of the
+      // profile. Disable test concurrency to prevent this from happening.
+      .waitForElementVisible(PROFILE_USER_NAME_FIELD)
       .assert.urlContains('/profile');
 
     browser
@@ -126,6 +130,24 @@ module.exports = {
     // Uncommenting this can be helpful for debugging after a failure.
     //browser.pause(10000);
 
-    browser.end();
+    browser
+      .getLog('browser', entries => {
+        for (const entry of entries) {
+          // Log entry messages start with URLs like this (but much longer):
+          //
+          // webpack-internal:///./foo!./bar!./src/views/Login.vue?vue&type=script&lang=ts&
+          //
+          // We chop off everything before the last path in the list and then
+          // remove its leading './' and query string.
+          const msg = entry.message
+            .replace(/^webpack-internal:\/\/\//, '')
+            .replace(/^(\S+!)/, '')
+            .replace(/^\.\//, '')
+            .replace(/^([^?]+)\?\S+/, '$1');
+
+          console.log(`[${entry.level}] ${entry.timestamp}: ${msg}`);
+        }
+      })
+      .end();
   },
 };
