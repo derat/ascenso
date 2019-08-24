@@ -33,6 +33,7 @@ const sortedData: SortedData = {
   areas: [
     {
       name: 'Area 1',
+      id: 'a1',
       routes: [
         { id: 'r1', name: 'Route 1', grade: '5.10a', lead: 10, tr: 5 },
         { id: 'r2', name: 'Route 2', grade: '5.7', lead: 6, tr: 3 },
@@ -40,6 +41,7 @@ const sortedData: SortedData = {
     },
     {
       name: 'Area 2',
+      id: 'a2',
       routes: [{ id: 'r3', name: 'Route 3', grade: '5.12c', lead: 20, tr: 10 }],
     },
   ],

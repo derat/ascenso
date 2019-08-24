@@ -77,9 +77,8 @@ func TestNewSortedData(t *testing.T) {
 	r2 := db.Route{ID: "r2", Name: "R2", Area: "a1", Grade: "5.9", Lead: 12, TR: 6}
 	r3 := db.Route{ID: "r3", Name: "R3", Area: "a2", Grade: "5.10a", Lead: 16, TR: 8}
 
-	// makeArea returns a copy of a with its ID field cleared and rs assigned to its Routes field.
+	// makeArea returns a copy of a with rs assigned to its Routes field.
 	makeArea := func(a db.Area, rs ...db.Route) db.Area {
-		a.ID = ""
 		for _, r := range rs {
 			r.Area = ""
 			a.Routes = append(a.Routes, r)

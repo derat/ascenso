@@ -4,10 +4,7 @@
 
 <template>
   <v-expansion-panel v-if="ready" expand>
-    <v-expansion-panel-content
-      v-for="area in sortedData.areas"
-      :key="area.name"
-    >
+    <v-expansion-panel-content v-for="area in sortedData.areas" :key="area.id">
       <template v-slot:header>
         <div class="area">{{ area.name }}</div>
       </template>

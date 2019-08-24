@@ -46,19 +46,20 @@ export class SetClimbStateEvent {
 }
 
 // Area contains information about a climbing area.
-// It appears in the global/indexedData and global/SortedData Firestore docs.
+// It appears in the global/indexedData and global/sortedData Firestore docs.
 export interface Area {
+  id?: string; // only in sortedData
   name: string;
-  routes?: Route[];
+  routes?: Route[]; // only in sortedData
 }
 
 // Route contains information about a climbing route.
-// It appears in the global/indexedData and global/SortedData Firestore docs.
+// It appears in the global/indexedData and global/sortedData Firestore docs.
 export interface Route {
-  id?: string;
+  id?: string; // only in sortedData
   name: string;
   grade: string;
-  area?: string;
+  area?: string; // only in indexedData
   lead: number;
   tr: number;
 }
@@ -91,6 +92,6 @@ export interface TeamUserData {
 // User represents a document in the 'users' collection.
 export interface User {
   name: string;
-  team?: string;
-  climbs?: Record<string, ClimbState>;
+  team?: string; // only if on a team
+  climbs?: Record<string, ClimbState>; // only if not on a team
 }

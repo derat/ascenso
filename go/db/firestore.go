@@ -43,7 +43,6 @@ func GetDoc(ctx context.Context, ref *firestore.DocumentRef, out interface{}) er
 type SortedData struct {
 	// Areas contains areas in the order in which they were seen.
 	// Each area's Routes field contains routes in the order in which they were seen.
-	// The area.ID field is unset.
 	Areas []Area `firestore:"areas"`
 }
 
@@ -59,7 +58,7 @@ func NewSortedData(areas []Area, routes []Route) (SortedData, error) {
 		areaRoutes[id] = append(areaRoutes[id], r)
 	}
 
-	// Copy areas, assign routes, and clear area IDs.
+	// Copy areas and assign routes.
 	sd := SortedData{Areas: make([]Area, len(areas))}
 	copy(sd.Areas, areas)
 	for i := range sd.Areas {
@@ -68,7 +67,6 @@ func NewSortedData(areas []Area, routes []Route) (SortedData, error) {
 			return SortedData{}, fmt.Errorf("no routes defined for area %q", id)
 		}
 		sd.Areas[i].Routes = areaRoutes[id]
-		sd.Areas[i].ID = ""
 		delete(areaRoutes, id)
 	}
 
