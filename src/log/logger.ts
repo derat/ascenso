@@ -72,7 +72,7 @@ export class Logger {
   constructor(
     name: string,
     logFunc: LogFunc | Promise<LogFunc>,
-    intervalMs = 10_000,
+    intervalMs: number,
     nowFunc = () => new Date().getTime(),
     onlineFunc = () => navigator.onLine
   ) {
@@ -256,8 +256,9 @@ export class Logger {
     Object.keys(localStorage).forEach(key => {
       // Look for other instances' last-active times.
       if (
-        !key.startsWith(this._name + '.') ||
-        !key.endsWith('.' + lastActiveKeySuffix)
+        !key.startsWith(`${this._name}.`) ||
+        !key.endsWith(`.${lastActiveKeySuffix}`) ||
+        key.startsWith(this._storagePrefix) // skip our own records
       ) {
         return;
       }

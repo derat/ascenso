@@ -329,4 +329,20 @@ describe('Logger', () => {
       done();
     });
   });
+
+  it('supports synchronous logging', done => {
+    createLogger(0);
+    const rec = newRecord(now, 'code');
+    sendRecord(rec);
+
+    // The logger should've already sent the record. This also guards against a
+    // regression of a bug where _claimAbandonedRecords() would actually claim
+    // the logger's own queued records.
+    expect(logger.isSendScheduled()).toBe(false);
+    endpoint.handleCall(true).then(data => {
+      expect(data).toEqual(new CloudFuncData(now, [rec]));
+      expect(logger.isSendScheduled()).toBe(false);
+      done();
+    });
+  });
 });

@@ -579,14 +579,14 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     if (this.leavingTeam) throw new Error('Already leaving team');
     this.leavingTeam = true;
 
-    logInfo('leave_team', {});
-
     // Grab this before leaving so we can use it in a message later.
     const teamName = this.teamDoc.name;
 
     new Promise(resolve => {
       if (!this.userRef) throw new Error('No user ref');
       if (!this.teamRef) throw new Error('No team ref');
+
+      logInfo('leave_team', { team: this.teamRef.id });
 
       // Grab the user's climbs from the team doc.
       const uid = this.user.uid;

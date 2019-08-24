@@ -40,7 +40,12 @@ function getLogFunc(): LogFunc | Promise<LogFunc> {
   return () => Promise.resolve({ data: {} });
 }
 
-const defaultLogger = new Logger('log', getLogFunc());
+const defaultLogger = new Logger(
+  'log',
+  getLogFunc(),
+  // If logging to the console, do so immediately to help with debugging.
+  isDev && devLogDest == LogDest.CONSOLE ? 0 : 10_000
+);
 
 // Helper function that sends a log message to Stackdriver.
 // See the Logger class's log method for more details.
