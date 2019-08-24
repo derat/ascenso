@@ -1,11 +1,15 @@
 #!/bin/sh -e
 
+# Deploys the named Cloud Function to GCP.
+
 die() {
   echo "$1" 1>&2
   exit 1
 }
 
-[ "$#" -eq 1 ] || die "Usage: $0 <function>"
+if [ "$#" -ne 1 ] || [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+  die "Usage: $0 <function>"
+fi
 [ -e ./.firebaserc ] || die ".firebaserc not found"
 [ -e ./ascenso.go ] || die "Must be run in the checkout root"
 command -v jq >/dev/null || die "jq is required: https://stedolan.github.io/jq/"
