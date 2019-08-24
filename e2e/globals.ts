@@ -22,4 +22,39 @@ module.exports = {
       })
     );
   },
+
+  afterEach: (browser, done) => {
+    browser
+      .getLog('browser', entries => {
+        console.log('\nBrowser console:');
+        for (const entry of entries) {
+          // Log entry messages start with URLs like this (but much longer):
+          //
+          // webpack-internal:///./foo!./bar!./src/views/Login.vue?vue&type=script&lang=ts&
+          //
+          // We chop off everything before the last path in the list and then
+          // remove its leading './' and query string.
+          let msg = entry.message
+            .replace(/^webpack-internal:\/\/\//, '')
+            .replace(/^(\S+!)/, '')
+            .replace(/^\.\//, '')
+            .replace(/^([^?]+)\?\S+/, '$1');
+
+          // After the path and a line:column like "55:18", there appears to be
+          // a JSON string containing the actual message. Try to unescape it so
+          // we don't write a bunch of annoying backslash-escaped double quotes.
+          try {
+            const match = msg.match(/^\S+ \S+ /);
+            if (match) {
+              const prefix = match[0];
+              msg = prefix + JSON.parse(msg.substr(prefix.length));
+            }
+          } catch {}
+
+          console.log(`[${entry.level}] ${entry.timestamp}: ${msg}`);
+        }
+      })
+      .end();
+    done();
+  },
 };

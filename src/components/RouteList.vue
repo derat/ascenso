@@ -4,7 +4,11 @@
 
 <template>
   <v-list two-line class="py-0">
-    <v-list-tile v-for="route in routes" :key="route.name">
+    <v-list-tile
+      v-for="route in routes"
+      :key="route.name"
+      :id="'routes-route-' + route.id"
+    >
       <v-list-tile-action v-for="(info, i) in climberInfos" :key="i">
         <ClimbDropdown
           :state="info.states[route.id] || ClimbState.NOT_CLIMBED"
