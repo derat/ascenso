@@ -9,7 +9,7 @@
     <v-container
       class="container"
       ref="container"
-      v-show="ready"
+      v-show="showUI"
       grid-list-md
       text-ms-center
     >
@@ -23,12 +23,12 @@
         <div id="firebaseui-auth-container"></div>
       </v-layout>
     </v-container>
-    <Spinner v-if="!ready" />
+    <Spinner v-if="!showUI" />
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Mixins, Watch } from 'vue-property-decorator';
+import { Component, Mixins } from 'vue-property-decorator';
 
 import { logError, logInfo } from '@/log';
 import { getAuth, getFirebase, getFirebaseUI, getFirestore } from '@/firebase';
@@ -52,7 +52,7 @@ export default class Login extends Mixins(Perf) {
   // checking/creating the user doc in Firestore).
   completingLogin = false;
 
-  get ready() {
+  get showUI() {
     // Hide the login elements when we don't need anything else from the user.
     return !this.pendingRedirect && !this.completingLogin;
   }
@@ -65,6 +65,7 @@ export default class Login extends Mixins(Perf) {
         if (!ui) ui = new firebaseui.auth.AuthUI(auth);
 
         this.pendingRedirect = ui.isPendingRedirect();
+        if (!this.pendingRedirect) this.logReady('login_loaded');
 
         ui.start('#firebaseui-auth-container', {
           // Disable the account chooser, which is ugly and doesn't seem to work
@@ -116,11 +117,6 @@ export default class Login extends Mixins(Perf) {
         });
       }
     );
-  }
-
-  @Watch('ready')
-  onReady(val: boolean) {
-    if (val) this.logReady('login_loaded');
   }
 }
 </script>
