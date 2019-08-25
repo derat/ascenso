@@ -48,6 +48,7 @@ Heterogeneous singleton documents:
                 route.
 *   `sortedData` - Document containing sorted area and route information:
     *   `areas` - Array of sorted area maps:
+        *   `id` - String field containing area ID, e.g. `my_area`.
         *   `name` - String field containing area name, e.g. `My Area`.
         *   `routes` - Array of sorted route maps:
             *   `id` - String containing the unique route ID. This should be a
