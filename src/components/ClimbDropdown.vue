@@ -17,7 +17,7 @@
         {{ stateAbbrevs[syncedState] }}
       </v-btn>
     </template>
-    <v-list>
+    <v-list class="climb-state-list">
       <v-list-tile @click="syncedState = ClimbState.LEAD">
         <v-list-tile-title>Lead</v-list-tile-title>
       </v-list-tile>

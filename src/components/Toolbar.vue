@@ -63,7 +63,13 @@
             Cancel
           </v-btn>
           <v-spacer />
-          <v-btn flat color="error" ref="signOutConfirmButton" @click="signOut">
+          <v-btn
+            flat
+            color="error"
+            id="toolbar-sign-out-confirm-button"
+            ref="signOutConfirmButton"
+            @click="signOut"
+          >
             Sign out
           </v-btn>
         </v-card-actions>
@@ -108,26 +114,26 @@ export default class Toolbar extends Vue {
   // Navigation drawer entries.
   navItems: readonly NavItem[] = Object.freeze([
     {
-      id: 'toolbar-nav-routes',
+      id: 'toolbar-routes',
       text: 'Routes',
       icon: 'view_list',
       route: 'routes',
     },
     {
-      id: 'toolbar-nav-stats',
+      id: 'toolbar-stats',
       text: 'Statistics',
       icon: 'assessment',
       route: 'stats',
     },
     {
-      id: 'toolbar-nav-profile',
+      id: 'toolbar-profile',
       text: 'Profile',
       icon: 'person',
       route: 'profile',
     },
     { divider: true },
     {
-      id: 'toolbar-nav-sign-out',
+      id: 'toolbar-sign-out',
       text: 'Sign out',
       icon: 'exit_to_app',
       method: this.onSignOutNav,

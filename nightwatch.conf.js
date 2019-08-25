@@ -5,6 +5,7 @@ const logDir = '.test_artifacts/e2e';
 
 module.exports = {
   src_folders: [srcDir + '/tests'],
+  page_objects_path: srcDir + '/pages',
   globals_path: srcDir + '/globals.js',
   output_folder: logDir,
   screenshots: {

@@ -3,7 +3,7 @@
      found in the LICENSE file. -->
 
 <template>
-  <div id="wrapper">
+  <div id="login-wrapper">
     <!-- We use v-show rather than v-if here so that FirebaseUI can find the
          auth container in the DOM immediately. -->
     <v-container
@@ -133,7 +133,7 @@ export default class Login extends Mixins(Perf) {
    * underneath it. */
   min-height: 100%;
 }
-#wrapper {
+#login-wrapper {
   /* Needed in order for spinner to be vertically centered. */
   display: inline;
 }

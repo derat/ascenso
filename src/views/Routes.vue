@@ -4,11 +4,16 @@
 
 <template>
   <v-expansion-panel v-if="ready" expand>
-    <v-expansion-panel-content v-for="area in sortedData.areas" :key="area.id">
+    <v-expansion-panel-content
+      v-for="area in sortedData.areas"
+      :key="area.id"
+      :id="'routes-expand-' + area.id"
+    >
       <template v-slot:header>
         <div class="area">{{ area.name }}</div>
       </template>
       <RouteList
+        :id="'routes-list-' + area.id"
         :climberInfos="climberInfos"
         :routes="area.routes"
         @set-climb-state="onSetClimbState"
