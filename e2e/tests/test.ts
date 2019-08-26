@@ -21,8 +21,9 @@ module.exports = {
 
     const login = browser.page.login();
     const profile = browser.page.profile();
-    const toolbar = browser.page.toolbar();
     const routes = browser.page.routes();
+    const stats = browser.page.stats();
+    const toolbar = browser.page.toolbar();
 
     task('Loading the app');
     browser.url(process.env.E2E_URL).waitForElementVisible('body');
@@ -66,7 +67,17 @@ module.exports = {
     // Mark the first climber as having led the route.
     routes.toggleArea(areaID).setClimbState(routeID, 0, 0);
 
-    // TODO: Check stats page.
+    task('Checking stats');
+    toolbar.clickNavElement('@stats');
+    stats
+      .getStat(true, 0, 0, (name, value) => {
+        stats.assert.equal(name, 'Total points');
+        stats.assert.equal(value, '44');
+      })
+      .getStat(true, 1, 0, (name, value) => {
+        stats.assert.equal(name, 'Total climbs');
+        stats.assert.equal(value, '1');
+      });
 
     task('Signing out');
     toolbar.signOut();
