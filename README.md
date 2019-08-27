@@ -79,15 +79,11 @@ Heterogeneous singleton documents:
             *   `climbs` - Map field containing information about the user's
                 completed climbs. Keys are route IDs. Values are 0 for not
                 climbed, 1 for lead, or 2 for top-rope.
+            *   `left`: Boolean field set to true if the user has left the team.
 
 ### `users` collection
 
 *   `<uid>` - Document containing information about a user.
     *   `name` - String field containing the user's name, e.g. "Some Climber".
-    *   `climbs` - Map field containing information about completed climbs. Keys
-        are route IDs. Values are 0 for not climbed, 1 for lead, or 2 for
-        top-rope. Climbs are only stored here when the user is not on a team:
-        when joining a team, climbs are stored in the `teams` doc, and when
-        leaving a team, climbs are moved back to the `users` doc.
     *   `team` - String field containing ID of a document in the `teams`
         collection. Unset if the user is not on a team.

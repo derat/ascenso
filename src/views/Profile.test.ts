@@ -30,25 +30,25 @@ const teamInvite = '123456';
 
 // User docs as a non-member and member of the team.
 const userPath = `users/${userID}`;
-const singleUserDoc: User = { name: userName, climbs: { r1: ClimbState.LEAD } };
+const singleUserDoc: User = { name: userName };
 const joinedUserDoc: User = { name: userName, team: teamID };
 
 // Team docs with zero, one, or two users.
 const teamPath = `teams/${teamID}`;
 const emptyTeamDoc: Team = { name: teamName, invite: teamInvite, users: {} };
-const nonFullTeamDoc: Team = {
-  name: teamName,
-  invite: teamInvite,
-  users: { [userID]: { name: userName, climbs: { r1: ClimbState.LEAD } } },
+
+const oneUserTeamDoc = deepCopy(emptyTeamDoc);
+oneUserTeamDoc.users[userID] = { name: userName, climbs: {} };
+const oneUserWithClimbTeamDoc = deepCopy(oneUserTeamDoc);
+oneUserWithClimbTeamDoc.users[userID].climbs = { r1: ClimbState.LEAD };
+
+const twoUserTeamDoc = deepCopy(oneUserTeamDoc);
+twoUserTeamDoc.users[otherUserID] = {
+  name: otherUserName,
+  climbs: { r2: ClimbState.TOP_ROPE },
 };
-const fullTeamDoc: Team = {
-  name: teamName,
-  invite: teamInvite,
-  users: {
-    [userID]: { name: userName, climbs: { r1: ClimbState.LEAD } },
-    [otherUserID]: { name: otherUserName, climbs: { r2: ClimbState.TOP_ROPE } },
-  },
-};
+const twoUserWithClimbTeamDoc = deepCopy(twoUserTeamDoc);
+twoUserWithClimbTeamDoc.users[userID].climbs = { r1: ClimbState.LEAD };
 
 const invitePath = `invites/${teamInvite}`;
 const inviteDoc = { team: teamID };
@@ -115,7 +115,7 @@ describe('Profile', () => {
   });
 
   it("updates the user's name in their team", async () => {
-    await init(joinedUserDoc, nonFullTeamDoc);
+    await init(joinedUserDoc, oneUserTeamDoc);
     const newName = 'Some Other Name';
     findRef('userNameField').vm.$emit('change', newName);
     await flushPromises();
@@ -125,13 +125,13 @@ describe('Profile', () => {
     newUserDoc.name = newName;
     expect(MockFirebase.getDoc(userPath)).toEqual(newUserDoc);
 
-    const newTeamDoc = deepCopy(nonFullTeamDoc);
+    const newTeamDoc = deepCopy(oneUserTeamDoc);
     newTeamDoc.users[userID].name = newName;
     expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
   });
 
   it("supports changing the team's name", async () => {
-    await init(joinedUserDoc, nonFullTeamDoc);
+    await init(joinedUserDoc, oneUserTeamDoc);
     const field = findRef('teamNameField');
     expect(getValue(field)).toEqual(teamName);
 
@@ -140,13 +140,13 @@ describe('Profile', () => {
     await flushPromises();
 
     expect(getValue(field)).toEqual(newName);
-    const newTeamDoc = deepCopy(nonFullTeamDoc);
+    const newTeamDoc = deepCopy(oneUserTeamDoc);
     newTeamDoc.name = newName;
     expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
   });
 
   it('removes excessive whitespace from user and team names', async () => {
-    await init(joinedUserDoc, nonFullTeamDoc);
+    await init(joinedUserDoc, oneUserTeamDoc);
 
     // Set user and team teams with weird spacing.
     const userField = findRef('userNameField');
@@ -165,7 +165,7 @@ describe('Profile', () => {
 
     const newTeamName = 'Space Cadets';
     expect(getValue(teamField)).toEqual(newTeamName);
-    const newTeamDoc = deepCopy(nonFullTeamDoc);
+    const newTeamDoc = deepCopy(oneUserTeamDoc);
     newTeamDoc.name = newTeamName;
     newTeamDoc.users[userID].name = newUserName;
     expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
@@ -178,14 +178,23 @@ describe('Profile', () => {
   });
 
   it('displays a list of team members', async () => {
-    await init(joinedUserDoc, fullTeamDoc);
+    await init(joinedUserDoc, twoUserTeamDoc);
     expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
       [userName, otherUserName]
     );
   });
 
+  it('reports when a member has left the team', async () => {
+    const teamDoc = deepCopy(twoUserTeamDoc);
+    teamDoc.users[otherUserID].left = true;
+    await init(joinedUserDoc, teamDoc);
+    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
+      [userName, `${otherUserName} (left)`]
+    );
+  });
+
   it("supports showing invite code when team isn't full", async () => {
-    await init(joinedUserDoc, nonFullTeamDoc);
+    await init(joinedUserDoc, oneUserTeamDoc);
 
     // The dialog should initially be hidden.
     const dialog = findRef('inviteDialog');
@@ -201,7 +210,7 @@ describe('Profile', () => {
   });
 
   it('disables the invite button when team is full', async () => {
-    await init(joinedUserDoc, fullTeamDoc);
+    await init(joinedUserDoc, twoUserTeamDoc);
     expect(findRef('inviteButton').attributes('disabled')).toBeTruthy();
   });
 
@@ -210,8 +219,8 @@ describe('Profile', () => {
     expect(findRef('inviteButton').exists()).toBe(false);
   });
 
-  it('lets the user leave their team', async () => {
-    await init(joinedUserDoc, fullTeamDoc);
+  it('supports leaving single-user team before reporting climbs', async () => {
+    await init(joinedUserDoc, oneUserTeamDoc);
 
     // The dialog should initially be hidden.
     const dialog = findRef('leaveDialog');
@@ -226,13 +235,49 @@ describe('Profile', () => {
     await flushPromises();
     expect(getValue(dialog)).toBeFalsy();
 
-    // The team doc should be updated to not contain the user.
-    const newTeamDoc = deepCopy(fullTeamDoc);
+    // Since the user hadn't reported any climbs, they should be removed from
+    // the team's user map.
+    expect(MockFirebase.getDoc(teamPath)).toEqual(emptyTeamDoc);
+    expect(MockFirebase.getDoc(userPath)).toEqual(singleUserDoc);
+  });
+
+  it('supports leaving single-user team after reporting climbs', async () => {
+    await init(joinedUserDoc, oneUserWithClimbTeamDoc);
+    findRef('leaveButton').trigger('click');
+    findRef('leaveConfirmButton').trigger('click');
+    await flushPromises();
+
+    // The user should remain on the team since they had reported climbs.
+    const newTeamDoc = deepCopy(oneUserWithClimbTeamDoc);
+    newTeamDoc.users[userID].left = true;
+    expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
+    expect(MockFirebase.getDoc(userPath)).toEqual(singleUserDoc);
+  });
+
+  it('supports leaving two-user team before reporting climbs', async () => {
+    await init(joinedUserDoc, twoUserTeamDoc);
+    findRef('leaveButton').trigger('click');
+    findRef('leaveConfirmButton').trigger('click');
+    await flushPromises();
+
+    // The user should be removed from the team.
+    const newTeamDoc = deepCopy(twoUserTeamDoc);
     delete newTeamDoc.users[userID];
     expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
+    expect(MockFirebase.getDoc(userPath)).toEqual(singleUserDoc);
+  });
 
-    // The user doc should be updated to not list the team and to hold the
-    // user's climbs.
+  it('supports leaving two-user team after reporting climbs', async () => {
+    await init(joinedUserDoc, twoUserWithClimbTeamDoc);
+    findRef('leaveButton').trigger('click');
+    findRef('leaveConfirmButton').trigger('click');
+    await flushPromises();
+
+    // The user should remain on the team since they had reported climbs, and
+    // the other member's record should be unchanged.
+    const newTeamDoc = deepCopy(twoUserWithClimbTeamDoc);
+    newTeamDoc.users[userID].left = true;
+    expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
     expect(MockFirebase.getDoc(userPath)).toEqual(singleUserDoc);
   });
 
@@ -259,20 +304,19 @@ describe('Profile', () => {
     confirmButton.trigger('click');
     await flushPromises();
 
-    // The user doc should be updated to contain the ID of the new team, and its
-    // climbs should be wiped.
+    // The user doc should be updated to contain the ID of the new team.
     const userDoc = MockFirebase.getDoc(userPath) as User;
     const newTeamID = userDoc.team;
     expect(userDoc).toEqual({ name: singleUserDoc.name, team: newTeamID });
 
-    // A team doc should be created with the new ID, and it should now contain
-    // the user's climbs and a copy of their name from the user doc.
+    // A team doc should be created with the new ID, and it should now contain a
+    // copy of the user's name from the user doc.
     const teamDoc = MockFirebase.getDoc(`teams/${newTeamID}`) as Team;
     const newInvite = teamDoc.invite;
     expect(teamDoc).toEqual({
       name: newTeamName,
       invite: newInvite,
-      users: { [userID]: { name: userName, climbs: singleUserDoc.climbs } },
+      users: { [userID]: { name: userName, climbs: {} } },
     });
 
     // A document should be created to point from the invite code to the team
@@ -328,7 +372,7 @@ describe('Profile', () => {
     expect(userDoc).toEqual({ name: singleUserDoc.name, team: newTeamID });
     const teamDoc = MockFirebase.getDoc(`teams/${newTeamID}`) as Team;
     const invite = teamDoc.invite;
-    expect(teamDoc).toEqual({ name, invite, users: nonFullTeamDoc.users });
+    expect(teamDoc).toEqual({ name, invite, users: oneUserTeamDoc.users });
     const invitePath = `invites/${invite}`;
     expect(MockFirebase.getDoc(invitePath)).toEqual({ team: newTeamID });
     expect(lastPath).toEqual(invitePath);
@@ -371,13 +415,9 @@ describe('Profile', () => {
     confirmButton.trigger('click');
     await flushPromises();
 
-    // The user doc should be updated to contain the ID of the team, and its
-    // climbs should be moved to the team doc.
-    expect(MockFirebase.getDoc(userPath)).toEqual({
-      name: singleUserDoc.name,
-      team: teamID,
-    });
-    expect(MockFirebase.getDoc(teamPath)).toEqual(nonFullTeamDoc);
+    // The user and team docs should be updated.
+    expect(MockFirebase.getDoc(userPath)).toEqual(joinedUserDoc);
+    expect(MockFirebase.getDoc(teamPath)).toEqual(oneUserTeamDoc);
 
     // The dialog should be dismissed and the main view should be updated to
     // show the team roster.
@@ -385,6 +425,25 @@ describe('Profile', () => {
     expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
       [userName]
     );
+  });
+
+  it('supports rejoining a team', async () => {
+    // Simulate the user having left the team after reporting a climb.
+    const origTeamDoc = deepCopy(twoUserWithClimbTeamDoc);
+    origTeamDoc.users[userID].left = true;
+    await init(singleUserDoc, origTeamDoc);
+
+    // Join the team again.
+    findRef('joinButton').trigger('click');
+    wrapper.vm.$data.joinInviteCode = teamInvite;
+    validateForm(findRef('joinForm'));
+    findRef('joinConfirmButton').trigger('click');
+    await flushPromises();
+
+    // The user's old climb should be retained, and the should no longer be
+    // marked as having left the team.
+    expect(MockFirebase.getDoc(userPath)).toEqual(joinedUserDoc);
+    expect(MockFirebase.getDoc(teamPath)).toEqual(twoUserWithClimbTeamDoc);
   });
 
   it('disallows joining a full team', async () => {
@@ -403,10 +462,7 @@ describe('Profile', () => {
     expect(getValue(findRef('joinDialog'))).toBeTruthy();
     expect(MockFirebase.getDoc(userPath)).toEqual(singleUserDoc);
     expect(MockFirebase.getDoc(teamPath)).toEqual(teamDoc);
-
-    // TODO: Also check that an error is displayed once the UI does that, and
-    // add some way to check logged error codes to verify that the error is
-    // reported.
+    expect(wrapper.emitted('error-msg')).toHaveLength(1);
   });
 
   it('disallows joining a team using an invalid invite code', async () => {
@@ -422,7 +478,6 @@ describe('Profile', () => {
     // The dialog should still be shown and the user doc should be unchanged.
     expect(getValue(findRef('joinDialog'))).toBeTruthy();
     expect(MockFirebase.getDoc(userPath)).toEqual(singleUserDoc);
-
-    // TODO: Check error UI and reporting here too.
+    expect(wrapper.emitted('error-msg')).toHaveLength(1);
   });
 });

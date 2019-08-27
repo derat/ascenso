@@ -138,8 +138,10 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
       );
 
       this.teamCards = this.computeStats(userClimbs);
-    } else if (this.userDoc.climbs) {
-      this.userCards = this.computeStats([this.userDoc.climbs]);
+    } else {
+      // TODO: Should we track individual stats separately for the case where a
+      // user switches teams? Probably enough of an edge case to not bother...
+      this.userCards = [];
     }
 
     this.haveStats = true;

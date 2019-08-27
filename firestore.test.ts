@@ -25,6 +25,7 @@ const name = 'Test Name';
 const invite = '123456';
 const climbs = { route: 1 };
 const users = { [uid]: { name, climbs } };
+const usersNoClimbs = { [uid]: { name, climbs: {} } };
 
 const authPath = 'global/auth';
 const configPath = 'global/config';
@@ -71,6 +72,8 @@ describe('Firestore', () => {
   enum State {
     // |uid| is the only member of |team|.
     ON_TEAM,
+    // |uid| is the only member of |team| and hasn't reported climbs.
+    ON_TEAM_NO_CLIMBS,
     // |team| exists without any members.
     EMPTY_TEAM,
     // No team doc is written.
@@ -79,15 +82,21 @@ describe('Firestore', () => {
 
   // Writes initial user, team, and invite documents as described by |state|.
   async function writeDocs(state: State) {
-    await adminDB
-      .doc(userPath)
-      .set(state == State.ON_TEAM ? { name, team } : { name });
+    const userData: Record<string, any> = { name };
+    if (state == State.ON_TEAM || state == State.ON_TEAM_NO_CLIMBS) {
+      userData.team = team;
+    }
+    await adminDB.doc(userPath).set(userData);
 
     if (state == State.NO_TEAM) return;
 
-    await adminDB
-      .doc(teamPath)
-      .set({ name, invite, users: state == State.ON_TEAM ? users : {} });
+    const usersMap =
+      state == State.ON_TEAM
+        ? users
+        : state == State.ON_TEAM_NO_CLIMBS
+        ? usersNoClimbs
+        : {};
+    await adminDB.doc(teamPath).set({ name, invite, users: usersMap });
     await adminDB.doc(invitePath).set({ team });
   }
 
@@ -348,7 +357,7 @@ describe('Firestore', () => {
 
     const batch = authDB.batch();
     batch.update(authDB.doc(userPath), { team });
-    batch.update(authDB.doc(teamPath), { ['users.' + uid]: { name, climbs } });
+    batch.update(authDB.doc(teamPath), { [`users.${uid}`]: { name, climbs } });
     await allow(batch.commit());
   });
 
@@ -358,7 +367,7 @@ describe('Firestore', () => {
 
     const batch = authDB.batch();
     batch.update(authDB.doc(userPath), { team });
-    batch.update(authDB.doc(teamPath), { ['users.' + uid]: { name, climbs } });
+    batch.update(authDB.doc(teamPath), { [`users.${uid}`]: { name, climbs } });
     await deny(batch.commit());
   });
 
@@ -388,25 +397,47 @@ describe('Firestore', () => {
     await deny(batch.commit());
   });
 
-  it('allows leaving team', async () => {
+  it('allows removing from team before reporting climbs', async () => {
+    await writeDocs(State.ON_TEAM_NO_CLIMBS);
+    const batch = authDB.batch();
+    batch.update(authDB.doc(userPath), {
+      team: firebase.firestore.FieldValue.delete(),
+    });
+    batch.update(authDB.doc(teamPath), {
+      [`users.${uid}`]: firebase.firestore.FieldValue.delete(),
+    });
+    await allow(batch.commit());
+  });
+
+  it('allows marking left after reporting climbs', async () => {
+    await writeDocs(State.ON_TEAM);
+    const batch = authDB.batch();
+    batch.update(authDB.doc(userPath), {
+      team: firebase.firestore.FieldValue.delete(),
+    });
+    batch.update(authDB.doc(teamPath), { [`users.${uid}.left`]: true });
+    await allow(batch.commit());
+  });
+
+  it('denies removing from team after reporting climbs', async () => {
     await writeDocs(State.ON_TEAM);
     const batch = authDB.batch();
     batch.update(authDB.doc(userPath), {
       team: firebase.firestore.FieldValue.delete(),
     });
     batch.update(authDB.doc(teamPath), {
-      ['users.' + uid]: firebase.firestore.FieldValue.delete(),
+      [`users.${uid}`]: firebase.firestore.FieldValue.delete(),
     });
-    await allow(batch.commit());
+    await deny(batch.commit());
   });
 
-  it('denies leaving team without updating user doc', async () => {
-    await writeDocs(State.ON_TEAM);
+  it('denies removing from team without updating user doc', async () => {
+    await writeDocs(State.ON_TEAM_NO_CLIMBS);
     await deny(authDB.doc(teamPath).update({ users: {} }));
   });
 
-  it('denies leaving team without updating team doc', async () => {
-    await writeDocs(State.ON_TEAM);
+  it('denies removing from team without updating team doc', async () => {
+    await writeDocs(State.ON_TEAM_NO_CLIMBS);
     await deny(
       authDB.doc(userPath).update({
         team: firebase.firestore.FieldValue.delete(),

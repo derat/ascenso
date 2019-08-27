@@ -64,9 +64,12 @@ module.exports = {
         .click('@inviteDismissButton');
     },
     checkUserOnTeam(userName: string, teamName: string) {
-      return this.waitForElementVisible('@teamNameField')
-        .assert.value('@teamNameField', teamName)
-        .assert.containsText('@teamMemberDiv', userName);
+      return this.waitForElementVisible('@teamNameField').assert.value(
+        '@teamNameField',
+        teamName
+      );
+      this.expect.element('@teamMemberDiv').text.to.contain(userName);
+      return this;
     },
     // setValue() doesn't clear the existing value in a v-text-field, and
     // clearValue() doesn't seem to work either, so use this garbage instead.
