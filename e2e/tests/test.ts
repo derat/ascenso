@@ -9,7 +9,8 @@ module.exports = {
     // Logs a header at the beginning of a task.
     const task = msg => browser.perform(() => console.log('✏️ ' + msg));
 
-    const userName = 'My Name';
+    const userName1 = 'First User';
+    const userName2 = 'Second User';
     const teamName = 'My Team';
     const newTeamName = 'Updated Team';
 
@@ -30,7 +31,7 @@ module.exports = {
 
     task('Signing in');
     login
-      .signIn(process.env.E2E_EMAIL, process.env.E2E_PASSWORD)
+      .signIn(process.env.E2E_EMAIL_1, process.env.E2E_PASSWORD_1)
       // If the URL is /routes instead, it may indicate that another test
       // instance already signed in with the E2E test user account after this
       // instance deleted the user from Firestore. Disable test concurrency to
@@ -38,14 +39,14 @@ module.exports = {
       .assert.urlContains('/profile');
 
     task('Changing user name');
-    profile.setUserName(userName);
+    profile.setUserName(userName1);
 
     task('Creating team');
     profile
       .createTeam(teamName, code => {
         inviteCode = code;
       })
-      .checkUserOnTeam(userName, teamName);
+      .checkUserOnTeam(userName1, teamName);
 
     task('Changing team name');
     profile.setTeamName(newTeamName);
@@ -56,16 +57,47 @@ module.exports = {
     task('Leaving team');
     profile.leaveTeam();
 
-    task('Joining team');
+    task('Re-joining team');
     profile
       // Pass a function so |inviteCode| is initialized before it's used.
       .perform(() => profile.joinTeam(inviteCode))
-      .checkUserOnTeam(userName, newTeamName);
+      .checkUserOnTeam(userName1, newTeamName);
+
+    task('Signing out');
+    toolbar.signOut();
+
+    task('Signing in as second user');
+    login
+      .signIn(process.env.E2E_EMAIL_2, process.env.E2E_PASSWORD_2)
+      .assert.urlContains('/profile');
+
+    task('Changing user name');
+    profile.setUserName(userName2);
+
+    task('Joining team');
+    profile
+      .perform(() => profile.joinTeam(inviteCode))
+      .checkUserOnTeam(userName1, newTeamName)
+      .checkUserOnTeam(userName2, newTeamName);
 
     task('Climbing a route');
     toolbar.clickNavElement('@routes');
     // Mark the first climber as having led the route.
+    // It's arbitrary which team member this is since members are sorted by UID.
     routes.toggleArea(areaID).setClimbState(routeID, 0, 0);
+
+    task('Signing out');
+    toolbar.signOut();
+
+    task('Signing back in as first user');
+    login
+      .signIn(process.env.E2E_EMAIL_1, process.env.E2E_PASSWORD_1)
+      .assert.urlContains('/routes');
+
+    task('Checking that route is still climbed');
+    routes
+      .toggleArea(areaID)
+      .getClimbButtonText(routeID, 0, text => routes.assert.equal(text, 'L'));
 
     task('Checking stats');
     toolbar.clickNavElement('@stats');
@@ -78,19 +110,6 @@ module.exports = {
         stats.assert.equal(name, 'Total climbs');
         stats.assert.equal(value, '1');
       });
-
-    task('Signing out');
-    toolbar.signOut();
-
-    task('Signing back in');
-    login
-      .signIn(process.env.E2E_EMAIL, process.env.E2E_PASSWORD)
-      .assert.urlContains('/routes');
-
-    task('Checking that route is still climbed');
-    routes
-      .toggleArea(areaID)
-      .getClimbButtonText(routeID, 0, text => routes.assert.equal(text, 'L'));
 
     // Uncommenting this can be helpful for debugging after a failure.
     //browser.pause(10000);

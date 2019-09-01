@@ -80,18 +80,22 @@ export interface Team {
   name: string;
   invite: string;
   users: Record<string, TeamUserData>;
+  abandoned?: boolean; // only if a user left after climbs were recorded
 }
+
+// Number of members on a complete team.
+export const TeamSize = 2;
 
 // TeamUserData represents a record in the 'users' field in a document in the
 // 'teams' collection.
 export interface TeamUserData {
   name: string;
   climbs: Record<string, ClimbState>;
+  left?: boolean; // only if the user left the team after it was abandoned
 }
 
 // User represents a document in the 'users' collection.
 export interface User {
   name: string;
   team?: string; // only if on a team
-  climbs?: Record<string, ClimbState>; // only if not on a team
 }

@@ -53,8 +53,12 @@
         <v-layout row>
           <v-flex>
             <div class="caption grey--text text--darken-1">Members</div>
-            <div v-for="name in teamUserNames" :key="name" class="member-name">
-              {{ name }}
+            <div
+              v-for="user in teamMembers"
+              :key="user.name"
+              class="member-name"
+            >
+              {{ user.name }}<span v-if="user.left"> (left)</span>
             </div>
           </v-flex>
         </v-layout>
@@ -295,7 +299,7 @@
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 
 import { logInfo, logError } from '@/log';
-import { ClimbState } from '@/models';
+import { TeamSize, TeamUserData } from '@/models';
 
 import Card from '@/components/Card.vue';
 import DialogCard from '@/components/DialogCard.vue';
@@ -362,35 +366,42 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
   // Length of invite codes.
   readonly inviteCodeLength = 6;
-  // Number of users on a full team.
-  static readonly teamSize = 2;
 
   // Input mask passed to <v-text-input> for invite code.
   get inviteCodeMask() {
     return '#'.repeat(this.inviteCodeLength);
   }
 
-  // Stably-ordered names of team members.
-  get teamUserNames() {
+  // Stably-ordered information about the current team's members.
+  get teamMembers(): TeamUserData[] {
     if (!this.teamDoc || !this.teamDoc.users) return [];
 
     // Sort by UID to get stable ordering.
     return Object.keys(this.teamDoc.users)
       .sort()
       .map(uid => {
-        if (!this.teamDoc.users) return ''; // required by TypeScript
-        const data = this.teamDoc.users[uid];
-        return data && data.name ? data.name : '';
+        // Required by TypeScript.
+        if (!this.teamDoc.users) return { name: '', climbs: {} };
+        return this.teamDoc.users[uid];
       });
   }
 
-  // Whether the team is currently full.
+  // Whether the user's current team is full.
   get teamFull() {
     return (
       this.teamDoc &&
       this.teamDoc.users &&
-      Object.keys(this.teamDoc.users).length >= Profile.teamSize
+      Object.keys(this.teamDoc.users).length >= TeamSize
     );
+  }
+
+  // Number of climbs that the user has reported for their current team.
+  get numClimbs() {
+    if (!this.teamDoc || !this.teamDoc.users) return 0;
+    const userData = this.teamDoc.users[this.user.uid];
+    return userData && userData.climbs
+      ? Object.keys(userData.climbs).length
+      : 0;
   }
 
   // Updates the user's name in Firestore when the user name input is changed.
@@ -465,10 +476,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         batch.set(teamRef, {
           name: this.createTeamName,
           users: {
-            [this.user.uid]: {
-              name: this.userDoc.name,
-              climbs: this.userDoc.climbs || {},
-            },
+            [this.user.uid]: { name: this.userDoc.name, climbs: {} },
           },
           invite: inviteCode,
         });
@@ -477,14 +485,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         });
 
         if (!this.userRef) throw new Error('No ref to user doc');
-        batch.update(this.userRef, {
-          team: teamRef.id,
-          // The user's climbs are now stored in the team doc. We do this to avoid
-          // needing to write to both the team and user doc every time the user
-          // completes another climb, and also to prevent needing to let user A
-          // write to teammate B's user doc if A reports a climb performed by B.
-          climbs: this.firebase.firestore.FieldValue.delete(),
-        });
+        batch.update(this.userRef, { team: teamRef.id });
         return batch.commit();
       })
       .then(() => {
@@ -540,23 +541,31 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         if (!this.userRef) throw new Error('No ref to user doc');
         if (!teamRef) throw new Error('No ref to team doc');
 
-        if (Object.keys(teamSnap.get('users')).length >= Profile.teamSize) {
-          throw new Error('Team is full');
-        }
         teamName = teamSnap.get('name');
 
-        // Update the team doc and the user doc.
+        // Update the team doc and the user doc atomically.
         const batch = this.firestore.batch();
-        batch.update(teamRef, {
-          ['users.' + this.user.uid]: {
-            name: this.userDoc.name,
-            climbs: this.userDoc.climbs || {},
-          },
-        });
-        batch.update(this.userRef, {
-          team: teamRef.id,
-          climbs: this.firebase.firestore.FieldValue.delete(),
-        });
+
+        const uid = this.user.uid;
+        const users = teamSnap.get('users');
+        if (users && users[uid]) {
+          // If we're already listed as a member of the team, presumably we left
+          // it earlier after reporting some climbs. Update our name and mark us
+          // as no longer having left.
+          batch.update(teamRef, {
+            [`users.${uid}.name`]: this.userDoc.name,
+            [`users.${uid}.left`]: this.firebase.firestore.FieldValue.delete(),
+          });
+        } else if (Object.keys(users).length < TeamSize) {
+          // Otherwise, we're joining the team for the first time.
+          batch.update(teamRef, {
+            [`users.${uid}`]: { name: this.userDoc.name, climbs: {} },
+          });
+        } else {
+          throw new Error('Team is full');
+        }
+
+        batch.update(this.userRef, { team: teamRef.id });
         return batch.commit();
       })
       .then(() => {
@@ -588,24 +597,23 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
       logInfo('leave_team', { team: this.teamRef.id });
 
-      // Grab the user's climbs from the team doc.
+      // Perform a batched update that updates the team and user docs.
+      const batch = this.firestore.batch();
+
       const uid = this.user.uid;
-      let climbs: Record<string, ClimbState> = {};
-      const userData = this.teamDoc.users ? this.teamDoc.users[uid] : null;
-      if (userData && userData.climbs) {
-        climbs = userData.climbs;
+      if (this.numClimbs != 0) {
+        // If we already reported climbs, preserve our user entry and mark us as
+        // having left.
+        batch.update(this.teamRef, { [`users.${uid}.left`]: true });
+      } else {
+        // Otherwise, delete our user entry so someone else can take our place.
+        batch.update(this.teamRef, {
+          [`users.${uid}`]: this.firebase.firestore.FieldValue.delete(),
+        });
       }
 
-      // Perform a batched update that removes the user from the team doc and
-      // removes the team from the user doc.
-      const batch = this.firestore.batch();
-      batch.update(this.teamRef, {
-        ['users.' + uid]: this.firebase.firestore.FieldValue.delete(),
-      });
       batch.update(this.userRef, {
         team: this.firebase.firestore.FieldValue.delete(),
-        // Move the climbs back from the team doc to the user doc.
-        climbs: climbs,
       });
       resolve(batch.commit());
     })

@@ -14,7 +14,7 @@
       </template>
       <RouteList
         :id="'routes-list-' + area.id"
-        :climberInfos="climberInfos"
+        :climberInfos="teamFull ? climberInfos : []"
         :routes="area.routes"
         @set-climb-state="onSetClimbState"
       />
@@ -37,6 +37,7 @@ import {
   ClimbState,
   SetClimbStateEvent,
   SortedData,
+  TeamSize,
 } from '@/models';
 
 import Perf from '@/mixins/Perf';
@@ -73,6 +74,13 @@ export default class Routes extends Mixins(Perf, UserLoader) {
         Routes.climbColors[i % Routes.climbColors.length]
       );
     });
+  }
+
+  // Returns true if the team is full.
+  get teamFull() {
+    return (
+      this.teamDoc.users && Object.keys(this.teamDoc.users).length == TeamSize
+    );
   }
 
   // Updates team document in response to 'set-climb-state' events from RouteList

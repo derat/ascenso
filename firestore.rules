@@ -58,11 +58,15 @@ service cloud.firestore {
         return "name" in doc && nameValid(doc.name);
       }
 
-      // Returns true if |uid| will be listed in the doc for team ID |team|
-      // after the current transaction or batched write completes.
-      function teamHasUser(team) {
-        return uid in getAfter(
-            /databases/$(database)/documents/teams/$(team)).data.users;
+      // Returns true if |uid| is listed as an active member in |teamDoc|.
+      // This returns false if the user is marked as being an inactive member of
+      // the team (i.e. they left the team after reporting climbs).
+      function teamHasUser(teamDoc) {
+        return uid in teamDoc.data.users &&
+            (
+              !("left" in teamDoc.data.users[uid]) ||
+              !teamDoc.data.users[uid].left
+            );
       }
 
       // Returns true if |newDoc| contains valid team-related data.
@@ -75,15 +79,15 @@ service cloud.firestore {
               // - User will be on the same team as before.
               ("team" in oldDoc && newDoc.team == oldDoc.team) ||
               // - New team, and user is listed in the new team's doc.
-              teamHasUser(newDoc.team)
+              teamHasUser(getAfter(/databases/$(database)/documents/teams/$(newDoc.team)))
             ) &&
             ( // Valid cases for the team in the original document:
               // - User wasn't on a team before.
               !("team" in oldDoc) ||
               // - User didn't leave their team.
               ("team" in newDoc && newDoc.team == oldDoc.team) ||
-              // - User left and is no longer listed in old team's doc.
-              !teamHasUser(oldDoc.team)
+              // - User left and is no longer listed as active in old team's doc.
+              !teamHasUser(getAfter(/databases/$(database)/documents/teams/$(oldDoc.team)))
             );
       }
 
@@ -158,11 +162,13 @@ service cloud.firestore {
             request.resource.data.users.keys().hasOnly(resource.data.users.keys()) &&
             request.resource.data.invite == resource.data.invite;
 
-      // Let users remove themselves from their team if they don't make any
-      // other changes to the doc.
+      // Let users remove themselves from their team if they hadn't reported any
+      // climbs and don't make any other changes to the doc.
       allow update:
-        if loggedIn() && // skip teamDocValid() since it expects user on team
+        if loggedIn() &&
+            // Skip teamDocValid() since it expects user to be on team.
             request.auth.uid in resource.data.users &&
+            resource.data.users[request.auth.uid].climbs.size() == 0 &&
             !(request.auth.uid in request.resource.data.users) &&
             request.resource.data.users.size() == resource.data.users.size() - 1 &&
             request.resource.data.name == resource.data.name &&
