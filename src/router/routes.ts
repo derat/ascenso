@@ -9,6 +9,7 @@ import Login from '@/views/Login.vue';
 import Print from '@/views/Print.vue';
 import Profile from '@/views/Profile.vue';
 import Routes from '@/views/Routes.vue';
+import RoutesNav from '@/views/RoutesNav.vue';
 import Statistics from '@/views/Statistics.vue';
 
 export default [
@@ -35,7 +36,10 @@ export default [
   {
     name: 'routes',
     path: '/routes',
-    component: Routes,
+    components: {
+      default: Routes,
+      nav: RoutesNav,
+    },
     meta: {
       auth: true,
       title: 'Routes',
