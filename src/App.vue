@@ -4,7 +4,7 @@
 
 <template>
   <v-app>
-    <Toolbar v-if="signedIn" />
+    <Toolbar v-if="showToolbar" />
     <v-content>
       <!-- Ideally, this could be wrapped in <keep-alive include="Routes"> to
            keep the slow-to-render Routes view alive after navigating away from
@@ -61,6 +61,10 @@ export default class App extends Mixins(Perf) {
   showSnackbar = false;
   // Amount of time to display snackbar before autohiding, in milliseconds.
   snackbarTimeoutMs = 0;
+
+  get showToolbar() {
+    return this.signedIn && this.$route.meta && this.$route.meta.auth;
+  }
 
   // Displays the snackbar in response to a request from a component.
   onMessage(msg: string, color: string, timeout: number) {

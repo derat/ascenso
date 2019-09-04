@@ -153,7 +153,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
 }
 </script>
 
-<style>
+<style scoped>
 .area {
   font-size: 16px;
 }
