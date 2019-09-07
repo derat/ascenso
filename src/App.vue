@@ -4,7 +4,9 @@
 
 <template>
   <v-app>
-    <Toolbar v-if="showToolbar" />
+    <Toolbar v-if="showToolbar" :title="$route.meta.title">
+      <router-view name="nav" />
+    </Toolbar>
     <v-content>
       <!-- Ideally, this could be wrapped in <keep-alive include="Routes"> to
            keep the slow-to-render Routes view alive after navigating away from
