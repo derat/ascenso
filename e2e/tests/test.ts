@@ -9,10 +9,10 @@ module.exports = {
     // Logs a header at the beginning of a task.
     const task = msg => browser.perform(() => console.log('✏️ ' + msg));
 
-    const userName1 = 'First User';
-    const userName2 = 'Second User';
-    const teamName = 'My Team';
-    const newTeamName = 'Updated Team';
+    const userName1 = 'E2E User #1';
+    const userName2 = 'E2E User #2';
+    const teamName = 'E2E Team';
+    const newTeamName = 'E2E Updated Team';
 
     // Assigned after creating team.
     let inviteCode;
