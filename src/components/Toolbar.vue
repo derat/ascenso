@@ -42,9 +42,9 @@
       <!-- It's super-ugly that Vuetify seems to require hard-coding the text
            color here. Oddly, color="primary" gives us a white icon in
            <v-toolbar-side-icon> above, but it gives us black text here. -->
-      <v-toolbar-title class="white--text">
-        {{ competitionName }}
-      </v-toolbar-title>
+      <v-toolbar-title class="white--text">{{ title }}</v-toolbar-title>
+      <v-spacer />
+      <slot></slot>
     </v-toolbar>
 
     <!-- "Sign out" dialog -->
@@ -79,7 +79,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import { getAuth } from '@/firebase';
 import DialogCard from '@/components/DialogCard.vue';
 
@@ -105,7 +105,7 @@ interface NavItem {
 })
 export default class Toolbar extends Vue {
   // Name to display in the toolbar.
-  readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
+  @Prop(String) readonly title!: string;
   // Model for navigation drawer.
   drawer: any = null;
   // Whether the "Sign out" dialog is shown.

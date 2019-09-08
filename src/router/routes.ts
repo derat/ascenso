@@ -27,19 +27,28 @@ export default [
     name: 'profile',
     path: '/profile',
     component: Profile,
-    meta: { auth: true },
+    meta: {
+      auth: true,
+      title: 'Profile',
+    },
   },
   {
     name: 'routes',
     path: '/routes',
     component: Routes,
-    meta: { auth: true },
+    meta: {
+      auth: true,
+      title: 'Routes',
+    },
   },
   {
     name: 'stats',
     path: '/stats',
     component: Statistics,
-    meta: { auth: true },
+    meta: {
+      auth: true,
+      title: 'Statistics',
+    },
   },
   {
     path: '*',
