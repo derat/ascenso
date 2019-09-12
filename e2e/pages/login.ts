@@ -14,7 +14,9 @@ module.exports = {
     // Signs in using |email| and |password| and blocks until the login page is
     // no longer loaded.
     signIn(email: string, password: string) {
-      return this.waitForElementVisible('@startButton')
+      // Wait a while since the page (or at least FirebaseUI) sometimes seems to
+      // take a while to load.
+      return this.waitForElementVisible('@startButton', 15_000)
         .click('@startButton')
         .waitForElementVisible('@emailInput')
         .setValue('@emailInput', email)
