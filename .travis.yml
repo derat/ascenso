@@ -26,11 +26,9 @@ matrix:
       node_js: lts/*
       addons:
         apt:
-          sources:
-            - google-chrome
           packages:
             - awscli
-            - google-chrome-stable
+        chrome: stable
       install:
         - npm install
         - firebase setup:emulators:firestore
