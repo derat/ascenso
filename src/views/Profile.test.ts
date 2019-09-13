@@ -5,17 +5,20 @@
 import { MockFirebase, MockUser } from '@/firebase/mock';
 
 import { mount, Wrapper } from '@vue/test-utils';
+import {
+  setUpVuetifyTesting,
+  newVuetifyMountOptions,
+  deepCopy,
+  getValue,
+} from '@/testutil';
 import Vue from 'vue';
-import Vuetify from 'vuetify';
-Vue.use(Vuetify);
-
 import i18n from '@/plugins/i18n';
-
 import flushPromises from 'flush-promises';
 
 import { ClimbState, Team, User } from '@/models';
-import { deepCopy, getValue } from '@/testutil';
 import Profile from './Profile.vue';
+
+setUpVuetifyTesting();
 
 // Hardcoded test data to insert into Firestore.
 const userID = '123';
@@ -76,12 +79,13 @@ describe('Profile', () => {
 
     // Use mount() instead of shallowMount() so that templates around v-btn
     // elements will be expanded.
-    wrapper = mount(Profile, { mocks: MockFirebase.mountMocks, i18n });
-
-    // Avoid Vuetify log spam: https://github.com/vuetifyjs/vuetify/issues/3456
-    const el = document.createElement('div');
-    el.setAttribute('data-app', 'true');
-    document.body.appendChild(el);
+    wrapper = mount(
+      Profile,
+      newVuetifyMountOptions({
+        mocks: MockFirebase.mountMocks,
+        i18n,
+      })
+    );
 
     await flushPromises();
   }

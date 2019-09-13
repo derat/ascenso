@@ -12,40 +12,40 @@
             :key="`divider-${index}`"
             class="my-2"
           />
-          <!-- Note that v-list-tile extends router-link:
+          <!-- Note that v-list-item (formerly v-list-tile) extends router-link:
                https://stackoverflow.com/q/47586022. -->
-          <v-list-tile
+          <v-list-item
             v-else
             :id="item.id"
             :key="item.text"
             :to="item.route ? { name: item.route } : ''"
             v-on="item.method ? { click: item.method } : null"
           >
-            <v-list-tile-action>
+            <v-list-item-action>
               <v-icon>{{ item.icon }}</v-icon>
-            </v-list-tile-action>
-            <v-list-tile-content>
-              <v-list-tile-title>{{ item.text }}</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{ item.text }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </template>
       </v-list>
     </v-navigation-drawer>
 
-    <v-toolbar color="primary" app scroll-off-screen :scroll-threshold="32">
-      <v-toolbar-side-icon
+    <v-app-bar color="primary" app scroll-off-screen :scroll-threshold="32">
+      <v-app-bar-nav-icon
         id="toolbar-menu-icon"
         ref="toolbarIcon"
         @click.stop="drawer = !drawer"
-        color="primary"
-      ></v-toolbar-side-icon>
+        color="white"
+      ></v-app-bar-nav-icon>
       <!-- It's super-ugly that Vuetify seems to require hard-coding the text
            color here. Oddly, color="primary" gives us a white icon in
-           <v-toolbar-side-icon> above, but it gives us black text here. -->
+           <v-app-bar-nav-icon> above, but it gives us black text here. -->
       <v-toolbar-title class="white--text">{{ title }}</v-toolbar-title>
       <v-spacer />
       <slot></slot>
-    </v-toolbar>
+    </v-app-bar>
 
     <!-- "Sign out" dialog -->
     <v-dialog
@@ -59,12 +59,12 @@
         </v-card-text>
 
         <v-card-actions>
-          <v-btn flat @click="signOutDialogShown = false">
+          <v-btn text @click="signOutDialogShown = false">
             Cancel
           </v-btn>
           <v-spacer />
           <v-btn
-            flat
+            text
             color="error"
             id="toolbar-sign-out-confirm-button"
             ref="signOutConfirmButton"

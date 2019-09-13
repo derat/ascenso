@@ -40,7 +40,8 @@ module.exports = {
         .click('@createConfirmButton')
         .waitForElementVisible('@inviteCodeDiv')
         .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
-        .click('@inviteDismissButton');
+        .click('@inviteDismissButton')
+        .waitForElementNotVisible('@inviteDismissButton');
     },
     joinTeam(inviteCode: string) {
       return this.waitForElementVisible('@joinButton')
@@ -48,20 +49,23 @@ module.exports = {
         .waitForElementVisible('@joinCodeField')
         .setVTextFieldValue('@joinCodeField', inviteCode)
         .waitForElementVisible('@joinConfirmButton')
-        .click('@joinConfirmButton');
+        .click('@joinConfirmButton')
+        .waitForElementNotVisible('@joinConfirmButton');
     },
     leaveTeam() {
       return this.waitForElementVisible('@leaveButton')
         .click('@leaveButton')
         .waitForElementVisible('@leaveConfirmButton')
-        .click('@leaveConfirmButton');
+        .click('@leaveConfirmButton')
+        .waitForElementNotVisible('@leaveConfirmButton');
     },
     showInviteCode(inviteCodeFunc: (code: string) => void) {
       return this.waitForElementVisible('@inviteButton')
         .click('@inviteButton')
         .waitForElementVisible('@inviteCodeDiv')
         .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
-        .click('@inviteDismissButton');
+        .click('@inviteDismissButton')
+        .waitForElementNotVisible('@inviteDismissButton');
     },
     checkUserOnTeam(userName: string, teamName: string) {
       return this.waitForElementVisible('@teamNameField').assert.value(

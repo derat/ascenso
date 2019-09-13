@@ -5,33 +5,27 @@
 import { MockFirebase } from '@/firebase/mock';
 
 import Vue from 'vue';
-import Vuetify from 'vuetify';
 import VueRouter from 'vue-router';
-import { createLocalVue, mount, Wrapper } from '@vue/test-utils';
+import { mount, Wrapper } from '@vue/test-utils';
+import { setUpVuetifyTesting, newVuetifyMountOptions, getValue } from '@/testutil';
 import flushPromises from 'flush-promises';
 
-import { getValue } from '@/testutil';
 import routes from '@/router/routes';
 import Toolbar from './Toolbar.vue';
 
-Vue.use(Vuetify);
+setUpVuetifyTesting();
 
 describe('Toolbar', () => {
   let wrapper: Wrapper<Vue>;
 
   beforeEach(() => {
     MockFirebase.reset();
-
-    // Avoid Vuetify log spam: https://github.com/vuetifyjs/vuetify/issues/3456
-    const el = document.createElement('div');
-    el.setAttribute('data-app', 'true');
-    document.body.appendChild(el);
-
-    // See https://vue-test-utils.vuejs.org/guides/using-with-vue-router.html.
-    const localVue = createLocalVue();
-    localVue.use(VueRouter);
-    const router = new VueRouter({ mode: 'abstract', routes });
-    wrapper = mount(Toolbar, { localVue, router });
+    wrapper = mount(
+      Toolbar,
+      newVuetifyMountOptions({
+        router: new VueRouter({ mode: 'abstract', routes }),
+      })
+    );
   });
 
   function findRef(ref: string): Wrapper<Vue> {
@@ -55,11 +49,11 @@ describe('Toolbar', () => {
     expect(getValue(dialog)).toBeFalsy();
     expect(MockFirebase.currentUser).toBeTruthy();
 
-    // Open the navigation drawer and click the last tile.
-    // Use vm.$emit instead of trigger: // https://stackoverflow.com/q/52058141
+    // Open the navigation drawer and click the last item.
+    // Use vm.$emit instead of trigger: https://stackoverflow.com/q/52058141
     findRef('toolbarIcon').trigger('click');
-    const tiles = wrapper.findAll({ name: 'v-list-tile' });
-    tiles.at(tiles.length - 1).vm.$emit('click');
+    const items = wrapper.findAll({ name: 'v-list-item' });
+    items.at(items.length - 1).vm.$emit('click');
 
     // Click the confirm button in the dialog.
     expect(getValue(dialog)).toBeTruthy();
@@ -72,9 +66,9 @@ describe('Toolbar', () => {
   });
 
   // TODO: Ideally we'd also test that the navigation links work, but doing so
-  // is beyond me. After I call trigger('click') on one of the v-list-tile
+  // is beyond me. After I call trigger('click') on one of the v-list-item
   // elements in the navigation drawer, wrapper.vm.$route and
   // router.currentRoute are both empty objects. This is probably an issue
-  // related to router-link (which v-list-tile extends), since navigation works
+  // related to router-link (which v-list-item extends), since navigation works
   // in the signout test when it's triggered by $router.replace().
 });

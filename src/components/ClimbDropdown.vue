@@ -3,30 +3,28 @@
      found in the LICENSE file. -->
 
 <template>
-  <!-- The "lazy" attribute here is important: rendering a bunch of
-       ClimbDropdown components is significantly faster when we defer rendering
-       their menus until they need to be displayed. -->
-  <v-menu lazy>
+  <v-menu>
     <template v-slot:activator="{ on }">
       <v-btn
         :color="stateColor"
-        class="narrow-button elevation-1"
+        class="elevation-1"
         :class="stateTextClass"
+        width="48px"
         v-on="on"
       >
         {{ stateAbbrevs[syncedState] }}
       </v-btn>
     </template>
     <v-list class="climb-state-list">
-      <v-list-tile @click="syncedState = ClimbState.LEAD">
-        <v-list-tile-title>Lead</v-list-tile-title>
-      </v-list-tile>
-      <v-list-tile @click="syncedState = ClimbState.TOP_ROPE">
-        <v-list-tile-title>Top-rope</v-list-tile-title>
-      </v-list-tile>
-      <v-list-tile @click="syncedState = ClimbState.NOT_CLIMBED">
-        <v-list-tile-title>Not climbed</v-list-tile-title>
-      </v-list-tile>
+      <v-list-item @click="syncedState = ClimbState.LEAD">
+        <v-list-item-title>Lead</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="syncedState = ClimbState.TOP_ROPE">
+        <v-list-item-title>Top-rope</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="syncedState = ClimbState.NOT_CLIMBED">
+        <v-list-item-title>Not climbed</v-list-item-title>
+      </v-list-item>
     </v-list>
   </v-menu>
 </template>
@@ -76,8 +74,9 @@ export default class ClimbDropdown extends Vue {
 </script>
 
 <style scoped>
-.narrow-button {
-  min-width: 48px;
+.v-btn {
+  /* Override 64px default: https://stackoverflow.com/q/47331310 */
+  min-width: 0 !important;
 }
 .not-climbed-button {
   color: #ddd;

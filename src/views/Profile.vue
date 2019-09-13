@@ -3,10 +3,10 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-container v-if="userLoaded" grid-list-md text-ms-center>
+  <v-container v-if="userLoaded">
     <Card :title="$t('individual')">
-      <v-layout row>
-        <v-flex>
+      <v-row>
+        <v-col>
           <v-form v-model="userNameValid" @submit.prevent>
             <!-- It's exceedingly unfortunate that all of these elements have
                  nearly-identical 'id' and 'ref' attributes. Refs are nice since
@@ -27,15 +27,15 @@
               @change="updateUserName"
             />
           </v-form>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </Card>
 
-    <Card :title="$t('team')" class="mt-3">
+    <Card :title="$t('team')" class="py-3">
       <!-- User is on a team -->
       <template v-if="teamDoc && teamDoc.users">
-        <v-layout row>
-          <v-flex>
+        <v-row>
+          <v-col>
             <v-form v-model="teamNameValid" @submit.prevent>
               <v-text-field
                 id="profile-team-name-field"
@@ -47,11 +47,11 @@
                 @change="updateTeamName"
               />
             </v-form>
-          </v-flex>
-        </v-layout>
+          </v-col>
+        </v-row>
 
-        <v-layout row>
-          <v-flex>
+        <v-row>
+          <v-col>
             <div class="caption grey--text text--darken-1">Members</div>
             <div
               v-for="user in teamMembers"
@@ -60,10 +60,10 @@
             >
               {{ user.name }}<span v-if="user.left"> (left)</span>
             </div>
-          </v-flex>
-        </v-layout>
+          </v-col>
+        </v-row>
 
-        <v-divider class="mt-2 mb-3" />
+        <v-divider class="mt-2 mb-4" />
 
         <v-card-actions class="pa-0">
           <!-- "Show invite code" button and dialog -->
@@ -99,7 +99,7 @@
                 <v-spacer />
                 <v-btn
                   id="profile-invite-dismiss-button"
-                  flat
+                  text
                   color="primary"
                   @click="inviteDialogShown = false"
                 >
@@ -121,7 +121,7 @@
               <v-btn
                 id="profile-leave-button"
                 ref="leaveButton"
-                flat
+                text
                 color="error"
                 v-on="on"
                 >Leave team</v-btn
@@ -134,14 +134,14 @@
               </v-card-text>
 
               <v-card-actions>
-                <v-btn flat color="primary" @click="leaveDialogShown = false">
+                <v-btn text color="primary" @click="leaveDialogShown = false">
                   Cancel
                 </v-btn>
                 <v-spacer />
                 <v-btn
                   id="profile-leave-confirm-button"
                   ref="leaveConfirmButton"
-                  flat
+                  text
                   color="error"
                   :disabled="leavingTeam"
                   @click="leaveTeam"
@@ -160,7 +160,7 @@
           You are not on a team.
         </div>
 
-        <v-divider class="mt-2 mb-3" />
+        <v-divider class="mt-2 mb-4" />
 
         <v-card-actions class="pa-0">
           <!-- "Join team" button and dialog -->
@@ -200,7 +200,7 @@
                     ref="joinCodeField"
                     v-model="joinInviteCode"
                     v-if="joinDialogShown"
-                    :mask="inviteCodeMask"
+                    v-mask="'#'.repeat(inviteCodeLength)"
                     :counter="inviteCodeLength"
                     :rules="joinInviteCodeRules"
                     label="Invite code"
@@ -219,7 +219,7 @@
                   ref="joinConfirmButton"
                   :disabled="!joinTeamValid || joiningTeam"
                   color="primary"
-                  flat
+                  text
                   @click="joinTeam"
                 >
                   Join
@@ -280,7 +280,7 @@
                   ref="createConfirmButton"
                   :disabled="!createTeamValid || creatingTeam"
                   color="primary"
-                  flat
+                  text
                   @click="createTeam"
                 >
                   Create
@@ -297,6 +297,8 @@
 
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
+// @ts-ignore: No TypeScript definitions for vue-the-mask. :-/
+import { mask } from 'vue-the-mask';
 
 import { logInfo, logError } from '@/log';
 import { TeamSize, TeamUserData } from '@/models';
@@ -314,6 +316,7 @@ function cleanName(name: string): string {
 
 @Component({
   components: { Card, DialogCard, Spinner },
+  directives: { mask },
 })
 export default class Profile extends Mixins(Perf, UserLoader) {
   // Maximum length of user and team names.
@@ -366,11 +369,6 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
   // Length of invite codes.
   readonly inviteCodeLength = 6;
-
-  // Input mask passed to <v-text-input> for invite code.
-  get inviteCodeMask() {
-    return '#'.repeat(this.inviteCodeLength);
-  }
 
   // Stably-ordered information about the current team's members.
   get teamMembers(): TeamUserData[] {

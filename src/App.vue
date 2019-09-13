@@ -34,7 +34,7 @@
              https://stackoverflow.com/q/49627750 both suggest the hack of
              setting 'persistent' on the dialog to prevent clicks outside of it
              from closing it, but that's not very user-friendly. -->
-        <v-btn flat text @click="showSnackbar = false">Close</v-btn>
+        <v-btn text @click="showSnackbar = false">Close</v-btn>
       </v-snackbar>
     </v-content>
   </v-app>
@@ -101,3 +101,11 @@ export default class App extends Mixins(Perf) {
   }
 }
 </script>
+
+<!-- These apply across the entire app. -->
+<style>
+/* v-card-text uses hard-to-read gray text. ಠ_ಠ */
+.theme--light.v-card > .v-card__text {
+  color: black;
+}
+</style>

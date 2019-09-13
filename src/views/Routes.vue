@@ -3,23 +3,25 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-expansion-panel v-if="ready" expand>
-    <v-expansion-panel-content
+  <v-expansion-panels v-if="ready" multiple>
+    <v-expansion-panel
       v-for="area in sortedData.areas"
       :key="area.id"
       :id="'routes-expand-' + area.id"
     >
-      <template v-slot:header>
-        <div class="area">{{ area.name }}</div>
-      </template>
-      <RouteList
-        :id="'routes-list-' + area.id"
-        :climberInfos="teamFull ? climberInfos : []"
-        :routes="area.routes"
-        @set-climb-state="onSetClimbState"
-      />
-    </v-expansion-panel-content>
-  </v-expansion-panel>
+      <v-expansion-panel-header class="area">
+        {{ area.name }}
+      </v-expansion-panel-header>
+      <v-expansion-panel-content>
+        <RouteList
+          :id="'routes-list-' + area.id"
+          :climberInfos="teamFull ? climberInfos : []"
+          :routes="area.routes"
+          @set-climb-state="onSetClimbState"
+        />
+      </v-expansion-panel-content>
+    </v-expansion-panel>
+  </v-expansion-panels>
   <Spinner v-else />
 </template>
 
@@ -152,9 +154,3 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   }
 }
 </script>
-
-<style scoped>
-.area {
-  font-size: 16px;
-}
-</style>

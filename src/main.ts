@@ -59,10 +59,11 @@ import { firestorePlugin } from 'vuefire';
 Vue.use(VueRouter);
 Vue.use(firestorePlugin);
 
-import './plugins/vuetify';
-
 import App from '@/App.vue';
+// TODO: Do we actually need to use this? See
+// https://vuetifyjs.com/en/customization/internationalization
 import i18n from '@/plugins/i18n';
+import vuetify from '@/plugins/vuetify';
 import router from '@/router';
 
 import '@/register-service-worker';
@@ -77,6 +78,7 @@ getAuth().then(auth => {
       app = new Vue({
         router,
         i18n,
+        vuetify,
         render: h => h(App),
       }).$mount('#app');
     }

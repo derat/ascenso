@@ -4,31 +4,35 @@
 
 <template>
   <v-list two-line class="py-0">
-    <v-list-tile
+    <v-list-item
       v-for="route in routes"
       :key="route.name"
       :id="'routes-route-' + route.id"
+      class="px-0"
     >
-      <v-list-tile-action v-for="(info, i) in climberInfos" :key="i">
+      <v-list-item-action
+        v-for="(info, i) in climberInfos"
+        :key="i"
+        class="mr-0"
+      >
         <ClimbDropdown
           :state="info.states[route.id] || ClimbState.NOT_CLIMBED"
           :color="info.color"
           :label="info.initials"
           @update:state="onUpdateClimb(i, route.id, $event)"
-          class="mr-3"
+          class="mr-5"
         />
-      </v-list-tile-action>
+      </v-list-item-action>
 
-      <!-- Add a left margin if there aren't any climb drop-downs. -->
-      <v-list-tile-content :class="[{ 'ml-3': !climberInfos.length }]">
+      <v-list-item-content>
         <!-- The 'name' class here just exists for unit testing. -->
-        <v-list-tile-title class="name">{{ route.name }}</v-list-tile-title>
-        <v-list-tile-sub-title class="details">
+        <v-list-item-title class="name">{{ route.name }}</v-list-item-title>
+        <v-list-item-subtitle class="details">
           <span class="grade">{{ route.grade }}</span>
           <span class="points"> {{ route.lead }} ({{ route.tr }}) </span>
-        </v-list-tile-sub-title>
-      </v-list-tile-content>
-    </v-list-tile>
+        </v-list-item-subtitle>
+      </v-list-item-content>
+    </v-list-item>
   </v-list>
 </template>
 

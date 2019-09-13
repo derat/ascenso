@@ -7,21 +7,19 @@
     <!-- We use v-show rather than v-if here so that FirebaseUI can find the
          auth container in the DOM immediately. -->
     <v-container
-      class="container"
+      class="container text-center"
       ref="container"
       v-show="showUI"
-      grid-list-md
-      text-ms-center
     >
-      <v-layout row justify-center>
+      <v-row justify="center">
         <!-- These widths are chosen to match those of the <Card> below. -->
-        <v-flex xs12 sm8 md6>
+        <v-col cols="12" sm="8" md="6">
           <v-img :src="logoURL" :alt="competitionName" contain />
-        </v-flex>
-      </v-layout>
-      <v-layout row justify-center class="mt-4">
+        </v-col>
+      </v-row>
+      <v-row justify="center" class="mt-6">
         <div id="firebaseui-auth-container"></div>
-      </v-layout>
+      </v-row>
     </v-container>
     <Spinner v-if="!showUI" />
   </div>
@@ -136,5 +134,10 @@ export default class Login extends Mixins(Perf) {
 #login-wrapper {
   /* Needed in order for spinner to be vertically centered. */
   display: inline;
+}
+>>> .firebaseui-idp-list {
+  /* Vuetify 2 has some garbage unscoped ".v-application ul" rule that adds 24px
+   * of left padding to this element otherwise, making it off-center. */
+  padding-left: 0;
 }
 </style>
