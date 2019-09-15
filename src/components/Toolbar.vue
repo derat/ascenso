@@ -58,6 +58,7 @@
           Are you sure you want to sign out?
         </v-card-text>
 
+        <v-divider />
         <v-card-actions>
           <v-btn text @click="signOutDialogShown = false">
             Cancel

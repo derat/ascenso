@@ -95,6 +95,7 @@
                 </div>
               </v-card-text>
 
+              <v-divider />
               <v-card-actions>
                 <v-spacer />
                 <v-btn
@@ -133,8 +134,9 @@
                 Are you sure you want to leave your team?
               </v-card-text>
 
+              <v-divider />
               <v-card-actions>
-                <v-btn text color="primary" @click="leaveDialogShown = false">
+                <v-btn text @click="leaveDialogShown = false">
                   Cancel
                 </v-btn>
                 <v-spacer />
@@ -212,7 +214,11 @@
                 </v-form>
               </v-card-text>
 
+              <v-divider />
               <v-card-actions>
+                <v-btn text @click="joinDialogShown = false">
+                  Cancel
+                </v-btn>
                 <v-spacer />
                 <v-btn
                   id="profile-join-confirm-button"
@@ -273,7 +279,11 @@
                 </v-form>
               </v-card-text>
 
+              <v-divider />
               <v-card-actions>
+                <v-btn text @click="createDialogShown = false">
+                  Cancel
+                </v-btn>
                 <v-spacer />
                 <v-btn
                   id="profile-create-confirm-button"
