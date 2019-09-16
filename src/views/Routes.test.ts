@@ -5,10 +5,8 @@
 import { MockFirebase, MockUser } from '@/firebase/mock';
 
 import { mount, Wrapper } from '@vue/test-utils';
+import { setUpVuetifyTesting, newVuetifyMountOptions } from '@/testutil';
 import Vue from 'vue';
-import Vuetify from 'vuetify';
-Vue.use(Vuetify);
-
 import flushPromises from 'flush-promises';
 
 import {
@@ -19,9 +17,10 @@ import {
   Team,
   User,
 } from '@/models.ts';
-
 import Routes from './Routes.vue';
 import RouteList from '@/components/RouteList.vue';
+
+setUpVuetifyTesting();
 
 // Hardcoded test data to insert into Firestore.
 const testUID = '123';
@@ -75,7 +74,12 @@ describe('Routes', () => {
     MockFirebase.setDoc(`users/${testUID}`, userDoc);
     MockFirebase.setDoc(`teams/${teamID}`, teamDoc);
 
-    wrapper = mount(Routes, { mocks: MockFirebase.mountMocks });
+    wrapper = mount(
+      Routes,
+      newVuetifyMountOptions({
+        mocks: MockFirebase.mountMocks,
+      })
+    );
     await flushPromises();
   });
 
@@ -85,7 +89,11 @@ describe('Routes', () => {
     );
   });
 
-  it('passes data to route lists', () => {
+  it('passes data to route lists', async () => {
+    // Expand all areas to instantiate lazily-initialized RouteLists.
+    wrapper.findAll('.area').wrappers.forEach(w => w.trigger('click'));
+    await flushPromises();
+
     const routeLists = wrapper.findAll(RouteList).wrappers;
     expect(routeLists.map(w => w.props('routes'))).toEqual(
       sortedData.areas.map(a => a.routes)
@@ -103,6 +111,10 @@ describe('Routes', () => {
   });
 
   it('updates climb states', async () => {
+    // Expand all areas to instantiate lazily-initialized RouteLists.
+    wrapper.findAll('.area').wrappers.forEach(w => w.trigger('click'));
+    await flushPromises();
+
     // Simulate the first climber leading the third route and the second climber
     // undoing their lead of the second route.
     const routeLists = wrapper.findAll(RouteList).wrappers;

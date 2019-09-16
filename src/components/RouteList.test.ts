@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { shallowMount, Wrapper } from '@vue/test-utils';
 import Vue from 'vue';
-import Vuetify from 'vuetify';
+import { shallowMount, Wrapper } from '@vue/test-utils';
+import { setUpVuetifyTesting, newVuetifyMountOptions } from '@/testutil';
 
 import ClimbDropdown from './ClimbDropdown.vue';
 import RouteList from './RouteList.vue';
 import { ClimbState, ClimberInfo, SetClimbStateEvent } from '@/models';
 
-Vue.use(Vuetify);
+setUpVuetifyTesting();
 
 describe('RouteList', () => {
   // Hardcoded test data.
@@ -27,19 +27,22 @@ describe('RouteList', () => {
   let wrapper: Wrapper<Vue>;
 
   beforeEach(() => {
-    wrapper = shallowMount(RouteList, { propsData: { climberInfos, routes } });
+    wrapper = shallowMount(
+      RouteList,
+      newVuetifyMountOptions({ propsData: { climberInfos, routes } })
+    );
   });
 
   // Returns an array of arrays of dropdowns for each route.
   function getRouteDropdowns() {
     return wrapper
-      .findAll({ name: 'v-list-tile' })
+      .findAll({ name: 'v-list-item' })
       .wrappers.map(tile => tile.findAll(ClimbDropdown).wrappers);
   }
 
   it('displays route information', () => {
-    // For reasons that I don't understand, using a {name: 'v-list-tile-title'}
-    // selector here doesn't match anything, although {name: 'v-list-tile}'}
+    // For reasons that I don't understand, using a {name: 'v-list-item-title'}
+    // selector here doesn't match anything, although {name: 'v-list-item}'}
     // matches the tiles. So, use class names for all of these.
     expect(wrapper.findAll('.name').wrappers.map(w => w.text())).toEqual(
       routes.map(r => r.name)

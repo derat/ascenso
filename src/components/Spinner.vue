@@ -3,10 +3,10 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-container fill-height>
-    <v-layout column justify-center align-center>
+  <v-container class="fill-height">
+    <v-row justify="center" align="center">
       <v-progress-circular indeterminate size="48" />
-    </v-layout>
+    </v-row>
   </v-container>
 </template>
 

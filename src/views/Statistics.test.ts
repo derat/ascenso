@@ -5,16 +5,15 @@
 import { MockFirebase, MockUser } from '@/firebase/mock';
 
 import { shallowMount, Wrapper } from '@vue/test-utils';
+import { setUpVuetifyTesting, newVuetifyMountOptions } from '@/testutil';
 import Vue from 'vue';
-import Vuetify from 'vuetify';
-Vue.use(Vuetify);
-
 import flushPromises from 'flush-promises';
 
 import { ClimbState, Statistic } from '@/models';
-
 import Statistics from './Statistics.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
+
+setUpVuetifyTesting();
 
 describe('Statistics', () => {
   let wrapper: Wrapper<Vue>;
@@ -47,9 +46,12 @@ describe('Statistics', () => {
         },
       },
     });
-    wrapper = shallowMount(Statistics, {
-      mocks: MockFirebase.mountMocks,
-    });
+    wrapper = shallowMount(
+      Statistics,
+      newVuetifyMountOptions({
+        mocks: MockFirebase.mountMocks,
+      })
+    );
     await flushPromises();
   });
 

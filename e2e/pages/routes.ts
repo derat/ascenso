@@ -15,7 +15,7 @@ module.exports = {
     // the item to click in the dropdown (e.g. 0 for 'Lead').
     setClimbState(routeID: string, climberIndex: number, menuIndex: number) {
       const button = buttonSelector(routeID, climberIndex);
-      const item = `.climb-state-list a:nth-of-type(${menuIndex + 1})`;
+      const item = `.climb-state-list>div:nth-of-type(${menuIndex + 1})`;
       return this.waitForElementVisible(button)
         .click(button)
         .waitForElementVisible(item)

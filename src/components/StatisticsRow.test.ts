@@ -3,20 +3,22 @@
 // found in the LICENSE file.
 
 import { shallowMount } from '@vue/test-utils';
-import Vue from 'vue';
-import Vuetify from 'vuetify';
+import { setUpVuetifyTesting, newVuetifyMountOptions } from '@/testutil';
 
 import StatisticsRow from './StatisticsRow.vue';
 
-Vue.use(Vuetify);
+setUpVuetifyTesting();
 
 describe('StatisticsRow', () => {
   it('displays the supplied data', () => {
     const name = 'The Name';
     const value = 12345;
-    const wrapper = shallowMount(StatisticsRow, {
-      propsData: { name, value },
-    });
-    expect(wrapper.find('.row').text()).toEqual(`${name} ${value}`);
+    const wrapper = shallowMount(
+      StatisticsRow,
+      newVuetifyMountOptions({
+        propsData: { name, value },
+      })
+    );
+    expect(wrapper.find('.stats-row').text()).toEqual(`${name} ${value}`);
   });
 });

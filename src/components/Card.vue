@@ -3,14 +3,14 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-layout row justify-center>
-    <v-flex xs12 sm8 md6>
-      <v-card class="pa-3">
+  <v-row justify="center">
+    <v-col cols="12" sm="8" md="6" class="py-0">
+      <v-card class="pa-4">
         <div class="caption" v-if="title">{{ title }}</div>
         <slot></slot>
       </v-card>
-    </v-flex>
-  </v-layout>
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">

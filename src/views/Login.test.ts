@@ -9,17 +9,16 @@ import {
   MockGoogleAuthProviderID,
 } from '@/firebase/mock';
 
-import { createLocalVue, mount, Wrapper } from '@vue/test-utils';
+import { mount, Wrapper } from '@vue/test-utils';
+import { setUpVuetifyTesting, newVuetifyMountOptions } from '@/testutil';
 import Vue from 'vue';
-import Vuetify from 'vuetify';
 import VueRouter from 'vue-router';
-
 import flushPromises from 'flush-promises';
 
 import routes from '@/router/routes';
 import Login from './Login.vue';
 
-Vue.use(Vuetify);
+setUpVuetifyTesting();
 
 describe('Login', () => {
   let wrapper: Wrapper<Vue>;
@@ -28,15 +27,13 @@ describe('Login', () => {
     MockFirebase.reset();
     MockAuthUI.reset();
 
-    // See https://vue-test-utils.vuejs.org/guides/using-with-vue-router.html.
-    const localVue = createLocalVue();
-    localVue.use(VueRouter);
-    const router = new VueRouter({ mode: 'abstract', routes });
-    wrapper = mount(Login, {
-      localVue,
-      router,
-      mocks: MockFirebase.mountMocks,
-    });
+    wrapper = mount(
+      Login,
+      newVuetifyMountOptions({
+        router: new VueRouter({ mode: 'abstract', routes }),
+        mocks: MockFirebase.mountMocks,
+      })
+    );
 
     // Let tests call flushPromises() themselves so they can set
     // MockAuthUI.pendingRedirect as needed.

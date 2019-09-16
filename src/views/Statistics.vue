@@ -9,31 +9,27 @@
       <v-tab href="#user">Individual</v-tab>
 
       <v-tab-item key="team" value="team" v-if="teamCards.length">
-        <v-container grid-list-md text-ms-center class="pt-0">
-          <Card
-            v-for="(card, i) in teamCards"
-            :key="card.name"
-            :title="card.name"
-            class="mt-3"
-            :class="'team-card-' + i"
-          >
-            <StatisticsList :items="card.items" />
-          </Card>
-        </v-container>
+        <Card
+          v-for="(card, i) in teamCards"
+          :key="card.name"
+          :title="card.name"
+          class="mt-3 mx-0"
+          :class="'team-card-' + i"
+        >
+          <StatisticsList :items="card.items" />
+        </Card>
       </v-tab-item>
 
       <v-tab-item key="user" value="user">
-        <v-container grid-list-md text-ms-center class="pt-0">
-          <Card
-            v-for="(card, i) in userCards"
-            :key="card.name"
-            :title="card.name"
-            class="mt-3"
-            :class="'user-card-' + i"
-          >
-            <StatisticsList :items="card.items" />
-          </Card>
-        </v-container>
+        <Card
+          v-for="(card, i) in userCards"
+          :key="card.name"
+          :title="card.name"
+          class="mt-3 mx-0"
+          :class="'user-card-' + i"
+        >
+          <StatisticsList :items="card.items" />
+        </Card>
       </v-tab-item>
     </v-tabs>
   </div>
@@ -174,3 +170,12 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
   }
 }
 </script>
+
+<style scoped>
+>>> .v-tabs-items {
+  /* This gross hack seems to be needed to keep the tab container from using a
+   * white background that doesn't match the rest of the app's slightly-gray
+   * background. */
+  background-color: rgba(1, 1, 1, 0);
+}
+</style>

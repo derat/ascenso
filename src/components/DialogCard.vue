@@ -3,16 +3,12 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-layout row justify-center>
-    <v-flex>
-      <v-card>
-        <v-card-title class="title grey lighten-2" primary-title>
-          {{ title }}
-        </v-card-title>
-        <slot></slot>
-      </v-card>
-    </v-flex>
-  </v-layout>
+  <v-card>
+    <v-card-title class="title grey lighten-2 mb-4" primary-title>
+      {{ title }}
+    </v-card-title>
+    <slot></slot>
+  </v-card>
 </template>
 
 <script lang="ts">
