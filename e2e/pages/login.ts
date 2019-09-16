@@ -26,7 +26,7 @@ module.exports = {
         .setValue('@passwordInput', password)
         .waitForElementVisible('@nextButton')
         .click('@nextButton')
-        .waitForElementNotPresent('@wrapper');
+        .waitForElementNotPresent('@wrapper', 15_000);
     },
   },
 };

@@ -3,7 +3,14 @@
      found in the LICENSE file. -->
 
 <template>
-  <v-expansion-panels v-if="ready" multiple>
+  <!-- Set 'accordion' here to avoid animating margins between expanded panels
+       and their neighbors, which is a Vuetify 2 thing that seems to kill
+       performance even on not-slow phones (e.g. Pixel 2). -->
+  <!-- TODO: I think that this is probably just a symptom of a more general
+       performance regression in Vuetify 2, tracked by
+       https://github.com/vuetifyjs/vuetify/issues/8298. Remove it if/when that
+       bug is fixed. -->
+  <v-expansion-panels v-if="ready" accordion multiple>
     <v-expansion-panel
       v-for="area in sortedData.areas"
       :key="area.id"
@@ -12,7 +19,12 @@
       <v-expansion-panel-header class="area">
         {{ area.name }}
       </v-expansion-panel-header>
-      <v-expansion-panel-content>
+      <!-- Expansion panel content became lazily-rendered in Vuetify 2. To avoid
+           jank whenever the user expands a panel, set 'eager' here so that all
+           route lists are rendered upfront. -->
+      <!-- TODO: Same comment as above about reevaluating if this is necessary
+           after https://github.com/vuetifyjs/vuetify/issues/8298 is fixed. -->
+      <v-expansion-panel-content eager>
         <RouteList
           :id="'routes-list-' + area.id"
           :climberInfos="teamFull ? climberInfos : []"
