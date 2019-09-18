@@ -89,11 +89,7 @@ describe('Routes', () => {
     );
   });
 
-  it('passes data to route lists', async () => {
-    // Expand all areas to instantiate lazily-initialized RouteLists.
-    wrapper.findAll('.area').wrappers.forEach(w => w.trigger('click'));
-    await flushPromises();
-
+  it('passes data to route lists', () => {
     const routeLists = wrapper.findAll(RouteList).wrappers;
     expect(routeLists.map(w => w.props('routes'))).toEqual(
       sortedData.areas.map(a => a.routes)
@@ -111,10 +107,6 @@ describe('Routes', () => {
   });
 
   it('updates climb states', async () => {
-    // Expand all areas to instantiate lazily-initialized RouteLists.
-    wrapper.findAll('.area').wrappers.forEach(w => w.trigger('click'));
-    await flushPromises();
-
     // Simulate the first climber leading the third route and the second climber
     // undoing their lead of the second route.
     const routeLists = wrapper.findAll(RouteList).wrappers;
