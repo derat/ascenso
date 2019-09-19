@@ -35,6 +35,47 @@ export class Statistic {
   ) {}
 }
 
+// Climbing grades in ascending order.
+// TODO: Consider including '5.10-', '5.11+', etc., or at least having some way
+// of mapping them to 5.10a/b, 5.11c/d, etc.
+export const Grades = [
+  '5.0',
+  '5.1',
+  '5.2',
+  '5.3',
+  '5.4',
+  '5.5',
+  '5.6',
+  '5.7',
+  '5.8',
+  '5.9',
+  '5.9+',
+  '5.10a',
+  '5.10b',
+  '5.10c',
+  '5.10d',
+  '5.11a',
+  '5.11b',
+  '5.11c',
+  '5.11d',
+  '5.12a',
+  '5.12b',
+  '5.12c',
+  '5.12d',
+  '5.13a',
+  '5.13b',
+  '5.13c',
+  '5.13d',
+  '5.14a',
+  '5.14b',
+  '5.14c',
+  '5.14d',
+  '5.15a',
+  '5.15b',
+  '5.15c',
+  '5.15d',
+];
+
 // SetClimbStateEvent is emitted in a 'set-climb-state' event by the RouteList
 // component when the climb state for a route is changed.
 export class SetClimbStateEvent {
@@ -98,4 +139,11 @@ export interface TeamUserData {
 export interface User {
   name: string;
   team?: string; // only if on a team
+  filters?: UserFilterData; // only if non-empty
+}
+
+// UserFilterData represents route filter data inside User.
+export interface UserFilterData {
+  minGrade?: string; // only if not equal to easiest climb's grade
+  maxGrade?: string; // only if not equal to hardest climb's grade
 }

@@ -87,3 +87,9 @@ Heterogeneous singleton documents:
     *   `name` - String field containing the user's name, e.g. "Some Climber".
     *   `team` - String field containing ID of a document in the `teams`
         collection. Unset if the user is not on a team.
+    *   `filters` - Map field containing route filter data. Unset if no filters
+        are set.
+        *   `minGrade` - String field containing minimum grade. Unset if equal
+            to the easiest route's grade.
+        *   `maxGrade` - String field containing maximum grade. Unset if equal
+            to the hardest route's grade.
