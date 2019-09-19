@@ -79,9 +79,16 @@ module.exports = {
     // clearValue() doesn't seem to work either, so use this garbage instead.
     // Possibly related: https://github.com/nightwatchjs/nightwatch/issues/1132
     setVTextFieldValue(sel: string, value: string) {
-      return this.sendKeys(sel, [this.api.Keys.CONTROL, 'a'])
-        .sendKeys(sel, this.api.Keys.DELETE)
-        .sendKeys(sel, value.split(''));
+      // I'm sometimes seeing input characters get scrambled, e.g. in
+      // https://travis-ci.org/derat/ascenso/jobs/587196209, '088523' somehow
+      // got entered as '082358'. Send each key separately and pause
+      // between them to try to avoid this.
+      const delayMs = 5;
+      const send = keys => this.pause(delayMs).sendKeys(sel, keys);
+      send([this.api.Keys.CONTROL, 'a']);
+      send(this.api.Keys.DELETE);
+      for (const ch of value.split('')) send(ch);
+      return this;
     },
   },
 };
