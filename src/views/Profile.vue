@@ -5,63 +5,49 @@
 <template>
   <v-container v-if="userLoaded">
     <Card :title="$t('individual')">
-      <v-row>
-        <v-col>
-          <v-form v-model="userNameValid" @submit.prevent>
-            <!-- It's exceedingly unfortunate that all of these elements have
-                 nearly-identical 'id' and 'ref' attributes. Refs are nice since
-                 they still work if there are multiple instances of a component,
-                 but we need IDs to be able to access elements from end-to-end
-                 tests -- refs are only used by Vue and don't even end up in the
-                 DOM. Ideally we could also use IDs in unit tests and not define
-                 refs, but vue-test-utils' Wrapper class frequently fails to
-                 find elements by ID while still being able to find them by ref.
-                 Sigh. -->
-            <v-text-field
-              id="profile-user-name-field"
-              ref="userNameField"
-              :value="userDoc.name"
-              :counter="nameMaxLength"
-              :rules="nameRules"
-              :label="$t('yourName')"
-              @change="updateUserName"
-            />
-          </v-form>
-        </v-col>
-      </v-row>
+      <v-spacer class="mt-3" />
+      <v-form v-model="userNameValid" @submit.prevent>
+        <!-- It's exceedingly unfortunate that all of these elements have
+             nearly-identical 'id' and 'ref' attributes. Refs are nice since
+             they still work if there are multiple instances of a component, but
+             we need IDs to be able to access elements from end-to-end tests --
+             refs are only used by Vue and don't even end up in the DOM. Ideally
+             we could also use IDs in unit tests and not define refs, but
+             vue-test-utils' Wrapper class frequently fails to find elements by
+             ID while still being able to find them by ref. Sigh. -->
+        <v-text-field
+          id="profile-user-name-field"
+          ref="userNameField"
+          :value="userDoc.name"
+          :counter="nameMaxLength"
+          :rules="nameRules"
+          :label="$t('yourName')"
+          @change="updateUserName"
+        />
+      </v-form>
     </Card>
 
     <Card :title="$t('team')" class="py-3">
+      <v-spacer class="mt-3" />
+
       <!-- User is on a team -->
       <template v-if="teamDoc && teamDoc.users">
-        <v-row>
-          <v-col>
-            <v-form v-model="teamNameValid" @submit.prevent>
-              <v-text-field
-                id="profile-team-name-field"
-                ref="teamNameField"
-                :value="teamDoc.name"
-                :counter="nameMaxLength"
-                :rules="nameRules"
-                label="Name"
-                @change="updateTeamName"
-              />
-            </v-form>
-          </v-col>
-        </v-row>
+        <v-form v-model="teamNameValid" @submit.prevent>
+          <v-text-field
+            id="profile-team-name-field"
+            ref="teamNameField"
+            :value="teamDoc.name"
+            :counter="nameMaxLength"
+            :rules="nameRules"
+            label="Name"
+            @change="updateTeamName"
+          />
+        </v-form>
 
-        <v-row>
-          <v-col>
-            <div class="caption grey--text text--darken-1">Members</div>
-            <div
-              v-for="user in teamMembers"
-              :key="user.name"
-              class="member-name"
-            >
-              {{ user.name }}<span v-if="user.left"> (left)</span>
-            </div>
-          </v-col>
-        </v-row>
+        <div class="caption grey--text text--darken-1">Members</div>
+        <div v-for="user in teamMembers" :key="user.name" class="member-name">
+          {{ user.name }}<span v-if="user.left"> (left)</span>
+        </div>
 
         <v-divider class="mt-2 mb-4" />
 
