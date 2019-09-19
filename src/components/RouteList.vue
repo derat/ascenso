@@ -24,7 +24,7 @@
         />
       </v-list-item-action>
 
-      <v-list-item-content>
+      <v-list-item-content :class="{ filtered: isFiltered(route) }">
         <!-- The 'name' class here just exists for unit testing. -->
         <v-list-item-title class="name">{{ route.name }}</v-list-item-title>
         <v-list-item-subtitle class="details">
@@ -38,7 +38,13 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { ClimberInfo, ClimbState, SetClimbStateEvent, Route } from '@/models';
+import {
+  ClimberInfo,
+  ClimbState,
+  GradeIndexes,
+  SetClimbStateEvent,
+  Route,
+} from '@/models';
 import ClimbDropdown from '@/components/ClimbDropdown.vue';
 
 @Component({
@@ -48,8 +54,24 @@ export default class RouteList extends Vue {
   @Prop(Array) readonly climberInfos!: ClimberInfo[];
   @Prop(Array) readonly routes!: Route[];
 
+  // Minimum and maximum grades that the user plans to climb, e.g. '5.10a'.
+  // Routes outside of the supplied range are visually deemphasized.
+  @Prop({ validator: v => v in GradeIndexes }) minGrade?: string;
+  @Prop({ validator: v => v in GradeIndexes }) maxGrade?: string;
+
   readonly ClimbState = ClimbState;
 
+  // Indexes into the Grades array for |minGrade| and |maxGrade|, or -1 if the
+  // min and/or max are not set.
+  get minGradeIndex(): number {
+    return this.minGrade ? GradeIndexes[this.minGrade] : -1;
+  }
+  get maxGradeIndex(): number {
+    return this.maxGrade ? GradeIndexes[this.maxGrade] : -1;
+  }
+
+  // Handles a request to update the state of a climb.
+  // |index| is the index into |climberInfos| and |route| is the route's ID.
   onUpdateClimb(index: number, route: string, state: ClimbState) {
     // Call this.$emit instead of using vue-property-decorator's @Emit since the
     // latter seems a bit weird: in addition to emitting the returned value
@@ -57,10 +79,25 @@ export default class RouteList extends Vue {
     // function.
     this.$emit('set-climb-state', new SetClimbStateEvent(index, route, state));
   }
+
+  // Returns true if |route| is filtered out.
+  isFiltered(route: Route): boolean {
+    // If we don't recognize the grade, don't filter out the route.
+    const i: number | undefined = GradeIndexes[route.grade];
+    if (i === undefined) return false;
+
+    return (
+      (this.minGradeIndex != -1 && i < this.minGradeIndex) ||
+      (this.maxGradeIndex != -1 && i > this.maxGradeIndex)
+    );
+  }
 }
 </script>
 
 <style scoped>
+.filtered {
+  opacity: 0.4;
+}
 .details {
   display: flex;
   justify-content: space-between;

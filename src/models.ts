@@ -76,6 +76,16 @@ export const Grades = [
   '5.15d',
 ];
 
+// Maps from each grade to its index in |Grades|.
+// Presumably faster than calling Grades.indexOf().
+export const GradeIndexes: Record<string, number> = Grades.reduce(
+  (res: Record<string, number>, g: string, i: number) => {
+    res[g] = i;
+    return res;
+  },
+  {}
+);
+
 // SetClimbStateEvent is emitted in a 'set-climb-state' event by the RouteList
 // component when the climb state for a route is changed.
 export class SetClimbStateEvent {
