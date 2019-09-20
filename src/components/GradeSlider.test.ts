@@ -7,7 +7,7 @@ import { mount, Wrapper } from '@vue/test-utils';
 import { setUpVuetifyTesting, newVuetifyMountOptions } from '@/testutil';
 
 import GradeSlider from './GradeSlider.vue';
-import { Grades } from '@/models';
+import { GradeIndexes } from '@/models';
 
 setUpVuetifyTesting();
 
@@ -23,7 +23,7 @@ describe('GradeSlider', () => {
   // Updates |wrapper|'s v-range-slider to span the supplied grades.
   function setSlider(min: string, max: string) {
     wrapper.setData({
-      sliderValue: [Grades.indexOf(min), Grades.indexOf(max)],
+      sliderValue: [GradeIndexes[min], GradeIndexes[max]],
     });
   }
 
@@ -41,8 +41,8 @@ describe('GradeSlider', () => {
     init(['5.5', '5.12a'], '5.5', '5.12a');
     wrapper.setProps({ value: ['5.8', '5.11c'] });
     expect(wrapper.find({ ref: 'slider' }).props('value')).toEqual([
-      Grades.indexOf('5.8'),
-      Grades.indexOf('5.11c'),
+      GradeIndexes['5.8'],
+      GradeIndexes['5.11c'],
     ]);
   });
 });

@@ -25,7 +25,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Grades } from '@/models';
+import { Grades, GradeIndexes } from '@/models';
 
 @Component
 export default class GradeSlider extends Vue {
@@ -34,32 +34,20 @@ export default class GradeSlider extends Vue {
   // outside of the component, make sure that you reassign the array instead of
   // indexing into it -- see e.g.
   // https://vuejs.org/2016/02/06/common-gotchas/#Why-isn’t-the-DOM-updating.
-  @Prop({
-    type: Array,
-    validator: v => Grades.indexOf(v[0]) != -1 && Grades.indexOf(v[1]) != -1,
-  })
+  @Prop({ validator: v => v[0] in GradeIndexes && v[1] in GradeIndexes })
   value!: [string, string];
 
   // Minimum and maximum grades that should be selectable, as values from the
   // Grades array, e.g. '5.9+'.
-  @Prop({
-    type: String,
-    validator: v => Grades.indexOf(v) != -1,
-  })
-  min!: string;
-
-  @Prop({
-    type: String,
-    validator: v => Grades.indexOf(v) != -1,
-  })
-  max!: string;
+  @Prop({ validator: v => v in GradeIndexes }) min!: string;
+  @Prop({ validator: v => v in GradeIndexes }) max!: string;
 
   // Model for the v-slider. The strings in |value| are mapped to integer values
   // for the slider, and slider-triggered updates produce 'input' events to make
   // the parent component's v-model binding get updated. For details, see
   // https://vuejs.org/v2/guide/components.html#Using-v-model-on-Components.
   get sliderValue(): [number, number] {
-    return [Grades.indexOf(this.value[0]), Grades.indexOf(this.value[1])];
+    return [GradeIndexes[this.value[0]], GradeIndexes[this.value[1]]];
   }
   set sliderValue(v: [number, number]) {
     this.$emit('input', [Grades[v[0]], Grades[v[1]]]);
@@ -67,10 +55,10 @@ export default class GradeSlider extends Vue {
 
   // Minimum and maximum values for the v-range-slider.
   get minSliderValue() {
-    return Grades.indexOf(this.min);
+    return GradeIndexes[this.min];
   }
   get maxSliderValue() {
-    return Grades.indexOf(this.max);
+    return GradeIndexes[this.max];
   }
 
   // Labels for tick marks.

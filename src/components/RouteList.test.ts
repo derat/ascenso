@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import Vue from 'vue';
-import { shallowMount, Wrapper } from '@vue/test-utils';
+import { mount, Wrapper } from '@vue/test-utils';
 import { setUpVuetifyTesting, newVuetifyMountOptions } from '@/testutil';
 
 import ClimbDropdown from './ClimbDropdown.vue';
@@ -27,7 +27,10 @@ describe('RouteList', () => {
   let wrapper: Wrapper<Vue>;
 
   beforeEach(() => {
-    wrapper = shallowMount(
+    // If we use shallowMount() instead, dynamically-computed CSS classes don't
+    // appear to be applied, and classList returns bogus items like '[object'
+    // and 'Object]'.
+    wrapper = mount(
       RouteList,
       newVuetifyMountOptions({ propsData: { climberInfos, routes } })
     );
@@ -37,7 +40,7 @@ describe('RouteList', () => {
   function getRouteDropdowns() {
     return wrapper
       .findAll({ name: 'v-list-item' })
-      .wrappers.map(tile => tile.findAll(ClimbDropdown).wrappers);
+      .wrappers.map(w => w.findAll(ClimbDropdown).wrappers);
   }
 
   it('displays route information', () => {
@@ -108,5 +111,28 @@ describe('RouteList', () => {
       [new SetClimbStateEvent(1, 'r2', ClimbState.NOT_CLIMBED)],
       [new SetClimbStateEvent(0, 'r3', ClimbState.LEAD)],
     ]);
+  });
+
+  it('deemphasizes filtered routes', () => {
+    // By default, no routes should be filtered out.
+    const filtered = () =>
+      wrapper.findAll('.filtered').wrappers.map(w => w.find('.grade').text());
+    expect(filtered()).toEqual([]);
+
+    // Set a max that excludes the hardest route.
+    wrapper.setProps({ maxGrade: '5.11a' });
+    expect(filtered()).toEqual(['5.12c']);
+
+    // Add a max that excludes the easiest route.
+    wrapper.setProps({ minGrade: '5.9' });
+    expect(filtered()).toEqual(['5.8', '5.12c']);
+
+    // Set a range that filters out all routes.
+    wrapper.setProps({ minGrade: '5.14a', maxGrade: '5.14c' });
+    expect(filtered()).toEqual(['5.10a', '5.8', '5.12c']);
+
+    // Set a range that includes all routes.
+    wrapper.setProps({ minGrade: '5.5', maxGrade: '5.13a' });
+    expect(filtered()).toEqual([]);
   });
 });

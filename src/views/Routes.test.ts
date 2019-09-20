@@ -30,6 +30,7 @@ setUpVuetifyTesting();
 // Hardcoded test data to insert into Firestore.
 const testUID = '123';
 const testName = 'Test User';
+const testUserPath = `users/${testUID}`;
 const otherUID = '456';
 const otherName = 'Other User';
 const teamID = 'test-team';
@@ -80,7 +81,7 @@ describe('Routes', () => {
     MockFirebase.reset();
     MockFirebase.currentUser = new MockUser(testUID, testName);
     MockFirebase.setDoc('global/sortedData', sortedData);
-    MockFirebase.setDoc(`users/${testUID}`, userDoc);
+    MockFirebase.setDoc(testUserPath, userDoc);
     MockFirebase.setDoc(`teams/${teamID}`, teamDoc);
 
     await mountView();
@@ -110,7 +111,7 @@ describe('Routes', () => {
     );
   });
 
-  it('passes data to route lists', () => {
+  it('passes route and climber data to route lists', () => {
     const routeLists = wrapper.findAll(RouteList).wrappers;
     expect(routeLists.map(w => w.props('routes'))).toEqual(
       sortedData.areas.map(a => a.routes)
@@ -177,7 +178,7 @@ describe('Routes', () => {
     // Write custom filters to Firestore and remount the view.
     const doc = deepCopy(userDoc);
     doc.filters = { minGrade: '5.9', maxGrade: '5.11a' };
-    MockFirebase.setDoc(`users/${testUID}`, doc);
+    MockFirebase.setDoc(testUserPath, doc);
     await mountView();
 
     // The slider should be initialized to the range from the user doc.
@@ -204,7 +205,7 @@ describe('Routes', () => {
 
     const doc = deepCopy(userDoc);
     doc.filters = { minGrade: '5.9', maxGrade: '5.11a' };
-    expect(MockFirebase.getDoc(`users/${testUID}`)).toEqual(doc);
+    expect(MockFirebase.getDoc(testUserPath)).toEqual(doc);
 
     // If the selected grades match the full range, the filters should be
     // cleared in the user doc.
@@ -214,6 +215,25 @@ describe('Routes', () => {
     await flushPromises();
 
     delete doc.filters;
-    expect(MockFirebase.getDoc(`users/${testUID}`)).toEqual(doc);
+    expect(MockFirebase.getDoc(testUserPath)).toEqual(doc);
+  });
+
+  it('passes filters to route lists', () => {
+    const routeList = wrapper.find(RouteList);
+    expect(routeList.props('minGrade')).toBeUndefined();
+    expect(routeList.props('maxGrade')).toBeUndefined();
+
+    const doc = deepCopy(userDoc);
+    doc.filters = { minGrade: '5.9', maxGrade: '5.11a' };
+    MockFirebase.setDoc(testUserPath, doc);
+    expect(routeList.props('minGrade')).toBe('5.9');
+    expect(routeList.props('maxGrade')).toBe('5.11a');
+
+    // If the filters match the easiest and hardest routes, we shouldn't bother
+    // passing them to the route list.
+    doc.filters = { minGrade, maxGrade };
+    MockFirebase.setDoc(testUserPath, doc);
+    expect(routeList.props('minGrade')).toBeUndefined();
+    expect(routeList.props('maxGrade')).toBeUndefined();
   });
 });

@@ -31,6 +31,8 @@
             :id="'routes-list-' + area.id"
             :climberInfos="teamFull ? climberInfos : []"
             :routes="area.routes"
+            :minGrade="minGradeFilter"
+            :maxGrade="maxGradeFilter"
             @set-climb-state="onSetClimbState"
           />
         </v-expansion-panel-content>
@@ -89,6 +91,7 @@ import {
   ClimberInfo,
   ClimbState,
   Grades,
+  GradeIndexes,
   SetClimbStateEvent,
   SortedData,
   TeamSize,
@@ -144,11 +147,29 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     });
   }
 
-  // Returns true if the team is full.
+  // True if the team is full.
   get teamFull() {
     return (
       this.teamDoc.users && Object.keys(this.teamDoc.users).length == TeamSize
     );
+  }
+
+  // Minimum and maximum grade filters to pass to RouteList components.
+  // Returns undefined if the filter is unset or matches the min/max grade
+  // across all routes (making it a no-op).
+  get minGradeFilter(): string | undefined {
+    return this.userDoc &&
+      this.userDoc.filters &&
+      this.userDoc.filters.minGrade != this.minGrade
+      ? this.userDoc.filters.minGrade
+      : undefined;
+  }
+  get maxGradeFilter(): string | undefined {
+    return this.userDoc &&
+      this.userDoc.filters &&
+      this.userDoc.filters.maxGrade != this.maxGrade
+      ? this.userDoc.filters.maxGrade
+      : undefined;
   }
 
   // Updates team document in response to 'set-climb-state' events from RouteList
@@ -195,8 +216,8 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       for (const a of this.sortedData.areas) {
         if (!a.routes) continue;
         for (const r of a.routes) {
-          const i = Grades.indexOf(r.grade);
-          if (i == -1) continue;
+          const i: number | undefined = GradeIndexes[r.grade];
+          if (i === undefined) continue;
           min = Math.min(min, i);
           max = Math.max(max, i);
         }
@@ -213,8 +234,8 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     this.minGrade = Grades[min];
     this.maxGrade = Grades[max];
     this.filtersDialogGrades = [
-      Grades[Math.max(Grades.indexOf(this.filtersDialogGrades[0]), min)],
-      Grades[Math.min(Grades.indexOf(this.filtersDialogGrades[1]), max)],
+      Grades[Math.max(GradeIndexes[this.filtersDialogGrades[0]], min)],
+      Grades[Math.min(GradeIndexes[this.filtersDialogGrades[1]], max)],
     ];
   }
 
