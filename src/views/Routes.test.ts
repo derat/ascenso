@@ -34,6 +34,7 @@ const testUserPath = `users/${testUID}`;
 const otherUID = '456';
 const otherName = 'Other User';
 const teamID = 'test-team';
+const teamPath = `teams/${teamID}`;
 
 const sortedData: SortedData = {
   areas: [
@@ -82,7 +83,7 @@ describe('Routes', () => {
     MockFirebase.currentUser = new MockUser(testUID, testName);
     MockFirebase.setDoc('global/sortedData', sortedData);
     MockFirebase.setDoc(testUserPath, userDoc);
-    MockFirebase.setDoc(`teams/${teamID}`, teamDoc);
+    MockFirebase.setDoc(teamPath, teamDoc);
 
     await mountView();
   });
@@ -147,7 +148,7 @@ describe('Routes', () => {
     expected.users[otherUID].climbs = {};
 
     // The team doc in Firestore should be updated.
-    expect(MockFirebase.getDoc(`teams/${teamID}`)).toEqual(expected);
+    expect(MockFirebase.getDoc(teamPath)).toEqual(expected);
 
     // Check that one of the RouteLists also got the updated climb states.
     expect(
@@ -235,5 +236,34 @@ describe('Routes', () => {
     MockFirebase.setDoc(testUserPath, doc);
     expect(routeList.props('minGrade')).toBeUndefined();
     expect(routeList.props('maxGrade')).toBeUndefined();
+  });
+
+  it('displays counts of available routes', () => {
+    // r2 should be excluded since it's been climbed by both team members.
+    const getCounts = () =>
+      wrapper.findAll('.count').wrappers.map(w => w.text());
+    expect(getCounts()).toEqual(['1', '1']);
+
+    // After clearing the climbs, all routes should be included.
+    const td = deepCopy(teamDoc);
+    for (const uid of Object.keys(td.users)) delete td.users[uid].climbs;
+    MockFirebase.setDoc(teamPath, td);
+    expect(getCounts()).toEqual(['2', '1']);
+
+    // Set filters that don't exclude any climbs.
+    const ud = deepCopy(userDoc);
+    ud.filters = { minGrade, maxGrade };
+    MockFirebase.setDoc(testUserPath, ud);
+    expect(getCounts()).toEqual(['2', '1']);
+
+    // Exclude the two easiest climbs, which are in the first area.
+    ud.filters.minGrade = '5.10c';
+    MockFirebase.setDoc(testUserPath, ud);
+    expect(getCounts()).toEqual(['0', '1']);
+
+    // Also exclude the hardest climb, in the second area.
+    ud.filters.maxGrade = '5.10d';
+    MockFirebase.setDoc(testUserPath, ud);
+    expect(getCounts()).toEqual(['0', '0']);
   });
 });

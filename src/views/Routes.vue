@@ -8,17 +8,22 @@
          and their neighbors, which is a Vuetify 2 thing that seems to kill
          performance even on not-slow phones (e.g. Pixel 2). -->
     <!-- TODO: I think that this is probably just a symptom of a more general
-       performance regression in Vuetify 2, tracked by
-       https://github.com/vuetifyjs/vuetify/issues/8298. Remove it if/when that
-       bug is fixed. -->
+         performance regression in Vuetify 2, tracked by
+         https://github.com/vuetifyjs/vuetify/issues/8298. Remove it if/when that
+         bug is fixed. -->
     <v-expansion-panels accordion multiple>
       <v-expansion-panel
         v-for="area in sortedData.areas"
         :key="area.id"
         :id="'routes-expand-' + area.id"
       >
-        <v-expansion-panel-header class="area">
-          {{ area.name }}
+        <v-expansion-panel-header>
+          <v-row no-gutters justify="space-between">
+            <v-col class="area">{{ area.name }}</v-col>
+            <v-col class="count mr-6">
+              {{ countAvailableRoutes(area.routes) }}
+            </v-col>
+          </v-row>
         </v-expansion-panel-header>
         <!-- Expansion panel content became lazily-rendered in Vuetify 2. To
              avoid jank whenever the user expands a panel, set 'eager' here so
@@ -92,6 +97,7 @@ import {
   ClimbState,
   Grades,
   GradeIndexes,
+  Route,
   SetClimbStateEvent,
   SortedData,
   TeamSize,
@@ -172,6 +178,10 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       : undefined;
   }
 
+  get ready() {
+    return this.loadedSortedData && this.userLoaded;
+  }
+
   // Updates team document in response to 'set-climb-state' events from RouteList
   // component.
   onSetClimbState(ev: SetClimbStateEvent) {
@@ -203,8 +213,35 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       });
   }
 
-  get ready() {
-    return this.loadedSortedData && this.userLoaded;
+  // Returns the number of routes in |routes| that are still available, i.e. not
+  // yet climbed by all team members and not filtered out.
+  countAvailableRoutes(routes: Route[]) {
+    const min = this.minGradeFilter ? GradeIndexes[this.minGradeFilter] : -1;
+    const max = this.maxGradeFilter ? GradeIndexes[this.maxGradeFilter] : -1;
+
+    let count = 0;
+    for (const r of routes) {
+      // Skip routes that are filtered out.
+      const i: number | undefined = GradeIndexes[r.grade];
+      if (
+        (i !== undefined && (min != -1 && i < min)) ||
+        (max != -1 && i > max)
+      ) {
+        continue;
+      }
+
+      // Skip routes that have been climbed by all team members.
+      let climbs = 0;
+      for (const info of this.climberInfos) {
+        if (!r.id) continue;
+        const state: ClimbState | undefined = info.states[r.id];
+        if (state !== undefined && state != ClimbState.NOT_CLIMBED) climbs++;
+      }
+      if (climbs == this.climberInfos.length) continue;
+
+      count++;
+    }
+    return count;
   }
 
   @Watch('sortedData')
@@ -330,3 +367,10 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   }
 }
 </script>
+
+<style scoped>
+.count {
+  opacity: 0.3;
+  text-align: right;
+}
+</style>
