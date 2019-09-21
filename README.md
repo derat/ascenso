@@ -27,9 +27,12 @@ Heterogeneous singleton documents:
 *   `auth` - Document containing authentication-related information.
     *   `cloudFunctionSHA256` - Hex-encoded SHA256 hash of secret password used
         to restrict HTTP access to Cloud Functions.
-*   `config` - Document containing global configuration. Currently empty, but
-    will eventually contain competition start/end time and other dynamic
-    configuration data.
+*   `config` - Document containing dynamic global configuration. (Static global
+    configuration is set in `.env`.)
+    *   `startTime` - [firebase.firestore.Timestamp] field containing
+        competition start time.
+    *   `endTime` - [firebase.firestore.Timestamp] field containing competition
+        end time.
 *   `indexedData` - Document containing indexed area and route information:
     *   `areas` - Map field containing area information keyed by area ID, e.g.
         `my_area`.
@@ -60,6 +63,8 @@ Heterogeneous singleton documents:
                 route.
             *   `tr` - Number field containing points awarded for top-roping the
                 route.
+
+[firebase.firestore.Timestamp]: https://firebase.google.com/docs/reference/js/firebase.firestore.Timestamp
 
 ### `invites` collection
 

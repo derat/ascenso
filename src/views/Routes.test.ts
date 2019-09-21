@@ -4,6 +4,9 @@
 
 import { MockFirebase, MockUser } from '@/firebase/mock';
 
+import firebase from 'firebase/app';
+import 'firebase/firestore';
+
 import { mount, Wrapper } from '@vue/test-utils';
 import {
   setUpVuetifyTesting,
@@ -22,10 +25,17 @@ import {
   Team,
   User,
 } from '@/models.ts';
-import Routes from './Routes.vue';
+import Routes, { formatDuration, getNextTimeout } from './Routes.vue';
 import RouteList from '@/components/RouteList.vue';
 
 setUpVuetifyTesting();
+
+// Durations in milliseconds.
+const sec = 1000;
+const min = 60 * sec;
+const hour = 60 * min;
+const day = 24 * hour;
+const week = 7 * day;
 
 // Hardcoded test data to insert into Firestore.
 const testUID = '123';
@@ -81,6 +91,7 @@ describe('Routes', () => {
   beforeEach(async () => {
     MockFirebase.reset();
     MockFirebase.currentUser = new MockUser(testUID, testName);
+    MockFirebase.setDoc('global/config', {});
     MockFirebase.setDoc('global/sortedData', sortedData);
     MockFirebase.setDoc(testUserPath, userDoc);
     MockFirebase.setDoc(teamPath, teamDoc);
@@ -266,4 +277,109 @@ describe('Routes', () => {
     MockFirebase.setDoc(testUserPath, ud);
     expect(getCounts()).toEqual(['0', '0']);
   });
+
+  it('displays time until competition starts and ends', () => {
+    let nowMs = 1000; // arbitrary
+    wrapper.setMethods({ getNowMs: () => nowMs });
+
+    const bar = wrapper.find({ ref: 'timeMessageSystemBar' });
+    expect(bar.isVisible()).toBe(false);
+
+    MockFirebase.setDoc('global/config', {
+      startTime: firebase.firestore.Timestamp.fromMillis(nowMs + hour),
+      endTime: firebase.firestore.Timestamp.fromMillis(nowMs + 3 * hour),
+    });
+    expect(bar.isVisible()).toBe(true);
+    expect(bar.text()).toBe('1 hour until competition starts');
+
+    const advance = (ms: number) => {
+      nowMs += ms;
+      (wrapper.vm as any).updateTimeMessage();
+    };
+
+    advance(59 * min + 50 * sec);
+    expect(bar.isVisible()).toBe(true);
+    expect(bar.text()).toBe('10 seconds until competition starts');
+
+    advance(10 * sec);
+    expect(bar.isVisible()).toBe(true);
+    expect(bar.text()).toBe('2 hours remaining');
+
+    advance(hour + 59 * min + 59 * sec);
+    expect(bar.isVisible()).toBe(true);
+    expect(bar.text()).toBe('1 second remaining');
+
+    advance(sec);
+    expect(bar.isVisible()).toBe(true);
+    expect(bar.text()).toBe('Competition ended');
+  });
+});
+
+test('formatDuration', () => {
+  const f = formatDuration;
+
+  // Short durations should be rounded to the nearest second.
+  expect(f(0)).toBe('0 seconds');
+  expect(f(499)).toBe('0 seconds');
+  expect(f(500)).toBe('1 second');
+  expect(f(1200)).toBe('1 second');
+  expect(f(2000)).toBe('2 seconds');
+  expect(f(min)).toBe('1 minute');
+  expect(f(min + 2 * sec)).toBe('1 minute, 2 seconds');
+  expect(f(hour - sec)).toBe('59 minutes, 59 seconds');
+  expect(f(hour)).toBe('1 hour');
+  expect(f(hour + min + sec)).toBe('1 hour, 1 minute, 1 second');
+  expect(f(day - sec)).toBe('23 hours, 59 minutes, 59 seconds');
+  expect(f(day)).toBe('24 hours');
+
+  // Durations longer than a day should be rounded to the hour.
+  expect(f(day + sec)).toBe('1 day');
+  expect(f(day + 30 * min)).toBe('1 day, 1 hour');
+  expect(f(day + 23 * hour)).toBe('1 day, 23 hours');
+  expect(f(2 * day)).toBe('2 days');
+  expect(f(week - hour)).toBe('6 days, 23 hours');
+  expect(f(week)).toBe('7 days');
+
+  // Durations longer than a week should be rounded to the day.
+  expect(f(week + hour)).toBe('1 week');
+  expect(f(week + day)).toBe('1 week, 1 day');
+  expect(f(2 * week)).toBe('2 weeks');
+  expect(f(6 * week + 2 * day + hour + min + sec)).toBe('6 weeks, 2 days');
+});
+
+test('getNextTimeout', () => {
+  const f = getNextTimeout;
+
+  // For durations of a day or less, we should update once per second.
+  // If we're close enough to the next update that we'd already be displaying
+  // its time, it should be skipped.
+  expect(f(1)).toBe(1);
+  expect(f(400)).toBe(400);
+  expect(f(999)).toBe(999);
+  expect(f(1000)).toBe(1000);
+  expect(f(1300)).toBe(1300); // skip next update
+  expect(f(1500)).toBe(500);
+  expect(f(1999)).toBe(999);
+  expect(f(2000)).toBe(sec);
+  expect(f(12 * hour)).toBe(sec);
+  expect(f(day)).toBe(sec);
+
+  // For durations over a day, we should update once per hour (or at the 1-day
+  // mark if it's less than an hour away).
+  expect(f(day + 50)).toBe(50); // wait until there's 1 day left
+  expect(f(day + 5 * sec)).toBe(5 * sec); // wait until there's 1 day left
+  expect(f(day + hour)).toBe(hour);
+  expect(f(day + hour + 5 * min)).toBe(hour + 5 * min); // skip next update
+  expect(f(day + hour + 30 * min)).toBe(30 * min);
+  expect(f(week)).toBe(hour);
+
+  // For durations over a week, we should update once per day (or at the 1-week
+  // mark if it's less than a day away).
+  expect(f(week + 50)).toBe(50); // wait until there's 1 week left
+  expect(f(week + 10 * hour)).toBe(10 * hour); // wait until there's 1 week left
+  expect(f(week + day)).toBe(day);
+  expect(f(week + day + 11 * hour)).toBe(day + 11 * hour); // skip next update
+  expect(f(week + day + 18 * hour)).toBe(18 * hour);
+  expect(f(week + 2 * day)).toBe(day);
+  expect(f(10 * week)).toBe(day);
 });
