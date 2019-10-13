@@ -6,13 +6,14 @@
 // is that it's used by more than one testing-related file.
 
 import { createLocalVue, Wrapper } from '@vue/test-utils';
+import _ from 'lodash';
 import Vue from 'vue';
 import Vuetify from 'vuetify';
 import VueRouter from 'vue-router';
 
-// Returns a deep copy of |data| (which must be serializable to JSON).
+// Returns a deep copy of |data|. Embedded objects are cloned.
 export function deepCopy(data: any) {
-  return JSON.parse(JSON.stringify(data));
+  return _.cloneDeep(data);
 }
 
 // Performs common setup needed for testing Vuetify components. This function

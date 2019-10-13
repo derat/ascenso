@@ -4,6 +4,15 @@
 
 <template>
   <div v-if="ready">
+    <v-system-bar
+      ref="timeMessageSystemBar"
+      v-show="timeMessage"
+      :color="timeColor"
+      window
+    >
+      {{ timeMessage }}
+    </v-system-bar>
+
     <!-- Set 'accordion' here to avoid animating margins between expanded panels
          and their neighbors, which is a Vuetify 2 thing that seems to kill
          performance even on not-slow phones (e.g. Pixel 2). -->
@@ -85,6 +94,7 @@
 
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
+import humanizeDuration from 'humanize-duration';
 
 import {
   getFirestore,
@@ -95,6 +105,7 @@ import { logInfo, logError } from '@/log';
 import {
   ClimberInfo,
   ClimbState,
+  Config,
   Grades,
   GradeIndexes,
   Route,
@@ -110,6 +121,64 @@ import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
 import UserLoader from '@/mixins/UserLoader';
 
+const secMs = 1000;
+const hourMs = 3600 * secMs;
+const dayMs = 24 * hourMs;
+
+// These functions are exported so they can be exercised by unit tests. Ideally
+// we could use a module that lets tests access them without exporting them,
+// but:
+// - The 'rewire' module is unable to import .vue files.
+// - The 'babel-plugin-rewire' module doesn't seem to work with Jest:
+//   https://github.com/facebook/create-react-app/issues/5662.
+
+// Formats the supplied duration as a string, e.g. '1 day, 3 hours' or '4 hours,
+// 23 minutes, 2 seconds'.
+// - If longer than a week, we display it with day granularity.
+// - If longer than a day, we display it with hour granularity.
+// - Otherwise, we display it with second granularity.
+export function formatDuration(ms: number): string {
+  let units: humanizeDuration.Unit[];
+  if (ms > 7 * dayMs) {
+    units = ['w', 'd'];
+  } else if (ms > dayMs) {
+    units = ['d', 'h'];
+  } else {
+    units = ['h', 'm', 's'];
+  }
+  return humanizeDuration(ms, { units, round: true });
+}
+
+// Gets the next timeout for updating the competition time message, given
+// |remainMs| until the upcoming event (i.e. competition start or end).
+export function getNextTimeout(remainMs: number): number {
+  if (remainMs <= 0) throw new Error(`Invalid duration ${remainMs}`);
+
+  // Computes the delay to return.
+  // |granularityMs| is the granularity used to display durations.
+  // |thresholdMs| is the duration at which we switch to a lower granularity.
+  const f = (granularityMs: number, thresholdMs: number) => {
+    if (remainMs <= thresholdMs) {
+      throw new Error(`Remaining time ${remainMs} <= ${thresholdMs}`);
+    }
+    // Compute the time until the next update.
+    let delayMs = remainMs % granularityMs;
+
+    // If we're more than halfway to the next update (i.e. we're displaying it
+    // already), skip it.
+    if (delayMs < 0.5 * granularityMs) delayMs += granularityMs;
+
+    // Make sure that we don't wait beyond the threshold.
+    return Math.min(remainMs - thresholdMs, delayMs);
+  };
+
+  // The granularities and thresholds here correspond to when the strings
+  // returned by formatDuration() would change.
+  if (remainMs > 7 * dayMs) return f(dayMs, 7 * dayMs);
+  if (remainMs > dayMs) return f(hourMs, dayMs);
+  return f(secMs, 0);
+}
+
 @Component({
   components: { DialogCard, GradeSlider, RouteList, Spinner },
 })
@@ -122,6 +191,11 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   // True after |sortedData| is loaded.
   loadedSortedData = false;
 
+  // Cloud Firestore document containing global configuration.
+  readonly config: Partial<Config> = {};
+  // True after |config| is loaded.
+  loadedConfig = false;
+
   // Minimum and maximum grades of routes in |sortedData|.
   minGrade = Grades[0];
   maxGrade = Grades[Grades.length - 1];
@@ -132,6 +206,14 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   // been applied yet; the filter data from |userDoc| should be used instead for
   // actually performing filtering.
   filtersDialogGrades = [this.minGrade, this.maxGrade];
+
+  // Describes whether the competition is starting, is ongoing, or has ended.
+  // Empty if no message should be displayed.
+  timeMessage = '';
+  // Vuetify 'color' attribute for v-system-bar used to display |timeMessage|.
+  timeColor = '';
+  // ID of timeout that calls updateTimeMessage().
+  updateTimeMessageTimer = 0;
 
   // Sorted UIDs from the team. Empty if the user is not currently on a team.
   get teamMembers(): string[] {
@@ -179,7 +261,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   }
 
   get ready() {
-    return this.loadedSortedData && this.userLoaded;
+    return this.loadedSortedData && this.loadedConfig && this.userLoaded;
   }
 
   // Updates team document in response to 'set-climb-state' events from RouteList
@@ -300,6 +382,59 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     }
   }
 
+  @Watch('config.startTime')
+  @Watch('config.endTime')
+  onTimesChanged() {
+    this.updateTimeMessage();
+  }
+
+  // Called periodically to update |timeMessage| and |timeColor|.
+  // Schedules the next call to itself and updates |updateTimeMessageTimer|.
+  updateTimeMessage() {
+    if (this.updateTimeMessageTimer) {
+      window.clearTimeout(this.updateTimeMessageTimer);
+      this.updateTimeMessageTimer = 0;
+    }
+
+    // Start/end times aren't defined.
+    if (!this.config.startTime || !this.config.endTime) {
+      this.timeMessage = '';
+      return;
+    }
+
+    const nowMs = this.getNowMs();
+    const startMs = this.config.startTime.toMillis();
+    const endMs = this.config.endTime.toMillis();
+
+    if (nowMs < startMs) {
+      // Competition hasn't started yet.
+      const remainMs = startMs - nowMs;
+      this.timeMessage = `${formatDuration(remainMs)} until competition starts`;
+      this.timeColor = 'blue lighten-4';
+      this.updateTimeMessageTimer = window.setTimeout(
+        this.updateTimeMessage,
+        getNextTimeout(remainMs)
+      );
+    } else if (nowMs < endMs) {
+      // Competition is ongoing.
+      const remainMs = endMs - nowMs;
+      this.timeMessage = `${formatDuration(remainMs)} remaining`;
+      this.timeColor = 'green lighten-3';
+      this.updateTimeMessageTimer = window.setTimeout(
+        this.updateTimeMessage,
+        getNextTimeout(remainMs)
+      );
+    } else {
+      // Competition ended.
+      this.timeMessage = 'Competition ended';
+      this.timeColor = 'blue-grey lighten-4';
+    }
+  }
+
+  getNowMs() {
+    return new Date().getTime();
+  }
+
   mounted() {
     // We can't use this.firestore yet.
     getFirestore().then(db => {
@@ -319,12 +454,30 @@ export default class Routes extends Mixins(Perf, UserLoader) {
           logError('routes_load_sorted_data_failed', err);
         }
       );
+
+      this.$bind('config', db.collection('global').doc('config')).then(
+        () => {
+          this.loadedConfig = true;
+          this.recordEvent('loadedConfig');
+        },
+        err => {
+          this.$emit('error-msg', `Failed loading configuration: ${err}`);
+          logError('routes_load_config_failed', err);
+        }
+      );
     });
 
     // Listen for events emitted by the RoutesNav view.
     this.$root.$on('show-route-filters', () => {
       this.filtersDialogShown = true;
     });
+  }
+
+  destroyed() {
+    if (this.updateTimeMessageTimer) {
+      window.clearTimeout(this.updateTimeMessageTimer);
+      this.updateTimeMessageTimer = 0;
+    }
   }
 
   // Handles the 'Cancel' button being clicked in the filters dialog.

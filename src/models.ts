@@ -126,6 +126,12 @@ export interface SortedData {
   areas: Area[];
 }
 
+// Config corresponds to the globals/config Firestore doc.
+export interface Config {
+  startTime?: firebase.firestore.Timestamp;
+  endTime?: firebase.firestore.Timestamp;
+}
+
 // Team represents a document in the 'teams' collection.
 export interface Team {
   name: string;

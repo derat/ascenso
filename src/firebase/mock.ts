@@ -304,9 +304,17 @@ jest.mock('firebase/app', () => {
     }),
   };
 
-  // Also set weird sentinel value that lives on the firestore method.
+  // Also set sentinel value for deleting fields and static Timestamp.fromMillis
+  // function, both of which live on the firestore method.
   (app.firestore as any).FieldValue = {
     delete: () => mockDeleteSentinel,
+  };
+  // Probably there's some way to use the real Timestamp implementation here
+  // instead, but I'm not sure how to get at it.
+  (app.firestore as any).Timestamp = {
+    fromMillis: (ms: number) => ({
+      toMillis: () => ms,
+    }),
   };
 
   // Set some random const properties on the auth method.
