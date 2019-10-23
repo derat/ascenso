@@ -3,6 +3,7 @@ env:
     # These environment variables are public; see .env.example.
     # Private variables are set in the "Environment Variables" section of the
     # Travis settings page.
+    - CHROMEDRIVER_VERSION=LATEST
     - E2E_URL=http://localhost:8080/
     - VUE_APP_APPLE_MASK_COLOR=#d50000
     - VUE_APP_APPLE_MASK_PATH=assets-fallback/safari-pinned-tab.svg
