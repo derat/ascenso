@@ -13,14 +13,13 @@
       <v-list-item-action
         v-for="(info, i) in climberInfos"
         :key="i"
-        class="mr-0"
+        class="mr-5"
       >
         <ClimbDropdown
           :state="info.states[route.id] || ClimbState.NOT_CLIMBED"
           :color="info.color"
           :label="info.initials"
           @update:state="onUpdateClimb(i, route.id, $event)"
-          class="mr-5"
         />
       </v-list-item-action>
 
