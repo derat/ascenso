@@ -19,7 +19,7 @@
     "@typescript-eslint/parser": "^2.6.1",
     "acorn": "^7.1.0",
     "core-js": "^2.6.5",
-    "firebase": "^6.3.0",
+    "firebase": "^6.6.2",
     "firebaseui": "^4.0.0",
     "humanize-duration": "^3.20.1",
     "register-service-worker": "^1.6.2",
