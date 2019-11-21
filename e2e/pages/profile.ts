@@ -50,14 +50,14 @@ module.exports = {
         .setVTextFieldValue('@joinCodeField', inviteCode)
         .waitForElementVisible('@joinConfirmButton')
         .click('@joinConfirmButton')
-        .waitForElementNotVisible('@joinConfirmButton', 10_000);
+        .waitForElementNotVisible('@joinConfirmButton', 20_000);
     },
     leaveTeam() {
       return this.waitForElementVisible('@leaveButton')
         .click('@leaveButton')
         .waitForElementVisible('@leaveConfirmButton')
         .click('@leaveConfirmButton')
-        .waitForElementNotVisible('@leaveConfirmButton', 10_000);
+        .waitForElementNotVisible('@leaveConfirmButton', 20_000);
     },
     showInviteCode(inviteCodeFunc: (code: string) => void) {
       return this.waitForElementVisible('@inviteButton')
