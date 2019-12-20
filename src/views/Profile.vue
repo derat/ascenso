@@ -4,7 +4,7 @@
 
 <template>
   <v-container v-if="userLoaded">
-    <Card :title="$t('individual')">
+    <Card :title="$t('Profile.individual')">
       <v-spacer class="mt-3" />
       <v-form v-model="userNameValid" @submit.prevent>
         <!-- It's exceedingly unfortunate that all of these elements have
@@ -21,13 +21,13 @@
           :value="userDoc.name"
           :counter="nameMaxLength"
           :rules="nameRules"
-          :label="$t('yourName')"
+          :label="$t('Profile.yourName')"
           @change="updateUserName"
         />
       </v-form>
     </Card>
 
-    <Card :title="$t('team')" class="py-3">
+    <Card :title="$t('Profile.team')" class="py-3">
       <v-spacer class="mt-3" />
 
       <!-- User is on a team -->
