@@ -60,8 +60,6 @@ Vue.use(VueRouter);
 Vue.use(firestorePlugin);
 
 import App from '@/App.vue';
-// TODO: Do we actually need to use this? See
-// https://vuetifyjs.com/en/customization/internationalization
 import i18n from '@/plugins/i18n';
 import vuetify from '@/plugins/vuetify';
 import router from '@/router';

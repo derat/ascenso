@@ -8,8 +8,11 @@
 import { createLocalVue, Wrapper } from '@vue/test-utils';
 import _ from 'lodash';
 import Vue from 'vue';
+import VueI18n from 'vue-i18n';
 import Vuetify from 'vuetify';
 import VueRouter from 'vue-router';
+
+import en from '@/locale/en';
 
 // Returns a deep copy of |data|. Embedded objects are cloned.
 export function deepCopy(data: any) {
@@ -20,6 +23,7 @@ export function deepCopy(data: any) {
 // should be called once at the beginning of each test file.
 export function setUpVuetifyTesting() {
   Vue.use(Vuetify);
+  Vue.use(VueI18n);
 
   // Avoid Vuetify log spam: https://github.com/vuetifyjs/vuetify/issues/3456
   // I believe that Vuetify uses the data-app element to attach floating UI
@@ -44,7 +48,12 @@ export function newVuetifyMountOptions(baseOptions?: Object): Object {
   return Object.assign(
     {
       localVue,
-      vuetify: new Vuetify(),
+      vuetify: new Vuetify({}),
+      i18n: new VueI18n({
+        locale: 'en',
+        fallbackLocale: 'en',
+        messages: { en },
+      }),
     },
     baseOptions
   );

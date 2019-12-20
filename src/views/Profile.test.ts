@@ -12,7 +12,6 @@ import {
   getValue,
 } from '@/testutil';
 import Vue from 'vue';
-import i18n from '@/plugins/i18n';
 import flushPromises from 'flush-promises';
 
 import { ClimbState, Team, User } from '@/models';
@@ -81,10 +80,7 @@ describe('Profile', () => {
     // elements will be expanded.
     wrapper = mount(
       Profile,
-      newVuetifyMountOptions({
-        mocks: MockFirebase.mountMocks,
-        i18n,
-      })
+      newVuetifyMountOptions({ mocks: MockFirebase.mountMocks })
     );
 
     await flushPromises();
