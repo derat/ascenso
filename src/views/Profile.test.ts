@@ -188,9 +188,13 @@ describe('Profile', () => {
     const teamDoc = deepCopy(twoUserTeamDoc);
     teamDoc.users[otherUserID].left = true;
     await init(joinedUserDoc, teamDoc);
-    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
-      [userName, `${otherUserName} (left)`]
-    );
+    expect(
+      wrapper
+        .findAll('.member-name')
+        // Need to replace repeated whitespace because Prettier insists on
+        // reformatting the template.
+        .wrappers.map(w => w.text().replace(/\s+/g, ' '))
+    ).toEqual([userName, `${otherUserName} (left)`]);
   });
 
   it("supports showing invite code when team isn't full", async () => {

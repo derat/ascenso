@@ -51,7 +51,6 @@ export function newVuetifyMountOptions(baseOptions?: Object): Object {
       vuetify: new Vuetify({}),
       i18n: new VueI18n({
         locale: 'en',
-        fallbackLocale: 'en',
         messages: { en },
       }),
     },
