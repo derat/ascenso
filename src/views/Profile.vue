@@ -4,7 +4,7 @@
 
 <template>
   <v-container v-if="userLoaded">
-    <Card :title="$t('Profile.individual')">
+    <Card :title="$t('Profile.individualTitle')">
       <v-spacer class="mt-3" />
       <v-form v-model="userNameValid" @submit.prevent>
         <!-- It's exceedingly unfortunate that all of these elements have
@@ -21,13 +21,13 @@
           :value="userDoc.name"
           :counter="nameMaxLength"
           :rules="nameRules"
-          :label="$t('Profile.yourName')"
+          :label="$t('Profile.yourNameLabel')"
           @change="updateUserName"
         />
       </v-form>
     </Card>
 
-    <Card :title="$t('Profile.team')" class="py-3">
+    <Card :title="$t('Profile.teamTitle')" class="py-3">
       <v-spacer class="mt-3" />
 
       <!-- User is on a team -->
@@ -39,14 +39,17 @@
             :value="teamDoc.name"
             :counter="nameMaxLength"
             :rules="nameRules"
-            label="Name"
+            :label="$t('Profile.teamNameLabel')"
             @change="updateTeamName"
           />
         </v-form>
 
-        <div class="caption grey--text text--darken-1">Members</div>
+        <div class="caption grey--text text--darken-1">
+          {{ $t('Profile.teamMembersLabel') }}
+        </div>
         <div v-for="user in teamMembers" :key="user.name" class="member-name">
-          {{ user.name }}<span v-if="user.left"> (left)</span>
+          {{ user.name }}
+          <span v-if="user.left">{{ $t('Profile.teamMemberLeftLabel') }}</span>
         </div>
 
         <v-divider class="mt-2 mb-4" />
@@ -66,18 +69,17 @@
                 color="primary"
                 v-on="on"
               >
-                Show invite code
+                {{ $t('Profile.showInviteCodeButton') }}
               </v-btn>
             </template>
 
-            <DialogCard title="Invite code">
+            <DialogCard :title="$t('Profile.inviteCodeTitle')">
               <v-card-text>
                 <div class="invite-code mb-2">
                   {{ teamDoc.invite }}
                 </div>
                 <div>
-                  Your teammate can enter this code in their profile to join
-                  your team. Don't show it to anyone else.
+                  {{ $t('Profile.inviteCodeText') }}
                 </div>
               </v-card-text>
 
@@ -90,7 +92,7 @@
                   color="primary"
                   @click="inviteDialogShown = false"
                 >
-                  Dismiss
+                  {{ $t('Profile.dismissButton') }}
                 </v-btn>
               </v-card-actions>
             </DialogCard>
@@ -111,19 +113,19 @@
                 text
                 color="error"
                 v-on="on"
-                >Leave team</v-btn
-              >
+                >{{ $t('Profile.leaveTeamButton') }}
+              </v-btn>
             </template>
 
             <DialogCard title="Leave team">
               <v-card-text>
-                Are you sure you want to leave your team?
+                {{ $t('Profile.leaveTeamText') }}
               </v-card-text>
 
               <v-divider />
               <v-card-actions>
                 <v-btn text @click="leaveDialogShown = false">
-                  Cancel
+                  {{ $t('Profile.cancelButton') }}
                 </v-btn>
                 <v-spacer />
                 <v-btn
@@ -134,7 +136,7 @@
                   :disabled="leavingTeam"
                   @click="leaveTeam"
                 >
-                  Leave team
+                  {{ $t('Profile.leaveTeamButton') }}
                 </v-btn>
               </v-card-actions>
             </DialogCard>
@@ -145,7 +147,7 @@
       <!-- User is not on a team -->
       <template v-else>
         <div class="no-team-text mt-2">
-          You are not on a team.
+          {{ $t('Profile.notOnTeamText') }}
         </div>
 
         <v-divider class="mt-2 mb-4" />
@@ -163,15 +165,14 @@
                 ref="joinButton"
                 color="primary"
                 v-on="on"
-                >Join team</v-btn
+                >{{ $t('Profile.joinTeamButton') }}</v-btn
               >
             </template>
 
-            <DialogCard title="Join team">
+            <DialogCard :title="$t('Profile.joinTeamTitle')">
               <v-card-text>
                 <div>
-                  Ask your teammate to give you the {{ inviteCodeLength }}-digit
-                  invite code from their profile page.
+                  {{ $t('Profile.inviteCodeText', [inviteCodeLength]) }}
                 </div>
                 <v-form
                   ref="joinForm"
@@ -191,7 +192,7 @@
                     v-mask="'#'.repeat(inviteCodeLength)"
                     :counter="inviteCodeLength"
                     :rules="joinInviteCodeRules"
-                    label="Invite code"
+                    :label="$t('Profile.inviteCodeLabel')"
                     type="tel"
                     class="mt-2"
                     autofocus
@@ -203,7 +204,7 @@
               <v-divider />
               <v-card-actions>
                 <v-btn text @click="joinDialogShown = false">
-                  Cancel
+                  {{ $t('Profile.cancelButton') }}
                 </v-btn>
                 <v-spacer />
                 <v-btn
@@ -214,7 +215,7 @@
                   text
                   @click="joinTeam"
                 >
-                  Join
+                  {{ $t('Profile.joinTeamButton') }}
                 </v-btn>
               </v-card-actions>
             </DialogCard>
@@ -235,15 +236,14 @@
                 ref="createButton"
                 color="primary"
                 v-on="on"
-                >Create team</v-btn
+                >{{ $t('Profile.createTeamButton') }}</v-btn
               >
             </template>
 
-            <DialogCard title="Create team">
+            <DialogCard :title="$t('Profile.createTeamTitle')">
               <v-card-text>
                 <div>
-                  After creating a new team, you'll get an invite code to give
-                  to your teammate so they can join.
+                  {{ $t('Profile.createTeamText') }}
                 </div>
                 <v-form
                   ref="createForm"
@@ -257,7 +257,7 @@
                     v-if="createDialogShown"
                     :counter="nameMaxLength"
                     :rules="nameRules"
-                    label="Team name"
+                    :label="$t('Profile.teamNameLabel')"
                     class="mt-2"
                     autofocus
                     required
@@ -268,7 +268,7 @@
               <v-divider />
               <v-card-actions>
                 <v-btn text @click="createDialogShown = false">
-                  Cancel
+                  {{ $t('Profile.cancelButton') }}
                 </v-btn>
                 <v-spacer />
                 <v-btn
@@ -279,7 +279,7 @@
                   text
                   @click="createTeam"
                 >
-                  Create
+                  {{ $t('Profile.createTeamButton') }}
                 </v-btn>
               </v-card-actions>
             </DialogCard>
@@ -319,13 +319,15 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   readonly nameMaxLength = 50;
 
   // Rules for user and team name inputs.
-  readonly nameRules = [
-    (v: string) => !!v || 'Name must not be empty',
-    (v: string) =>
-      !v ||
-      v.length <= this.nameMaxLength ||
-      'Name must be ' + this.nameMaxLength + ' characters or shorter',
-  ];
+  get nameRules() {
+    return [
+      (v: string) => !!v || this.$t('Profile.nameEmptyRule'),
+      (v: string) =>
+        !v ||
+        v.length <= this.nameMaxLength ||
+        this.$t('Profile.nameTooLongRule', [this.nameMaxLength]),
+    ];
+  }
 
   // Whether the user and team name text fields contain valid input.
   userNameValid = false;
@@ -349,11 +351,13 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   // Whether we're in the process of joining a team.
   joiningTeam = false;
   // Rules for invite code input.
-  readonly joinInviteCodeRules = [
-    (v: string) =>
-      (v && v.length == this.inviteCodeLength) ||
-      'Code must be ' + this.inviteCodeLength + ' digits',
-  ];
+  get joinInviteCodeRules() {
+    return [
+      (v: string) =>
+        (v && v.length == this.inviteCodeLength) ||
+        this.$t('Profile.inviteCodeLengthRule', [this.inviteCodeLength]),
+    ];
+  }
 
   // Model for "Show invite code" dialog visibility.
   inviteDialogShown = false;
@@ -403,7 +407,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     // Clean up the input first.
     name = cleanName(name);
     if (!this.userNameValid || !name.length) {
-      this.$emit('error-msg', 'Invalid user name');
+      this.$emit('error-msg', this.$t('Profile.invalidUserNameError'));
       return;
     }
 
@@ -418,7 +422,10 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       }
       resolve(batch.commit());
     }).catch(err => {
-      this.$emit('error-msg', `Failed setting user name: ${err.message}`);
+      this.$emit(
+        'error-msg',
+        this.$t('Profile.failedSettingUserNameError', [err.message])
+      );
       logError('set_user_name_failed', err);
     });
   }
@@ -428,7 +435,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     // Clean up the input first.
     name = cleanName(name);
     if (!this.teamNameValid || !name.length) {
-      this.$emit('error-msg', 'Invalid team name');
+      this.$emit('error-msg', this.$t('Profile.invalidTeamNameError'));
       return;
     }
 
@@ -437,7 +444,10 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       if (!this.teamRef) throw new Error('No ref to team doc');
       resolve(this.teamRef.update({ name: name }));
     }).catch(err => {
-      this.$emit('error-msg', `Failed setting team name: ${err.message}`);
+      this.$emit(
+        'error-msg',
+        this.$t('Profile.failedSettingTeamNameError', [err.message])
+      );
       logError('set_team_name_failed', err);
     });
   }
@@ -446,11 +456,13 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   // team" dialog.
   createTeam() {
     if (!this.createTeamValid) {
-      this.$emit('error-msg', 'Invalid team information');
+      this.$emit('error-msg', this.$t('Profile.invalidTeamInfoError'));
       return;
     }
 
-    if (this.creatingTeam) throw new Error('Already creating team');
+    if (this.creatingTeam) {
+      throw new Error(this.$t('Profile.alreadyCreatingTeamError'));
+    }
     this.creatingTeam = true;
 
     this.findUnusedInviteCode()
@@ -487,12 +499,15 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         this.inviteDialogShown = true;
         this.$emit(
           'success-msg',
-          `Created and joined "${this.createTeamName}"`
+          this.$t('Profile.createdTeamMessage', [this.createTeamName])
         );
         this.createTeamName = '';
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed creating team: ${err.message}`);
+        this.$emit(
+          'error-msg',
+          this.$t('Profile.failedCreatingTeamError', [err.message])
+        );
         logError('create_team_failed', err);
       })
       .finally(() => {
@@ -503,11 +518,13 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   // Joins a team when the "Join" button is clicked in the "Join team" dialog.
   joinTeam() {
     if (!this.joinTeamValid) {
-      this.$emit('error-msg', 'Invalid team information');
+      this.$emit('error-msg', this.$t('Profile.invalidTeamInfoError'));
       return;
     }
 
-    if (this.joiningTeam) throw new Error('Already joining team');
+    if (this.joiningTeam) {
+      throw new Error(this.$t('Profile.alreadyJoiningTeamError'));
+    }
     this.joiningTeam = true;
 
     logInfo('join_team', { invite: this.joinInviteCode });
@@ -524,7 +541,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .then(inviteSnap => {
         // Now get the team doc.
         const data = inviteSnap.data();
-        if (!data) throw new Error('Bad invite code');
+        if (!data) throw new Error(this.$t('Profile.badInviteCodeError'));
         const team = data.team;
         if (!team) throw new Error('No team ID in invite');
         teamRef = this.firestore.collection('teams').doc(data.team);
@@ -556,7 +573,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
             [`users.${uid}`]: { name: this.userDoc.name, climbs: {} },
           });
         } else {
-          throw new Error('Team is full');
+          throw new Error(this.$t('Profile.teamFullError'));
         }
 
         batch.update(this.userRef, { team: teamRef.id });
@@ -565,10 +582,16 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .then(() => {
         this.joinDialogShown = false;
         this.joinInviteCode = '';
-        this.$emit('success-msg', `Joined "${teamName}"`);
+        this.$emit(
+          'success-msg',
+          this.$t('Profile.joinedTeamMessage', [teamName])
+        );
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed joining team: ${err.message}`);
+        this.$emit(
+          'error-msg',
+          this.$t('Profile.failedJoiningTeamError', [err.message])
+        );
         logError('join_team_failed', err);
       })
       .finally(() => {
@@ -579,7 +602,9 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   // Leaves the current team when the "Leave team" button is clicked in the
   // "Leave team" dialog.
   leaveTeam() {
-    if (this.leavingTeam) throw new Error('Already leaving team');
+    if (this.leavingTeam) {
+      throw new Error(this.$t('Profile.alreadyLeavingTeamError'));
+    }
     this.leavingTeam = true;
 
     // Grab this before leaving so we can use it in a message later.
@@ -612,11 +637,17 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       resolve(batch.commit());
     })
       .then(() => {
-        this.$emit('success-msg', `Left "${teamName}"`);
+        this.$emit(
+          'success-msg',
+          this.$t('Profile.leftTeamMessage', [teamName])
+        );
         this.leaveDialogShown = false;
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed leaving team: ${err.message}`);
+        this.$emit(
+          'error-msg',
+          this.$t('Profile.failedLeavingTeam', [err.message])
+        );
         logError('leave_team_failed', err);
       })
       .finally(() => {
@@ -639,7 +670,9 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .get()
       .then(snap => {
         if (!snap.exists) return code;
-        if (remainingTries == 0) throw new Error("Can't find unused code");
+        if (remainingTries == 0) {
+          throw new Error(this.$t('Profile.cantFindUnusedCodeError'));
+        }
         return this.findUnusedInviteCode(remainingTries - 1);
       });
   }
@@ -651,7 +684,10 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
   @Watch('userLoadError')
   onUserLoadError(err: Error) {
-    this.$emit('error-msg', `Failed loading data: ${err.message}`);
+    this.$emit(
+      'error-msg',
+      this.$t('Profile.failedLoadingDataError', [err.message])
+    );
     logError('profile_load_failed', err);
   }
 }
