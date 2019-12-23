@@ -58,9 +58,14 @@
       v-model="filtersDialogShown"
       max-width="512px"
     >
-      <DialogCard title="Route filters">
+      <DialogCard :title="$t('Routes.routeFiltersTitle')">
         <v-subheader ref="filtersGradeLabel">
-          Grades: {{ filtersDialogGrades[0] }} to {{ filtersDialogGrades[1] }}
+          {{
+            $t('Routes.gradeRangeLabel', [
+              filtersDialogGrades[0],
+              filtersDialogGrades[1],
+            ])
+          }}
         </v-subheader>
         <v-card-text>
           <GradeSlider
@@ -74,7 +79,7 @@
         <v-divider />
         <v-card-actions>
           <v-btn text @click="onCancelFilters">
-            Cancel
+            {{ $t('Routes.cancelButton') }}
           </v-btn>
           <v-spacer />
           <v-btn
@@ -83,7 +88,7 @@
             color="primary"
             @click="onApplyFilters"
           >
-            Apply
+            {{ $t('Routes.applyButton') }}
           </v-btn>
         </v-card-actions>
       </DialogCard>
@@ -137,7 +142,7 @@ const dayMs = 24 * hourMs;
 // - If longer than a week, we display it with day granularity.
 // - If longer than a day, we display it with hour granularity.
 // - Otherwise, we display it with second granularity.
-export function formatDuration(ms: number): string {
+export function formatDuration(ms: number, language: string): string {
   let units: humanizeDuration.Unit[];
   if (ms > 7 * dayMs) {
     units = ['w', 'd'];
@@ -146,7 +151,7 @@ export function formatDuration(ms: number): string {
   } else {
     units = ['h', 'm', 's'];
   }
-  return humanizeDuration(ms, { units, round: true });
+  return humanizeDuration(ms, { units, language, round: true });
 }
 
 // Gets the next timeout for updating the competition time message, given
@@ -290,7 +295,10 @@ export default class Routes extends Mixins(Perf, UserLoader) {
         ['users.' + uid + '.climbs.' + ev.route]: value,
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed setting climb state: ${err}`);
+        this.$emit(
+          'error-msg',
+          this.$t('Routes.failedSettingClimbStateError', [err])
+        );
         logError('set_climb_state_failed', err);
       });
   }
@@ -365,7 +373,10 @@ export default class Routes extends Mixins(Perf, UserLoader) {
 
   @Watch('userLoadError')
   onUserLoadError(err: Error) {
-    this.$emit('error-msg', `Failed loading user or team: ${err.message}`);
+    this.$emit(
+      'error-msg',
+      this.$t('Routes.failedLoadingUserOrTeamError', [err.message])
+    );
     logError('routes_load_user_or_team_failed', err);
   }
 
@@ -409,7 +420,9 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     if (nowMs < startMs) {
       // Competition hasn't started yet.
       const remainMs = startMs - nowMs;
-      this.timeMessage = `${formatDuration(remainMs)} until competition starts`;
+      this.timeMessage = this.$t('Routes.timeUntilStartMessage', [
+        formatDuration(remainMs, this.$i18n.locale),
+      ]).toString();
       this.timeColor = 'blue lighten-4';
       this.updateTimeMessageTimer = window.setTimeout(
         this.updateTimeMessage,
@@ -418,7 +431,9 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     } else if (nowMs < endMs) {
       // Competition is ongoing.
       const remainMs = endMs - nowMs;
-      this.timeMessage = `${formatDuration(remainMs)} remaining`;
+      this.timeMessage = this.$t('Routes.timeRemainingMessage', [
+        formatDuration(remainMs, this.$i18n.locale),
+      ]).toString();
       this.timeColor = 'green lighten-3';
       this.updateTimeMessageTimer = window.setTimeout(
         this.updateTimeMessage,
@@ -426,7 +441,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       );
     } else {
       // Competition ended.
-      this.timeMessage = 'Competition ended';
+      this.timeMessage = this.$t('Routes.competitionEndedMessage').toString();
       this.timeColor = 'blue-grey lighten-4';
     }
   }
@@ -446,11 +461,17 @@ export default class Routes extends Mixins(Perf, UserLoader) {
           // Display a warning to the user if offline Firestore is unavailable.
           // TODO: Would it be better to just display this once?
           if (getFirestorePersistence() == FirestorePersistence.DISABLED) {
-            this.$emit('warning-msg', 'Offline mode unsupported');
+            this.$emit(
+              'warning-msg',
+              this.$t('Routes.offlineUnsupportedMessage')
+            );
           }
         },
         err => {
-          this.$emit('error-msg', `Failed loading route data: ${err}`);
+          this.$emit(
+            'error-msg',
+            this.$t('Routes.failedLoadingRoutesError', [err])
+          );
           logError('routes_load_sorted_data_failed', err);
         }
       );
@@ -461,7 +482,10 @@ export default class Routes extends Mixins(Perf, UserLoader) {
           this.recordEvent('loadedConfig');
         },
         err => {
-          this.$emit('error-msg', `Failed loading configuration: ${err}`);
+          this.$emit(
+            'error-msg',
+            this.$t('Routes.failedLoadingConfigError', [err])
+          );
           logError('routes_load_config_failed', err);
         }
       );
@@ -511,7 +535,10 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       );
     })
       .catch(err => {
-        this.$emit('error-msg', `Failed updating filters: ${err.message}`);
+        this.$emit(
+          'error-msg',
+          this.$t('Routes.failedUpdatingFiltersError', [err.message])
+        );
         logError('update_route_filters_failed', err);
       })
       .finally(() => {
