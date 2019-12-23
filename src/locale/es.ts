@@ -56,4 +56,20 @@ export default {
     teamTitle: 'Equipo',
     yourNameLabel: 'Tu Nombre',
   },
+  Routes: {
+    applyButton: 'Aplicar',
+    cancelButton: 'Cancelar',
+    competitionEndedMessage: 'La competencia terminó',
+    failedLoadingConfigError: 'Falló al cargar la configuración: {0}',
+    failedLoadingRoutesError: 'Falló al cargar las rutas: {0}',
+    failedLoadingUserOrTeamError: 'Falló al cargar usuario o equipo: {0}',
+    failedSettingClimbStateError:
+      'Falló al establecer el estado de ascenso: {0}',
+    failedUpdatingFiltersError: 'Falló al actualizar los filtros: {0}',
+    gradeRangeLabel: 'Grados: {0} a {1}',
+    offlineUnsupportedMessage: 'El modo fuera de línea no compatible',
+    routeFiltersTitle: 'Filtros de rutas',
+    timeUntilStartMessage: '{0} hasta que comience la competencia',
+    timeRemainingMessage: '{0} restantes',
+  },
 };

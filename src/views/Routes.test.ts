@@ -316,7 +316,7 @@ describe('Routes', () => {
 });
 
 test('formatDuration', () => {
-  const f = formatDuration;
+  const f = (ms: number) => formatDuration(ms, 'en');
 
   // Short durations should be rounded to the nearest second.
   expect(f(0)).toBe('0 seconds');
