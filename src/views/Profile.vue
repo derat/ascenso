@@ -47,9 +47,13 @@
         <div class="caption grey--text text--darken-1">
           {{ $t('Profile.teamMembersLabel') }}
         </div>
-        <div v-for="user in teamMembers" :key="user.name" class="member-name">
-          {{ user.name }}
-          <span v-if="user.left">{{ $t('Profile.teamMemberLeftLabel') }}</span>
+        <div id="profile-team-members">
+          <div v-for="user in teamMembers" :key="user.name" class="member-name">
+            {{ user.name }}
+            <span v-if="user.left">{{
+              $t('Profile.teamMemberLeftLabel')
+            }}</span>
+          </div>
         </div>
 
         <v-divider class="mt-2 mb-4" />
