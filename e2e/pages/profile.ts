@@ -6,7 +6,7 @@ module.exports = {
   elements: {
     userNameField: '#profile-user-name-field',
     teamNameField: '#profile-team-name-field',
-    teamMemberDiv: 'div.member-name',
+    teamMembersDiv: '#profile-team-members',
     createButton: '#profile-create-button',
     createNameField: '#profile-create-name-field',
     createConfirmButton: '#profile-create-confirm-button',
@@ -33,6 +33,26 @@ module.exports = {
         name
       );
     },
+    // The following methods open dialogs, interact with them, and then dismiss
+    // them. Each initially ended with a call to waitForElementNotVisible() on
+    // the dismiss button, but this seems to cause occasional failures of the
+    // form "Timed out while waiting for element ___ to be present for ___
+    // milliseconds. - expected 'not visible' but got: 'not found'". See e.g.
+    // https://travis-ci.org/derat/ascenso/jobs/636081607.
+    //
+    // This likely happens because of the odd Nightwatch design decision
+    // described at https://github.com/nightwatchjs/nightwatch/issues/1731,
+    // where waitForElementNotVisible() asserts the element is initially present
+    // in the DOM. I suspect that in some cases, Vue is removing the button from
+    // the DOM before Nightwatch asserts that it exists.
+    //
+    // Unfortunately, using waitForElementNotPresent() instead doesn't work
+    // here, since Vue also sometimes appears to leave the no-longer-visible
+    // button in the DOM instead of cleaning it up immediately.
+    //
+    // To avoid this mess, we instead wait for an opposing button to become
+    // visible in the main Profile page. For example, after creating a team, we
+    // wait for the "Leave team" button to show up.
     createTeam(teamName: string, inviteCodeFunc: (code: string) => void) {
       return this.waitForElementVisible('@createButton')
         .click('@createButton')
@@ -41,7 +61,7 @@ module.exports = {
         .waitForElementVisible('@inviteCodeDiv')
         .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
         .click('@inviteDismissButton')
-        .waitForElementNotVisible('@inviteDismissButton', 10_000);
+        .waitForElementVisible('@leaveButton', 20_000);
     },
     joinTeam(inviteCode: string) {
       return this.waitForElementVisible('@joinButton')
@@ -50,29 +70,28 @@ module.exports = {
         .setVTextFieldValue('@joinCodeField', inviteCode)
         .waitForElementVisible('@joinConfirmButton')
         .click('@joinConfirmButton')
-        .waitForElementNotVisible('@joinConfirmButton', 20_000);
+        .waitForElementVisible('@leaveButton', 20_000);
     },
     leaveTeam() {
       return this.waitForElementVisible('@leaveButton')
         .click('@leaveButton')
         .waitForElementVisible('@leaveConfirmButton')
         .click('@leaveConfirmButton')
-        .waitForElementNotVisible('@leaveConfirmButton', 20_000);
+        .waitForElementVisible('@joinButton', 20_000);
     },
     showInviteCode(inviteCodeFunc: (code: string) => void) {
       return this.waitForElementVisible('@inviteButton')
         .click('@inviteButton')
         .waitForElementVisible('@inviteCodeDiv')
         .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
-        .click('@inviteDismissButton')
-        .waitForElementNotVisible('@inviteDismissButton');
+        .click('@inviteDismissButton');
     },
     checkUserOnTeam(userName: string, teamName: string) {
-      return this.waitForElementVisible('@teamNameField').assert.value(
+      this.waitForElementVisible('@teamNameField').assert.value(
         '@teamNameField',
         teamName
       );
-      this.expect.element('@teamMemberDiv').text.to.contain(userName);
+      this.expect.element('@teamMembersDiv').text.to.contain(userName);
       return this;
     },
     // setValue() doesn't clear the existing value in a v-text-field, and
