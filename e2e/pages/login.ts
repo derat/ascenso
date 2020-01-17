@@ -16,9 +16,9 @@ module.exports = {
     signIn(email: string, password: string) {
       // Wait a while since the page (or at least FirebaseUI) sometimes seems to
       // take a while to load.
-      return this.waitForElementVisible('@startButton', 15_000)
+      return this.waitForElementVisible('@startButton', 20_000)
         .click('@startButton')
-        .waitForElementVisible('@emailInput')
+        .waitForElementVisible('@emailInput', 20_000)
         .setValue('@emailInput', email)
         .waitForElementVisible('@nextButton')
         .click('@nextButton')
@@ -26,7 +26,7 @@ module.exports = {
         .setValue('@passwordInput', password)
         .waitForElementVisible('@nextButton')
         .click('@nextButton')
-        .waitForElementNotPresent('@wrapper', 15_000);
+        .waitForElementNotPresent('@wrapper', 20_000);
     },
   },
 };
