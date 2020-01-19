@@ -38,10 +38,15 @@ export function setUpVuetifyTesting() {
 // Returns a new options object to pass to mount() or shallowMount() when
 // instantiating a Vuetify component for unit tests. If |baseOptions| is
 // supplied, its properties are included in the returned object.
-export function newVuetifyMountOptions(baseOptions?: Object): Object {
+export function newVuetifyMountOptions(
+  baseOptions?: Record<string, any>
+): Record<string, any> {
   // See https://vue-test-utils.vuejs.org/guides/using-with-vue-router.html.
   const localVue = createLocalVue();
-  if (baseOptions && baseOptions.hasOwnProperty('router')) {
+  if (
+    baseOptions &&
+    Object.prototype.hasOwnProperty.call(baseOptions, 'router')
+  ) {
     localVue.use(VueRouter);
   }
 

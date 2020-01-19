@@ -77,7 +77,7 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
     let lead = 0;
     let topRope = 0;
     let score = 0;
-    let areas: Record<string, boolean> = {};
+    const areas: Record<string, boolean> = {};
 
     for (const climbs of climbsArray) {
       for (const id of Object.keys(climbs)) {

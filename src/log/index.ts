@@ -16,12 +16,13 @@ const isDev = process.env.NODE_ENV == 'development';
 const isTest = process.env.NODE_ENV == 'test';
 
 // This environment variable is used to increase logging in Travis.
-let devLogDest = process.env.VUE_APP_LOG_TO_CONSOLE
+const devLogDest = process.env.VUE_APP_LOG_TO_CONSOLE
   ? LogDest.CONSOLE
   : LogDest.NONE;
 
 // Returns an appropriate function to pass to the default Logger.
 function getLogFunc(): LogFunc | Promise<LogFunc> {
+  // @ts-ignore: Make it easy to manually change |devLogDest|.
   if (isProd || (isDev && devLogDest == LogDest.STACKDRIVER)) {
     // Return a promise so that importing this module doesn't require
     // synchronously loading bulky Firebase code.
@@ -57,12 +58,10 @@ function log(severity: string, code: string, payload: Record<string, any>) {
         defaultLogger.log(severity, code, payload);
         return;
       }
-      user
-        .getIdToken()
-        .then(
-          token => defaultLogger.log(severity, code, payload, token),
-          err => console.log('Failed to get ID token:', err)
-        );
+      user.getIdToken().then(
+        token => defaultLogger.log(severity, code, payload, token),
+        err => console.log('Failed to get ID token:', err)
+      );
     })
     .catch(err => {
       console.error(`Failed to import Firebase auth code: ${err}`);

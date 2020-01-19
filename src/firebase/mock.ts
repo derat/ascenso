@@ -52,26 +52,26 @@ function pathID(path: string) {
 // error: "The module factory of `jest.mock()` is not allowed to reference any
 // out-of-scope variables."
 
-// Prefix and next ID for automatically-generated Firestore document IDs.
-// We do this instead of generating a UUID to make tests deterministic.
-// It's totally not because generating UUIDs in JS is painful.
-const autogenPrefix = 'auto-doc-';
-let nextAutogenNum = 1;
-
-// Stub implementation of firebase.firestore.CollectionReference.
-class MockCollectionReference {
-  path: string;
-  id: string;
-
-  constructor(path: string) {
-    this.path = canonicalizePath(path, PathType.COLLECTION);
-    this.id = pathID(this.path);
+// Stub implementation of firebase.firestore.DocumentSnapshot.
+class MockDocumentSnapshot {
+  _data: DocData | undefined;
+  constructor(data: DocData | undefined) {
+    this._data = data;
   }
-  doc(path: string) {
-    if (path === undefined) path = `${autogenPrefix}${nextAutogenNum++}`;
-    return new MockDocumentReference(`${this.path}/${canonicalizePath(path)}`);
+  data() {
+    return this._data;
+  }
+  get(field: string) {
+    // TODO: Implement dotted field paths if we need them.
+    if (field.indexOf('.') != -1) throw new Error('Field paths unsupported');
+    return this._data ? this._data[field] : undefined;
+  }
+  get exists() {
+    return this._data !== undefined;
   }
 }
+
+/* eslint-disable @typescript-eslint/no-use-before-define */
 
 // Stub implementation of firebase.firestore.DocumentReference.
 class MockDocumentReference {
@@ -100,22 +100,26 @@ class MockDocumentReference {
   }
 }
 
-// Stub implementation of firebase.firestore.DocumentSnapshot.
-class MockDocumentSnapshot {
-  _data: DocData | undefined;
-  constructor(data: DocData | undefined) {
-    this._data = data;
+/* eslint-enable @typescript-eslint/no-use-before-define */
+
+// Prefix and next ID for automatically-generated Firestore document IDs.
+// We do this instead of generating a UUID to make tests deterministic.
+// It's totally not because generating UUIDs in JS is painful.
+const autogenPrefix = 'auto-doc-';
+let nextAutogenNum = 1;
+
+// Stub implementation of firebase.firestore.CollectionReference.
+class MockCollectionReference {
+  path: string;
+  id: string;
+
+  constructor(path: string) {
+    this.path = canonicalizePath(path, PathType.COLLECTION);
+    this.id = pathID(this.path);
   }
-  data() {
-    return this._data;
-  }
-  get(field: string) {
-    // TODO: Implement dotted field paths if we need them.
-    if (field.indexOf('.') != -1) throw new Error('Field paths unsupported');
-    return this._data ? this._data[field] : undefined;
-  }
-  get exists() {
-    return this._data !== undefined;
+  doc(path: string) {
+    if (path === undefined) path = `${autogenPrefix}${nextAutogenNum++}`;
+    return new MockDocumentReference(`${this.path}/${canonicalizePath(path)}`);
   }
 }
 
@@ -126,6 +130,8 @@ class BatchSet {
 class BatchUpdate {
   constructor(public path: string, public props: DocData) {}
 }
+
+/* eslint-disable @typescript-eslint/no-use-before-define */
 
 // Stub implementation of firebase.firestore.WriteBatch.
 class MockWriteBatch {
@@ -154,6 +160,8 @@ class MockWriteBatch {
   }
 }
 
+/* eslint-enable @typescript-eslint/no-use-before-define */
+
 // Stub implementation of firebase.auth.User.
 export class MockUser {
   constructor(public uid: string, public displayName: string | null) {}
@@ -167,8 +175,11 @@ interface FirestoreBinding {
   name: string; // data property name
 }
 
+// Sentinel value for firebase.firestore.FieldValue.delete().
+const mockDeleteSentinel = {};
+
 // Holds data needed to simulate (a tiny bit of) Firebase's functionality.
-export const MockFirebase = new class {
+export const MockFirebase = new (class {
   // User for auth.currentUser.
   currentUser: MockUser | null = null;
   // May be set by tests to inject additional logic into getDoc().
@@ -210,7 +221,7 @@ export const MockFirebase = new class {
       if (data != null) return data;
     }
 
-    return this._docs.hasOwnProperty(path)
+    return Object.prototype.hasOwnProperty.call(this._docs, path)
       ? deepCopy(this._docs[path])
       : undefined;
   }
@@ -226,7 +237,9 @@ export const MockFirebase = new class {
       // deeper into the document and creating new nested objects if needed.
       for (let i = prop.indexOf('.'); i != -1; i = prop.indexOf('.')) {
         const first = prop.slice(0, i);
-        obj = obj.hasOwnProperty(first) ? obj[first] : (obj[first] = {});
+        obj = Object.prototype.hasOwnProperty.call(obj, first)
+          ? obj[first]
+          : (obj[first] = {});
         prop = prop.slice(i + 1);
       }
       data === mockDeleteSentinel ? delete obj[prop] : (obj[prop] = data);
@@ -238,7 +251,7 @@ export const MockFirebase = new class {
   // shallowMount().
   mountMocks: Record<string, any> = {
     $bind: function(name: string, ref: DocumentReference) {
-      if (!MockFirebase._docs.hasOwnProperty(ref.path)) {
+      if (!Object.prototype.hasOwnProperty.call(MockFirebase._docs, ref.path)) {
         return Promise.reject(`No document at ${ref.path}`);
       }
 
@@ -266,10 +279,7 @@ export const MockFirebase = new class {
       vm.$data[name] = null;
     },
   };
-}();
-
-// Sentinel value for firebase.firestore.FieldValue.delete().
-const mockDeleteSentinel = {};
+})();
 
 export const MockEmailAuthProviderID = 'email';
 export const MockGoogleAuthProviderID = 'google';
@@ -332,7 +342,7 @@ jest.mock('firebase/firestore');
 jest.mock('firebase/functions');
 
 // Mock implementation of firebaseui.auth.AuthUI.
-export const MockAuthUI = new class {
+export const MockAuthUI = new (class {
   // Return value for isPendingRedirect(). This is false when the page is first
   // loaded and then true when redirecting back to it after authentication has
   // been performed.
@@ -361,7 +371,7 @@ export const MockAuthUI = new class {
     this.containerID = id;
     this.config = config;
   }
-}();
+})();
 
 jest.mock('firebaseui', () => {
   return {
