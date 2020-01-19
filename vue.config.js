@@ -14,10 +14,7 @@ module.exports = {
       options.transform = (content, path) => {
         // Replace '{{ VUE_APP_SOME_ENV_VAR }}' with the value of the
         // corresponding environment variable (defined in .env or .env.local).
-        if (
-          path.endsWith('/browserconfig.xml') ||
-          path.endsWith('/manifest.json')
-        ) {
+        if (path.endsWith('/browserconfig.xml')) {
           content = Buffer.from(
             content.toString().replace(/{{\s*(\S+)\s*}}/g, (match, p1) => {
               const val = process.env[p1];
@@ -43,19 +40,48 @@ module.exports = {
   },
   pwa: {
     // See https://www.npmjs.com/package/@vue/cli-plugin-pwa.
-    // The model here is weird: all of this is just used to inject tags into
-    // index.html (apart from |workboxOptions|, which is used to generate
-    // service-worker.js). We're still on the hook for supplying the
-    // manifest.json file ourselves.
+    //
+    // We used to have a checked-in public/manifest.json file with
+    // '{{ VUE_APP_SOME_ENV_VAR }}' placeholders that were replaced by the
+    // copy-webpack-plugin transformation above, but after cli-plugin-pwa was
+    // upgraded from 3.10.0 to 4.1.2, it apparently decided to start reading in
+    // public/manifest.json before the transformation and writing
+    // dist/manifest.json itself without replacing the placeholders.
+    //
+    // Setting |manifestOptions| here apparently instructs cli-plugin-pwa to
+    // generate dist/manifest.json itself using the provided values.
+    // cli-plugin-pwa also injects tags into index.html and uses
+    // |workboxOptions| to generate service-worker.js).
     name: process.env.VUE_APP_COMPETITION_NAME,
     manifestPath: 'manifest.json',
+    manifestOptions: {
+      name: process.env.VUE_APP_COMPETITION_NAME,
+      short_name: process.env.VUE_APP_MANIFEST_SHORT_NAME,
+      icons: [
+        {
+          src: process.env.VUE_APP_MANIFEST_ICON_192_URL,
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          src: process.env.VUE_APP_MANIFEST_ICON_512_URL,
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ],
+      theme_color: '#1e88e5',
+      background_color: '#ffffff',
+      start_url: '/index.html',
+      scope: '/',
+      display: 'standalone',
+    },
     workboxOptions: {
       // Serve the index for non-precached URLs.
       navigateFallback: '/index.html',
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
-          handler: 'cacheFirst',
+          handler: 'CacheFirst',
           method: 'GET',
         },
       ],
