@@ -42,7 +42,7 @@ class Endpoint {
   // Data received from Logger via _log().
   _receivedData?: CloudFuncData;
   // Whether _log() should report success to Logger.
-  _logResult: boolean = true;
+  _logResult = true;
 
   // Implementation of the "Log" Cloud Function. Saves the supplied data so it
   // can be passed to the test and returns a promise that will be fulfilled once

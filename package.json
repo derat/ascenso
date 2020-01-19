@@ -15,8 +15,8 @@
     "test:unit:only": "vue-cli-service test:unit --testPathPattern"
   },
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^2.6.1",
-    "@typescript-eslint/parser": "^2.6.1",
+    "@typescript-eslint/eslint-plugin": "^2.16.0",
+    "@typescript-eslint/parser": "^2.16.0",
     "acorn": "^7.1.0",
     "core-js": "^3.4.4",
     "firebase": "^6.6.2",
@@ -44,7 +44,7 @@
     "@vue/cli-plugin-typescript": "^4.1.2",
     "@vue/cli-plugin-unit-jest": "^4.1.2",
     "@vue/cli-service": "^4.1.2",
-    "@vue/eslint-config-typescript": "^4.0.0",
+    "@vue/eslint-config-typescript": "^5.0.1",
     "@vue/test-utils": "^1.0.0-beta.29",
     "axios": "^0.19.0",
     "babel-core": "7.0.0-bridge.0",
@@ -72,37 +72,5 @@
     "vue-jest": "^3.0.4",
     "vue-template-compiler": "^2.6.10",
     "vuetify-loader": "^1.4.3"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended",
-      "@vue/typescript"
-    ],
-    "plugins": [
-      "vuetify"
-    ],
-    "rules": {
-      "no-console": "off",
-      "vuetify/no-deprecated-classes": "error",
-      "vuetify/grid-unknown-attributes": "error",
-      "vuetify/no-legacy-grid": "error"
-    },
-    "parserOptions": {
-      "parser": "@typescript-eslint/parser"
-    }
-  },
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions"
-  ]
+  }
 }

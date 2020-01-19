@@ -663,7 +663,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
   // Helper method for createTeam() that returns a promise for a new, unused
   // invite code.
-  findUnusedInviteCode(remainingTries: number = 9): Promise<string> {
+  findUnusedInviteCode(remainingTries = 9): Promise<string> {
     // We get a string like "0.4948219742736113" and then chop off the left.
     const code = Math.random()
       .toString()

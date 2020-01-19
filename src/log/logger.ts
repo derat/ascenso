@@ -55,9 +55,9 @@ export class Logger {
   // Prefix used in local storage keys. See makeKeyPrefix().
   _storagePrefix: string;
   // Last time _sendQueued() was called, as milliseconds since the epoch.
-  _lastSendTime: number = 0;
+  _lastSendTime = 0;
   // ID of timeout used to invoke _sendQueued().
-  _sendTimeoutID: number = 0;
+  _sendTimeoutID = 0;
   // Callback for online events.
   _handleOnline: () => void;
 
