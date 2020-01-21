@@ -17,13 +17,19 @@
     </template>
     <v-list class="climb-state-list">
       <v-list-item @click="syncedState = ClimbState.LEAD">
-        <v-list-item-title>Lead</v-list-item-title>
+        <v-list-item-title>{{
+          $t('ClimbDropdown.leadItem')
+        }}</v-list-item-title>
       </v-list-item>
       <v-list-item @click="syncedState = ClimbState.TOP_ROPE">
-        <v-list-item-title>Top-rope</v-list-item-title>
+        <v-list-item-title>{{
+          $t('ClimbDropdown.topRopeItem')
+        }}</v-list-item-title>
       </v-list-item>
       <v-list-item @click="syncedState = ClimbState.NOT_CLIMBED">
-        <v-list-item-title>Not climbed</v-list-item-title>
+        <v-list-item-title>{{
+          $t('ClimbDropdown.notClimbedItem')
+        }}</v-list-item-title>
       </v-list-item>
     </v-list>
   </v-menu>
@@ -48,8 +54,8 @@ export default class ClimbDropdown extends Vue {
 
   get stateAbbrevs() {
     return {
-      [ClimbState.LEAD]: 'L',
-      [ClimbState.TOP_ROPE]: 'TR',
+      [ClimbState.LEAD]: this.$t('ClimbDropdown.leadAbbrev'),
+      [ClimbState.TOP_ROPE]: this.$t('ClimbDropdown.topRopeAbbrev'),
       [ClimbState.NOT_CLIMBED]: this.label,
     };
   }

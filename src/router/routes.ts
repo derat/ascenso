@@ -30,7 +30,6 @@ export default [
     component: Profile,
     meta: {
       auth: true,
-      title: 'Profile',
     },
   },
   {
@@ -42,7 +41,6 @@ export default [
     },
     meta: {
       auth: true,
-      title: 'Routes',
     },
   },
   {
@@ -51,7 +49,6 @@ export default [
     component: Statistics,
     meta: {
       auth: true,
-      title: 'Statistics',
     },
   },
   {
