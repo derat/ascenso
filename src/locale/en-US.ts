@@ -6,6 +6,20 @@ import en from 'vuetify/src/locale/en';
 
 export default {
   $vuetify: en,
+  App: {
+    // These property names are generated automatically in App.vue based on the
+    // names of routes displayed in the main <router-view> component.
+    profileTitle: 'Profile',
+    routesTitle: 'Routes',
+    statsTitle: 'Statistics',
+  },
+  ClimbDropdown: {
+    leadAbbrev: 'L',
+    leadItem: 'Lead',
+    notClimbedItem: 'Not climbed',
+    topRopeAbbrev: 'TR',
+    topRopeItem: 'Top-rope',
+  },
   Profile: {
     alreadyCreatingTeamError: 'Already creating team',
     alreadyJoiningTeamError: 'Already joining team',
@@ -70,5 +84,31 @@ export default {
     routeFiltersTitle: 'Route filters',
     timeUntilStartMessage: '{0} until competition starts',
     timeRemainingMessage: '{0} remaining',
+  },
+  RoutesNav: {
+    filtersButton: 'Filters',
+  },
+  Statistics: {
+    areasClimbedStat: 'Areas climbed',
+    climbsCard: 'Climbs',
+    failedLoadingRoutesError: 'Failed loading routes: {0}',
+    failedLoadingUserOrTeamError: 'Failed loading user or team: {0}',
+    individualTab: 'Individual',
+    leadStat: 'Lead',
+    pointsCard: 'Points',
+    teamTab: 'Team',
+    topRopeStat: 'Top-rope',
+    totalClimbsStat: 'Total climbs',
+    totalPointsStat: 'Total points',
+  },
+  Toolbar: {
+    profileItem: 'Profile',
+    routesItem: 'Routes',
+    signOutCancelButton: 'Cancel',
+    signOutConfirmButton: 'Confirm',
+    signOutItem: 'Sign out',
+    signOutTitle: 'Sign out',
+    signOutText: 'Are you sure you want to sign out?',
+    statisticsItem: 'Statistics',
   },
 };

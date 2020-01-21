@@ -5,8 +5,10 @@
 <template>
   <div v-if="haveStats">
     <v-tabs v-model="tab">
-      <v-tab href="#team" v-if="teamCards.length">Team</v-tab>
-      <v-tab href="#user">Individual</v-tab>
+      <v-tab href="#team" v-if="teamCards.length">{{
+        $t('Statistics.teamTab')
+      }}</v-tab>
+      <v-tab href="#user">{{ $t('Statistics.individualTab') }}</v-tab>
 
       <v-tab-item key="team" value="team" v-if="teamCards.length">
         <Card
@@ -102,15 +104,29 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
     }
 
     return [
-      { name: 'Points', items: [new Statistic('Total points', score)] },
       {
-        name: 'Climbs',
+        name: this.$t('Statistics.pointsCard').toString(),
         items: [
-          new Statistic('Total climbs', all, [
-            new Statistic('Lead', lead),
-            new Statistic('Top-rope', topRope),
+          new Statistic(
+            this.$t('Statistics.totalPointsStat').toString(),
+            score
+          ),
+        ],
+      },
+      {
+        name: this.$t('Statistics.climbsCard').toString(),
+        items: [
+          new Statistic(this.$t('Statistics.totalClimbsStat').toString(), all, [
+            new Statistic(this.$t('Statistics.leadStat').toString(), lead),
+            new Statistic(
+              this.$t('Statistics.topRopeStat').toString(),
+              topRope
+            ),
           ]),
-          new Statistic('Areas climbed', Object.keys(areas).length),
+          new Statistic(
+            this.$t('Statistics.areasClimbedStat').toString(),
+            Object.keys(areas).length
+          ),
         ],
       },
     ];
@@ -120,6 +136,7 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
   @Watch('userLoaded')
   @Watch('userDoc.climbs')
   @Watch('teamDoc.users')
+  @Watch('$i18n.locale')
   updateItems(val?: any) {
     if (!this.indexedDataLoaded || !this.userLoaded) return;
 
@@ -150,7 +167,10 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
   @Watch('userLoadError')
   onUserLoadError(err: Error) {
-    this.$emit('error-msg', `Failed loading user or team: ${err.message}`);
+    this.$emit(
+      'error-msg',
+      this.$t('Statistics.failedLoadingUserOrTeamError', [err.message])
+    );
     logError('stats_load_user_or_team_failed', err);
   }
 
@@ -164,7 +184,10 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
         this.updateItems();
       })
       .catch(err => {
-        this.$emit('error-msg', `Failed loading routes: ${err}`);
+        this.$emit(
+          'error-msg',
+          this.$t('Statistics.failedLoadingRoutesError', [err])
+        );
         logError('stats_bind_indexed_data_failed', err);
       });
   }

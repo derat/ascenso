@@ -313,10 +313,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     for (const r of routes) {
       // Skip routes that are filtered out.
       const i: number | undefined = GradeIndexes[r.grade];
-      if (
-        (i !== undefined && (min != -1 && i < min)) ||
-        (max != -1 && i > max)
-      ) {
+      if ((i !== undefined && min != -1 && i < min) || (max != -1 && i > max)) {
         continue;
       }
 
@@ -393,14 +390,11 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     }
   }
 
-  @Watch('config.startTime')
-  @Watch('config.endTime')
-  onTimesChanged() {
-    this.updateTimeMessage();
-  }
-
   // Called periodically to update |timeMessage| and |timeColor|.
   // Schedules the next call to itself and updates |updateTimeMessageTimer|.
+  @Watch('config.startTime')
+  @Watch('config.endTime')
+  @Watch('$i18n.locale')
   updateTimeMessage() {
     if (this.updateTimeMessageTimer) {
       window.clearTimeout(this.updateTimeMessageTimer);
@@ -417,11 +411,14 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     const startMs = this.config.startTime.toMillis();
     const endMs = this.config.endTime.toMillis();
 
+    // We use e.g. 'en-US' as locale names, but humanize-duration wants 'en'.
+    const langCode = this.$i18n.locale.split('-')[0];
+
     if (nowMs < startMs) {
       // Competition hasn't started yet.
       const remainMs = startMs - nowMs;
       this.timeMessage = this.$t('Routes.timeUntilStartMessage', [
-        formatDuration(remainMs, this.$i18n.locale),
+        formatDuration(remainMs, langCode),
       ]).toString();
       this.timeColor = 'blue lighten-4';
       this.updateTimeMessageTimer = window.setTimeout(
@@ -432,7 +429,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       // Competition is ongoing.
       const remainMs = endMs - nowMs;
       this.timeMessage = this.$t('Routes.timeRemainingMessage', [
-        formatDuration(remainMs, this.$i18n.locale),
+        formatDuration(remainMs, langCode),
       ]).toString();
       this.timeColor = 'green lighten-3';
       this.updateTimeMessageTimer = window.setTimeout(

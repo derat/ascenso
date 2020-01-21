@@ -4,7 +4,7 @@
 
 <template>
   <v-app>
-    <Toolbar v-if="showToolbar" :title="$route.meta.title">
+    <Toolbar v-if="showToolbar" :title="$t(`App.${$route.name}Title`)">
       <router-view name="nav" />
     </Toolbar>
     <v-content>

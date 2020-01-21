@@ -4,8 +4,8 @@
 
 import { LocaleMessages } from 'vue-i18n';
 
-import en from './en';
-import es from './es';
+import enUs from './en-US';
+import esPr from './es-PR';
 
 test('same strings are translated to each locale', () => {
   // Map from a translated string's identifier (e.g. 'cancelButton') to the
@@ -32,5 +32,5 @@ test('same strings are translated to each locale', () => {
     return info;
   };
 
-  expect(getLocaleInfo(en)).toEqual(getLocaleInfo(es));
+  expect(getLocaleInfo(enUs)).toEqual(getLocaleInfo(esPr));
 });

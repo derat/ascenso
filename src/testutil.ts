@@ -12,7 +12,7 @@ import VueI18n from 'vue-i18n';
 import Vuetify from 'vuetify';
 import VueRouter from 'vue-router';
 
-import en from '@/locale/en';
+import enUs from '@/locale/en-US';
 
 // Returns a deep copy of |data|. Embedded objects are cloned.
 export function deepCopy(data: any) {
@@ -55,8 +55,8 @@ export function newVuetifyMountOptions(
       localVue,
       vuetify: new Vuetify({}),
       i18n: new VueI18n({
-        locale: 'en',
-        messages: { en },
+        locale: 'en-US',
+        messages: { ['en-US']: enUs },
       }),
     },
     baseOptions

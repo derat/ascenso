@@ -6,6 +6,24 @@ import es from 'vuetify/src/locale/es';
 
 export default {
   $vuetify: es,
+  App: {
+    profileTitle: 'Perfil',
+    routesTitle: 'Rutas',
+    statsTitle: 'Estadísticas',
+  },
+  ClimbDropdown: {
+    // TODO: http://www.notlostjustdiscovering.com/spanish-climbing-vocabulary/
+    // says 'Lead' is 'Puntear', while
+    // http://rlcolearnspanish.com/vocabulary/spanish-for-rock-climbers-theme-based-vocabulary-learning/
+    // says 'Ir de primero'.
+    leadAbbrev: 'L',
+    leadItem: 'Lead',
+    notClimbedItem: 'No escalado',
+    // TODO: https://www.reddit.com/r/climbing/comments/29laoe/climbing_vocabulary_in_spanish/
+    // says 'Top-rope' is 'en yo-yo'.
+    topRopeAbbrev: 'TR',
+    topRopeItem: 'Top-rope',
+  },
   Profile: {
     alreadyCreatingTeamError: 'Ya creando equipo',
     alreadyJoiningTeamError: 'Ya uniendo equipo',
@@ -71,5 +89,31 @@ export default {
     routeFiltersTitle: 'Filtros de rutas',
     timeUntilStartMessage: '{0} hasta que comience la competencia',
     timeRemainingMessage: '{0} restantes',
+  },
+  RoutesNav: {
+    filtersButton: 'Filtros',
+  },
+  Statistics: {
+    areasClimbedStat: 'Áreas escaladas',
+    climbsCard: 'Ascensos',
+    failedLoadingRoutesError: 'Falló al cargar las rutas: {0}',
+    failedLoadingUserOrTeamError: 'Falló al cargar usuario o equipo: {0}',
+    individualTab: 'Individual',
+    leadStat: 'Lead', // TODO: See ClimbDropdown above.
+    pointsCard: 'Puntos',
+    teamTab: 'Equipo',
+    topRopeStat: 'Top-rope', // TODO: See ClimbDropdown above.
+    totalClimbsStat: 'Ascensos totales',
+    totalPointsStat: 'Puntos totales',
+  },
+  Toolbar: {
+    profileItem: 'Perfil',
+    routesItem: 'Rutas',
+    signOutCancelButton: 'Cancelar',
+    signOutConfirmButton: 'Confirmar',
+    signOutItem: 'Cerrar sesión',
+    signOutTitle: 'Cerrar sesión',
+    signOutText: '¿Estás seguro de que quieres cerrar sesión?',
+    statisticsItem: 'Estadísticas',
   },
 };
