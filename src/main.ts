@@ -4,6 +4,7 @@
 
 import { logError } from '@/log';
 import { getAuth } from '@/firebase';
+import { get as getCookie } from 'tiny-cookie';
 
 const isTestEnv = process.env.NODE_ENV == 'test';
 
@@ -65,6 +66,10 @@ import vuetify from '@/plugins/vuetify';
 import router from '@/router';
 
 import '@/register-service-worker';
+
+// If the user previously selected a locale, apply it before initializing Vue.
+const lc = getCookie('locale');
+if (lc) i18n.locale = lc;
 
 // Defer Vue initialization until Firebase has determined if the user has
 // authenticated or not. Otherwise, router.beforeEach may end up trying to

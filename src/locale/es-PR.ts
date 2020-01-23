@@ -72,7 +72,7 @@ export default {
     teamMembersLabel: 'Miembros',
     teamNameLabel: 'Nombre de equipo',
     teamTitle: 'Equipo',
-    yourNameLabel: 'Tu Nombre',
+    yourNameLabel: 'Tu nombre',
   },
   Routes: {
     applyButton: 'Aplicar',
