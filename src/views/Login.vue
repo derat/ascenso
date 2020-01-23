@@ -6,11 +6,7 @@
   <div id="login-wrapper">
     <!-- We use v-show rather than v-if here so that FirebaseUI can find the
          auth container in the DOM immediately. -->
-    <v-container
-      class="container text-center"
-      ref="container"
-      v-show="showUI"
-    >
+    <v-container class="container text-center" ref="container" v-show="showUI">
       <v-row justify="center">
         <!-- These widths are chosen to match those of the <Card> below. -->
         <v-col cols="12" sm="8" md="6">
@@ -65,11 +61,30 @@ export default class Login extends Mixins(Perf) {
         this.pendingRedirect = ui.isPendingRedirect();
         if (!this.pendingRedirect) this.logReady('login_loaded');
 
+        // As far as I can tell, there's no way to localize FirebaseUI's auth
+        // interface without loading a completely different version of the
+        // library from the CDN:
+        //
+        // https://github.com/firebase/firebaseui-web#localized-widget
+        // https://github.com/firebase/firebaseui-web/issues/9
+        // https://github.com/firebase/firebaseui-web/issues/242
+        //
+        // Best comment on that last bug:
+        //
+        // > > Each internationalized version is a separate build. Including all
+        // > > the versions in one file is not feasible.
+        //
+        // > Oh dear. Looks like you've used the wrong implementation architecture
+        // > to support i18n for SPA web apps!
+        //
+        // There *is* a |languageCode| field on firebase.auth.Auth, but I'm not
+        // sure what it does:
+        // https://firebase.google.com/docs/reference/js/firebase.auth.Auth.html#languagecode
         ui.start('#firebaseui-auth-container', {
           // Disable the account chooser, which is ugly and doesn't seem to work
           // correctly with this logic (i.e. after signing out and trying to
           // sign in with email, I just see a spinner):
-          // https://stackoverflow.com/q/37369929.
+          // https://stackoverflow.com/q/37369929
           credentialHelper: firebaseui.auth.CredentialHelper.NONE,
           signInOptions: [
             firebase.auth.GoogleAuthProvider.PROVIDER_ID,

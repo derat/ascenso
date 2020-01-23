@@ -11,7 +11,6 @@ import esPr from '@/locale/es-PR';
 Vue.use(VueI18n);
 
 export default new VueI18n({
-  // TODO: Load from a cookie or the user doc before falling back.
   locale: (process.env.VUE_APP_LOCALES || 'en-US').split(',')[0],
   // If you get bogus-seeming 'Fall back to translate the keypath ___ with "en"
   // language.' warnings even when the translation is defined, make sure that

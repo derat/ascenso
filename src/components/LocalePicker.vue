@@ -21,6 +21,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import { set as setCookie } from 'tiny-cookie';
 
 interface LocaleInfo {
   // Locale's name, e.g. 'English (US)'. This should be in the locale's native
@@ -50,6 +51,7 @@ export default class LocalePicker extends Vue {
 
   onClick(lc: string) {
     this.$i18n.locale = lc;
+    setCookie('locale', lc);
   }
 }
 </script>
