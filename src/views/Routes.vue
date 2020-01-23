@@ -78,18 +78,13 @@
 
         <v-divider />
         <v-card-actions>
-          <v-btn text @click="onCancelFilters">
-            {{ $t('Routes.cancelButton') }}
-          </v-btn>
+          <v-btn text @click="onCancelFilters" v-t="'Routes.cancelButton'" />
           <v-spacer />
           <v-btn
             ref="applyFiltersButton"
             text
             color="primary"
-            @click="onApplyFilters"
-          >
-            {{ $t('Routes.applyButton') }}
-          </v-btn>
+            @click="onApplyFilters" v-t="'Routes.applyButton'" />
         </v-card-actions>
       </DialogCard>
     </v-dialog>

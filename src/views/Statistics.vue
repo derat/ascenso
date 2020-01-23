@@ -5,10 +5,8 @@
 <template>
   <div v-if="haveStats">
     <v-tabs v-model="tab">
-      <v-tab href="#team" v-if="teamCards.length">{{
-        $t('Statistics.teamTab')
-      }}</v-tab>
-      <v-tab href="#user">{{ $t('Statistics.individualTab') }}</v-tab>
+      <v-tab href="#team" v-if="teamCards.length" v-t="'Statistics.teamTab'" />
+      <v-tab href="#user" v-t="'Statistics.individualTab'" />
 
       <v-tab-item key="team" value="team" v-if="teamCards.length">
         <Card
