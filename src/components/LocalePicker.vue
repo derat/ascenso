@@ -50,8 +50,6 @@ export default class LocalePicker extends Vue {
 
   onClick(lc: string) {
     this.$i18n.locale = lc;
-    // I've seen claims online that there should be a this.$forceUpdate() call
-    // here, but it doesn't seem necessary.
   }
 }
 </script>

@@ -12,31 +12,25 @@
         width="48px"
         v-on="on"
       >
-        {{ stateAbbrevs[syncedState] }}
+        {{ stateAbbrev }}
       </v-btn>
     </template>
     <v-list class="climb-state-list">
       <v-list-item @click="syncedState = ClimbState.LEAD">
-        <v-list-item-title>{{
-          $t('ClimbDropdown.leadItem')
-        }}</v-list-item-title>
+        <v-list-item-title v-t="'ClimbDropdown.leadItem'" />
       </v-list-item>
       <v-list-item @click="syncedState = ClimbState.TOP_ROPE">
-        <v-list-item-title>{{
-          $t('ClimbDropdown.topRopeItem')
-        }}</v-list-item-title>
+        <v-list-item-title v-t="'ClimbDropdown.topRopeItem'" />
       </v-list-item>
       <v-list-item @click="syncedState = ClimbState.NOT_CLIMBED">
-        <v-list-item-title>{{
-          $t('ClimbDropdown.notClimbedItem')
-        }}</v-list-item-title>
+        <v-list-item-title v-t="'ClimbDropdown.notClimbedItem'" />
       </v-list-item>
     </v-list>
   </v-menu>
 </template>
 
 <script lang="ts">
-import { Component, Prop, PropSync, Vue } from 'vue-property-decorator';
+import { Component, Prop, PropSync, Vue, Watch } from 'vue-property-decorator';
 import { ClimbState } from '@/models';
 
 @Component
@@ -52,12 +46,15 @@ export default class ClimbDropdown extends Vue {
 
   readonly ClimbState = ClimbState;
 
-  get stateAbbrevs() {
-    return {
-      [ClimbState.LEAD]: this.$t('ClimbDropdown.leadAbbrev'),
-      [ClimbState.TOP_ROPE]: this.$t('ClimbDropdown.topRopeAbbrev'),
-      [ClimbState.NOT_CLIMBED]: this.label,
-    };
+  get stateAbbrev(): string {
+    switch (this.syncedState) {
+      case ClimbState.LEAD:
+        return this.$t('ClimbDropdown.leadAbbrev').toString();
+      case ClimbState.TOP_ROPE:
+        return this.$t('ClimbDropdown.topRopeAbbrev').toString();
+      default:
+        return this.label;
+    }
   }
 
   get stateColor() {
@@ -75,6 +72,15 @@ export default class ClimbDropdown extends Vue {
     return this.syncedState == ClimbState.NOT_CLIMBED
       ? 'not-climbed-button'
       : 'white--text';
+  }
+
+  // This seems to be necessary to make the <v-list-item-title> elements update
+  // their translations. I'm not sure why it doesn't seem to be needed for 'v-t'
+  // usage elsewhere. There's some discussion at
+  // https://github.com/kazupon/vue-i18n/issues/227.
+  @Watch('$i18n.locale')
+  onLocaleChange() {
+    this.$forceUpdate();
   }
 }
 </script>

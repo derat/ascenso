@@ -11,8 +11,8 @@
       text
       class="white--text"
       @click="$root.$emit('show-route-filters')"
-      >{{ $t('RoutesNav.filtersButton') }}</v-btn
-    >
+      v-t="'RoutesNav.filtersButton'"
+    />
   </v-toolbar-items>
 </template>
 

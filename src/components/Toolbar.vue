@@ -61,15 +61,15 @@
       max-width="320px"
     >
       <DialogCard :title="$t('Toolbar.signOutTitle')">
-        <v-card-text>
-          {{ $t('Toolbar.signOutText') }}
-        </v-card-text>
+        <v-card-text v-t="'Toolbar.signOutText'" />
 
         <v-divider />
         <v-card-actions>
-          <v-btn text @click="signOutDialogShown = false">
-            {{ $t('Toolbar.signOutCancelButton') }}
-          </v-btn>
+          <v-btn
+            text
+            @click="signOutDialogShown = false"
+            v-t="'Toolbar.signOutCancelButton'"
+          />
           <v-spacer />
           <v-btn
             text
@@ -77,9 +77,8 @@
             id="toolbar-sign-out-confirm-button"
             ref="signOutConfirmButton"
             @click="signOut"
-          >
-            {{ $t('Toolbar.signOutConfirmButton') }}
-          </v-btn>
+            v-t="'Toolbar.signOutConfirmButton'"
+          />
         </v-card-actions>
       </DialogCard>
     </v-dialog>

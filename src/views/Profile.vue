@@ -44,9 +44,10 @@
           />
         </v-form>
 
-        <div class="caption grey--text text--darken-1">
-          {{ $t('Profile.teamMembersLabel') }}
-        </div>
+        <div
+          class="caption grey--text text--darken-1"
+          v-t="'Profile.teamMembersLabel'"
+        />
         <div id="profile-team-members">
           <div v-for="user in teamMembers" :key="user.name" class="member-name">
             {{ user.name }}
@@ -72,9 +73,8 @@
                 :disabled="teamFull"
                 color="primary"
                 v-on="on"
-              >
-                {{ $t('Profile.showInviteCodeButton') }}
-              </v-btn>
+                v-t="'Profile.showInviteCodeButton'"
+              />
             </template>
 
             <DialogCard :title="$t('Profile.inviteCodeTitle')">
@@ -82,9 +82,7 @@
                 <div class="invite-code mb-2">
                   {{ teamDoc.invite }}
                 </div>
-                <div>
-                  {{ $t('Profile.inviteCodeText') }}
-                </div>
+                <div v-t="'Profile.inviteCodeText'" />
               </v-card-text>
 
               <v-divider />
@@ -95,9 +93,8 @@
                   text
                   color="primary"
                   @click="inviteDialogShown = false"
-                >
-                  {{ $t('Profile.dismissButton') }}
-                </v-btn>
+                  v-t="'Profile.dismissButton'"
+                />
               </v-card-actions>
             </DialogCard>
           </v-dialog>
@@ -117,20 +114,20 @@
                 text
                 color="error"
                 v-on="on"
-                >{{ $t('Profile.leaveTeamButton') }}
-              </v-btn>
+                v-t="'Profile.leaveTeamButton'"
+              />
             </template>
 
             <DialogCard title="Leave team">
-              <v-card-text>
-                {{ $t('Profile.leaveTeamText') }}
-              </v-card-text>
+              <v-card-text v-t="'Profile.leaveTeamText'" />
 
               <v-divider />
               <v-card-actions>
-                <v-btn text @click="leaveDialogShown = false">
-                  {{ $t('Profile.cancelButton') }}
-                </v-btn>
+                <v-btn
+                  text
+                  @click="leaveDialogShown = false"
+                  v-t="'Profile.cancelButton'"
+                />
                 <v-spacer />
                 <v-btn
                   id="profile-leave-confirm-button"
@@ -139,9 +136,8 @@
                   color="error"
                   :disabled="leavingTeam"
                   @click="leaveTeam"
-                >
-                  {{ $t('Profile.leaveTeamButton') }}
-                </v-btn>
+                  v-t="'Profile.leaveTeamButton'"
+                />
               </v-card-actions>
             </DialogCard>
           </v-dialog>
@@ -150,9 +146,7 @@
 
       <!-- User is not on a team -->
       <template v-else>
-        <div class="no-team-text mt-2">
-          {{ $t('Profile.notOnTeamText') }}
-        </div>
+        <div class="no-team-text mt-2" v-t="'Profile.notOnTeamText'"/>
 
         <v-divider class="mt-2 mb-4" />
 
@@ -168,9 +162,7 @@
                 id="profile-join-button"
                 ref="joinButton"
                 color="primary"
-                v-on="on"
-                >{{ $t('Profile.joinTeamButton') }}</v-btn
-              >
+                v-on="on" v-t="'Profile.joinTeamButton'" />
             </template>
 
             <DialogCard :title="$t('Profile.joinTeamTitle')">
@@ -207,9 +199,7 @@
 
               <v-divider />
               <v-card-actions>
-                <v-btn text @click="joinDialogShown = false">
-                  {{ $t('Profile.cancelButton') }}
-                </v-btn>
+                <v-btn text @click="joinDialogShown = false" v-t="'Profile.cancelButton'"/>
                 <v-spacer />
                 <v-btn
                   id="profile-join-confirm-button"
@@ -217,10 +207,7 @@
                   :disabled="!joinTeamValid || joiningTeam"
                   color="primary"
                   text
-                  @click="joinTeam"
-                >
-                  {{ $t('Profile.joinTeamButton') }}
-                </v-btn>
+                  @click="joinTeam" v-t="'Profile.joinTeamButton'"/>
               </v-card-actions>
             </DialogCard>
           </v-dialog>
@@ -239,16 +226,12 @@
                 id="profile-create-button"
                 ref="createButton"
                 color="primary"
-                v-on="on"
-                >{{ $t('Profile.createTeamButton') }}</v-btn
-              >
+                v-on="on" v-t="'Profile.createTeamButton'"/>
             </template>
 
             <DialogCard :title="$t('Profile.createTeamTitle')">
               <v-card-text>
-                <div>
-                  {{ $t('Profile.createTeamText') }}
-                </div>
+                <div v-t="'Profile.createTeamText'" />
                 <v-form
                   ref="createForm"
                   v-model="createTeamValid"
@@ -271,9 +254,7 @@
 
               <v-divider />
               <v-card-actions>
-                <v-btn text @click="createDialogShown = false">
-                  {{ $t('Profile.cancelButton') }}
-                </v-btn>
+                <v-btn text @click="createDialogShown = false" v-t="'Profile.cancelButton'"/>
                 <v-spacer />
                 <v-btn
                   id="profile-create-confirm-button"
@@ -282,9 +263,7 @@
                   color="primary"
                   text
                   @click="createTeam"
-                >
-                  {{ $t('Profile.createTeamButton') }}
-                </v-btn>
+                  v-t="'Profile.createTeamButton'" />
               </v-card-actions>
             </DialogCard>
           </v-dialog>
