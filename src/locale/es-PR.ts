@@ -31,7 +31,7 @@ export default {
     badInviteCodeError: 'Código de invitado incorrecto',
     cancelButton: 'Cancelar',
     cantFindUnusedCodeError: 'No puede encontrar el código no utilizado',
-    createTeamButton: 'Crear equipo',
+    createTeamButton: 'Crear', // dropping 'equipo' for small screens
     createTeamTitle: 'Crear equipo',
     createTeamText:
       'Después de crear un nuevo equipo, recibirá un código de invitado ' +
@@ -55,7 +55,7 @@ export default {
     inviteCodeLengthRule: 'El código debe tener {0} dígitos',
     inviteCodeTitle: 'Código de invitado',
     joinedTeamMessage: '"{0}" unido',
-    joinTeamButton: 'Unirse al equipo',
+    joinTeamButton: 'Unirse', // dropping 'al equipo' for small screens
     joinTeamText:
       'Pídale a su compañero de equipo que le dé el código de invitado ' +
       'de {0} dígitos de su página de perfil.',
@@ -66,7 +66,7 @@ export default {
     nameEmptyRule: 'El nombre no debe estar vacío',
     nameTooLongRule: 'El nombre debe tener {0} caracteres o menos',
     notOnTeamText: 'No estás en un equipo.',
-    showInviteCodeButton: 'Mostrar código de invitado',
+    showInviteCodeButton: 'Invitar', // from 'Mostrar código de invitado'
     teamFullError: 'El equipo está lleno',
     teamMemberLeftLabel: '(salido)',
     teamMembersLabel: 'Miembros',
