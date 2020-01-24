@@ -53,6 +53,11 @@
       </v-expansion-panel>
     </v-expansion-panels>
 
+    <div class="sync" :class="{ active: pendingWrites }">
+      <v-icon>sync</v-icon>
+      {{ pendingWrites }}
+    </div>
+
     <v-dialog
       ref="filtersDialog"
       v-model="filtersDialogShown"
@@ -195,6 +200,8 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   readonly config: Partial<Config> = {};
   // True after |config| is loaded.
   loadedConfig = false;
+  // Number of pending Firestore writes to update climb states.
+  pendingWrites = 0;
 
   // Minimum and maximum grades of routes in |sortedData|.
   minGrade = Grades[0];
@@ -296,6 +303,11 @@ export default class Routes extends Mixins(Perf, UserLoader) {
         );
         logError('set_climb_state_failed', err);
       });
+
+    this.pendingWrites++;
+    this.firestore.waitForPendingWrites().then(() => {
+      this.pendingWrites--;
+    });
   }
 
   // Returns the number of routes in |routes| that are still available, i.e. not
@@ -544,5 +556,21 @@ export default class Routes extends Mixins(Perf, UserLoader) {
 .count {
   opacity: 0.3;
   text-align: right;
+}
+
+.sync {
+  background-color: rgba(255, 255, 255, 0);
+  bottom: 8px;
+  color: #333;
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 12px;
+  transition: 0.4s linear opacity;
+  z-index: 1;
+}
+.sync.active {
+  opacity: 0.5;
+  transition: none;
 }
 </style>
