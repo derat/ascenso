@@ -107,6 +107,7 @@ export default {
     totalPointsStat: 'Puntos totales',
   },
   Toolbar: {
+    buildText: 'Versión {0}',
     profileItem: 'Perfil',
     routesItem: 'Rutas',
     signOutCancelButton: 'Cancelar',
