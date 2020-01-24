@@ -71,6 +71,7 @@
                 id="profile-invite-button"
                 ref="inviteButton"
                 :disabled="teamFull"
+                :small="useSmallButtons"
                 color="primary"
                 v-on="on"
                 v-t="'Profile.showInviteCodeButton'"
@@ -111,6 +112,7 @@
               <v-btn
                 id="profile-leave-button"
                 ref="leaveButton"
+                :small="useSmallButtons"
                 text
                 color="error"
                 v-on="on"
@@ -146,7 +148,7 @@
 
       <!-- User is not on a team -->
       <template v-else>
-        <div class="no-team-text mt-2" v-t="'Profile.notOnTeamText'"/>
+        <div class="no-team-text mt-2" v-t="'Profile.notOnTeamText'" />
 
         <v-divider class="mt-2 mb-4" />
 
@@ -161,14 +163,17 @@
               <v-btn
                 id="profile-join-button"
                 ref="joinButton"
+                :small="useSmallButtons"
                 color="primary"
-                v-on="on" v-t="'Profile.joinTeamButton'" />
+                v-on="on"
+                v-t="'Profile.joinTeamButton'"
+              />
             </template>
 
             <DialogCard :title="$t('Profile.joinTeamTitle')">
               <v-card-text>
                 <div>
-                  {{ $t('Profile.inviteCodeText', [inviteCodeLength]) }}
+                  {{ $t('Profile.joinTeamText', [inviteCodeLength]) }}
                 </div>
                 <v-form
                   ref="joinForm"
@@ -199,7 +204,11 @@
 
               <v-divider />
               <v-card-actions>
-                <v-btn text @click="joinDialogShown = false" v-t="'Profile.cancelButton'"/>
+                <v-btn
+                  text
+                  @click="joinDialogShown = false"
+                  v-t="'Profile.cancelButton'"
+                />
                 <v-spacer />
                 <v-btn
                   id="profile-join-confirm-button"
@@ -207,7 +216,9 @@
                   :disabled="!joinTeamValid || joiningTeam"
                   color="primary"
                   text
-                  @click="joinTeam" v-t="'Profile.joinTeamButton'"/>
+                  @click="joinTeam"
+                  v-t="'Profile.joinTeamButton'"
+                />
               </v-card-actions>
             </DialogCard>
           </v-dialog>
@@ -225,8 +236,11 @@
               <v-btn
                 id="profile-create-button"
                 ref="createButton"
+                :small="useSmallButtons"
                 color="primary"
-                v-on="on" v-t="'Profile.createTeamButton'"/>
+                v-on="on"
+                v-t="'Profile.createTeamButton'"
+              />
             </template>
 
             <DialogCard :title="$t('Profile.createTeamTitle')">
@@ -254,7 +268,11 @@
 
               <v-divider />
               <v-card-actions>
-                <v-btn text @click="createDialogShown = false" v-t="'Profile.cancelButton'"/>
+                <v-btn
+                  text
+                  @click="createDialogShown = false"
+                  v-t="'Profile.cancelButton'"
+                />
                 <v-spacer />
                 <v-btn
                   id="profile-create-confirm-button"
@@ -263,7 +281,8 @@
                   color="primary"
                   text
                   @click="createTeam"
-                  v-t="'Profile.createTeamButton'" />
+                  v-t="'Profile.createTeamButton'"
+                />
               </v-card-actions>
             </DialogCard>
           </v-dialog>
@@ -383,6 +402,14 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     return userData && userData.climbs
       ? Object.keys(userData.climbs).length
       : 0;
+  }
+
+  // Whether small buttons should be used in the view.
+  get useSmallButtons() {
+    return (
+      !window.matchMedia ||
+      window.matchMedia('screen and (max-width: 400px)').matches
+    );
   }
 
   // Updates the user's name in Firestore when the user name input is changed.

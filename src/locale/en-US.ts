@@ -62,7 +62,7 @@ export default {
     nameEmptyRule: 'Name must not be empty',
     nameTooLongRule: 'Name must be {0} characters or shorter',
     notOnTeamText: 'You are not on a team.',
-    showInviteCodeButton: 'Show invite code',
+    showInviteCodeButton: 'Invite code', // dropping 'Show' for small screens
     teamFullError: 'Team is full',
     teamMemberLeftLabel: '(left)',
     teamMembersLabel: 'Members',
