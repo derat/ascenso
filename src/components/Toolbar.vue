@@ -37,6 +37,11 @@
           </v-list-item>
         </template>
       </v-list>
+      <template v-slot:append>
+        <div class="build mb-2 ml-2">
+          {{ $t('Toolbar.buildText', [buildInfo]) }}
+        </div>
+      </template>
     </v-navigation-drawer>
 
     <v-app-bar color="primary" app scroll-off-screen :scroll-threshold="32">
@@ -176,6 +181,12 @@ export default class Toolbar extends Vue {
     return (process.env.VUE_APP_LOCALES || 'en-US,es-PR').split(',');
   }
 
+  get buildInfo(): string {
+    const timestamp = document.documentElement.dataset.buildTime || '';
+    const commit = document.documentElement.dataset.buildCommit || '';
+    return `${timestamp}-${commit.slice(0, 8)}`;
+  }
+
   // Handles the "Sign out" navigation drawer item being clicked.
   onSignOutNav() {
     this.signOutDialogShown = true;
@@ -192,3 +203,11 @@ export default class Toolbar extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.build {
+  color: #aaa;
+  font-size: 11px;
+  padding-left: 2px;
+}
+</style>

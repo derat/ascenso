@@ -102,6 +102,7 @@ export default {
     totalPointsStat: 'Total points',
   },
   Toolbar: {
+    buildText: 'Build {0}',
     profileItem: 'Profile',
     routesItem: 'Routes',
     signOutCancelButton: 'Cancel',
