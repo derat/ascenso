@@ -89,7 +89,9 @@
             ref="applyFiltersButton"
             text
             color="primary"
-            @click="onApplyFilters" v-t="'Routes.applyButton'" />
+            @click="onApplyFilters"
+            v-t="'Routes.applyButton'"
+          />
         </v-card-actions>
       </DialogCard>
     </v-dialog>
@@ -496,16 +498,23 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     });
 
     // Listen for events emitted by the RoutesNav view.
-    this.$root.$on('show-route-filters', () => {
-      this.filtersDialogShown = true;
-    });
+    this.$root.$on('show-route-filters', this.onShowFilters);
   }
 
-  destroyed() {
+  beforeDestroy() {
+    // Remove the listener so the root view doesn't hold a reference to us and
+    // cause a memory leak.
+    this.$root.$off('show-route-filters', this.onShowFilters);
+
     if (this.updateTimeMessageTimer) {
       window.clearTimeout(this.updateTimeMessageTimer);
       this.updateTimeMessageTimer = 0;
     }
+  }
+
+  // Handles 'show-route-filters' events.
+  onShowFilters() {
+    this.filtersDialogShown = true;
   }
 
   // Handles the 'Cancel' button being clicked in the filters dialog.
