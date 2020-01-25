@@ -311,6 +311,7 @@ jest.mock('firebase/app', () => {
       collection: (path: string) => new MockCollectionReference(path),
       doc: (path: string) => new MockDocumentReference(path),
       enablePersistence: () => Promise.resolve(),
+      waitForPendingWrites: () => Promise.resolve(),
     }),
   };
 
