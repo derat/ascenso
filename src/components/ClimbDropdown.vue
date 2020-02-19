@@ -49,9 +49,9 @@ export default class ClimbDropdown extends Vue {
   get stateAbbrev(): string {
     switch (this.syncedState) {
       case ClimbState.LEAD:
-        return this.$t('ClimbDropdown.leadAbbrev').toString();
+        return this.$t('ClimbDropdown.leadAbbrev');
       case ClimbState.TOP_ROPE:
-        return this.$t('ClimbDropdown.topRopeAbbrev').toString();
+        return this.$t('ClimbDropdown.topRopeAbbrev');
       default:
         return this.label;
     }

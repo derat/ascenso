@@ -144,21 +144,21 @@ export default class Toolbar extends Vue {
       {
         type: NavItemType.ITEM,
         id: 'toolbar-routes',
-        text: this.$t('Toolbar.routesItem').toString(),
+        text: this.$t('Toolbar.routesItem'),
         icon: 'view_list',
         route: 'routes',
       },
       {
         type: NavItemType.ITEM,
         id: 'toolbar-stats',
-        text: this.$t('Toolbar.statisticsItem').toString(),
+        text: this.$t('Toolbar.statisticsItem'),
         icon: 'assessment',
         route: 'stats',
       },
       {
         type: NavItemType.ITEM,
         id: 'toolbar-profile',
-        text: this.$t('Toolbar.profileItem').toString(),
+        text: this.$t('Toolbar.profileItem'),
         icon: 'person',
         route: 'profile',
       },
@@ -166,7 +166,7 @@ export default class Toolbar extends Vue {
       {
         type: NavItemType.ITEM,
         id: 'toolbar-sign-out',
-        text: this.$t('Toolbar.signOutItem').toString(),
+        text: this.$t('Toolbar.signOutItem'),
         icon: 'exit_to_app',
         method: this.onSignOutNav,
       },

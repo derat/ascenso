@@ -428,7 +428,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       const remainMs = startMs - nowMs;
       this.timeMessage = this.$t('Routes.timeUntilStartMessage', [
         formatDuration(remainMs, langCode),
-      ]).toString();
+      ]);
       this.timeColor = 'blue lighten-4';
       this.updateTimeMessageTimer = window.setTimeout(
         this.updateTimeMessage,
@@ -439,7 +439,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       const remainMs = endMs - nowMs;
       this.timeMessage = this.$t('Routes.timeRemainingMessage', [
         formatDuration(remainMs, langCode),
-      ]).toString();
+      ]);
       this.timeColor = 'green lighten-3';
       this.updateTimeMessageTimer = window.setTimeout(
         this.updateTimeMessage,
@@ -447,7 +447,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       );
     } else {
       // Competition ended.
-      this.timeMessage = this.$t('Routes.competitionEndedMessage').toString();
+      this.timeMessage = this.$t('Routes.competitionEndedMessage');
       this.timeColor = 'blue-grey lighten-4';
     }
   }

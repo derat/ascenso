@@ -471,7 +471,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     }
 
     if (this.creatingTeam) {
-      throw new Error(this.$t('Profile.alreadyCreatingTeamError').toString());
+      throw new Error(this.$t('Profile.alreadyCreatingTeamError'));
     }
     this.creatingTeam = true;
 
@@ -533,7 +533,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     }
 
     if (this.joiningTeam) {
-      throw new Error(this.$t('Profile.alreadyJoiningTeamError').toString());
+      throw new Error(this.$t('Profile.alreadyJoiningTeamError'));
     }
     this.joiningTeam = true;
 
@@ -552,7 +552,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         // Now get the team doc.
         const data = inviteSnap.data();
         if (!data) {
-          throw new Error(this.$t('Profile.badInviteCodeError').toString());
+          throw new Error(this.$t('Profile.badInviteCodeError'));
         }
         const team = data.team;
         if (!team) throw new Error('No team ID in invite');
@@ -585,7 +585,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
             [`users.${uid}`]: { name: this.userDoc.name, climbs: {} },
           });
         } else {
-          throw new Error(this.$t('Profile.teamFullError').toString());
+          throw new Error(this.$t('Profile.teamFullError'));
         }
 
         batch.update(this.userRef, { team: teamRef.id });
@@ -615,7 +615,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   // "Leave team" dialog.
   leaveTeam() {
     if (this.leavingTeam) {
-      throw new Error(this.$t('Profile.alreadyLeavingTeamError').toString());
+      throw new Error(this.$t('Profile.alreadyLeavingTeamError'));
     }
     this.leavingTeam = true;
 
@@ -683,9 +683,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .then(snap => {
         if (!snap.exists) return code;
         if (remainingTries == 0) {
-          throw new Error(
-            this.$t('Profile.cantFindUnusedCodeError').toString()
-          );
+          throw new Error(this.$t('Profile.cantFindUnusedCodeError'));
         }
         return this.findUnusedInviteCode(remainingTries - 1);
       });

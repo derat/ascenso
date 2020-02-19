@@ -15,12 +15,7 @@ export default new Vuetify({
   lang: {
     // Make Vuetify use vue-i18n for translations:
     // https://vuetifyjs.com/en/customization/internationalization
-    //
-    // Per the docs, we should be able to return the result of t() directly
-    // here, but in reality it returns a TranslateResult, which is the type
-    // string | LocaleMessages. See
-    // https://github.com/kazupon/vue-i18n/issues/410 for discussion.
-    t: (key, ...params) => i18n.t(key, params).toString(),
+    t: (key, ...params) => i18n.t(key, params),
   },
   theme: {
     themes: {

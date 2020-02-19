@@ -103,26 +103,18 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
     return [
       {
-        name: this.$t('Statistics.pointsCard').toString(),
-        items: [
-          new Statistic(
-            this.$t('Statistics.totalPointsStat').toString(),
-            score
-          ),
-        ],
+        name: this.$t('Statistics.pointsCard'),
+        items: [new Statistic(this.$t('Statistics.totalPointsStat'), score)],
       },
       {
-        name: this.$t('Statistics.climbsCard').toString(),
+        name: this.$t('Statistics.climbsCard'),
         items: [
-          new Statistic(this.$t('Statistics.totalClimbsStat').toString(), all, [
-            new Statistic(this.$t('Statistics.leadStat').toString(), lead),
-            new Statistic(
-              this.$t('Statistics.topRopeStat').toString(),
-              topRope
-            ),
+          new Statistic(this.$t('Statistics.totalClimbsStat'), all, [
+            new Statistic(this.$t('Statistics.leadStat'), lead),
+            new Statistic(this.$t('Statistics.topRopeStat'), topRope),
           ]),
           new Statistic(
-            this.$t('Statistics.areasClimbedStat').toString(),
+            this.$t('Statistics.areasClimbedStat'),
             Object.keys(areas).length
           ),
         ],
