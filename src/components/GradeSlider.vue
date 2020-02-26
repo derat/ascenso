@@ -7,9 +7,6 @@
        "shows ticks when using [the] slider", but since we also define labels
        it seems to instead make the ticks always be shown, which looks pretty
        ugly. -->
-  <!-- This component generates a "Found 2 elements with non-unique id" console
-       warning about <input> elements:
-       https://github.com/vuetifyjs/vuetify/issues/6843 -->
   <v-range-slider
     ref="slider"
     :min="minSliderValue"
