@@ -42,7 +42,7 @@ if (!isTestEnv) {
   Vue.config.errorHandler = function(err: Error, vm: Vue, info: string) {
     try {
       logError('vue_error', err);
-    } catch (e) {
+    } catch (err) {
       console.log('Vue error handler generated error:', err);
     }
   };
