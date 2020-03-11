@@ -114,7 +114,7 @@ module.exports = {
     task('Changing locale to es-PR');
     toolbar.changeLocale(1);
     stats.getStat(true, 0, 0, (name, value) => {
-      stats.assert.equal(name, 'Puntos totales');
+      stats.assert.equal(name, 'Total de puntos');
     });
 
     // Uncommenting this can be helpful for debugging after a failure.
