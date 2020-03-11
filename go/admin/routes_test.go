@@ -16,12 +16,16 @@ func TestReadAreas(t *testing.T) {
 		in  string    // input CSV data (including header row)
 		out []db.Area // expected output; nil if error is expected
 	}{
-		{"id,name\na1,A1\na2,A2\n", []db.Area{{ID: "a1", Name: "A1"}, {ID: "a2", Name: "A2"}}},
-		{"", nil},                         // empty data, i.e. no header row
-		{"id,name\na1\n", nil},            // missing name column in data
-		{"id\na1\n", nil},                 // missing name column in header/data
-		{"id,name,id\na1,A1,a1\n", nil},   // duplicated id column
-		{"id,name,abc\na1,A1,def\n", nil}, // extra 'abc' column
+		{"id,name,mpid\na1,A1,123\na2,A2,\na3,A3,456\n", []db.Area{
+			{ID: "a1", Name: "A1", MPID: "123"},
+			{ID: "a2", Name: "A2", MPID: ""}, // mpid is optional
+			{ID: "a3", Name: "A3", MPID: "456"},
+		}},
+		{"", nil},                                  // empty data, i.e. no header row
+		{"id,name,mpid\na1,123\n", nil},            // missing name column in data
+		{"id,mpid\na1,123\n", nil},                 // missing name column in header/data
+		{"id,name,mpid,id\na1,A1,123,a1\n", nil},   // duplicated id column
+		{"id,name,mpid,abc\na1,A1,123,def\n", nil}, // extra 'abc' column
 	} {
 		if as, err := readAreas(strings.NewReader(tc.in)); err != nil {
 			if tc.out != nil {
@@ -41,22 +45,22 @@ func TestReadRoutes(t *testing.T) {
 		out []db.Route // expected output; nil if error is expected
 	}{
 		{
-			in: "id,name,area,grade,lead,tr\n" +
-				"r1,R1,a1,5.8,10,5\n" +
-				"r2,R2,a2,5.10a,8,4\n" +
-				"r3,R3,a1,5.12d,20,10\n",
+			in: "id,name,area,grade,lead,tr,mpid\n" +
+				"r1,R1,a1,5.8,10,5,123\n" +
+				"r2,R2,a2,5.10a,8,4,\n" + // mpid is optional
+				"r3,R3,a1,5.12d,20,10,456\n",
 			out: []db.Route{
-				{ID: "r1", Name: "R1", Area: "a1", Grade: "5.8", Lead: 10, TR: 5},
-				{ID: "r2", Name: "R2", Area: "a2", Grade: "5.10a", Lead: 8, TR: 4},
-				{ID: "r3", Name: "R3", Area: "a1", Grade: "5.12d", Lead: 20, TR: 10},
+				{ID: "r1", Name: "R1", Area: "a1", Grade: "5.8", Lead: 10, TR: 5, MPID: "123"},
+				{ID: "r2", Name: "R2", Area: "a2", Grade: "5.10a", Lead: 8, TR: 4, MPID: ""},
+				{ID: "r3", Name: "R3", Area: "a1", Grade: "5.12d", Lead: 20, TR: 10, MPID: "456"},
 			},
 		},
 		{"", nil}, // empty data, i.e. no header row
-		{"id,name,area,grade,lead,tr\nr1,R1,a1,5.8,10\n", nil},           // missing tr column in data
-		{"id,name,area,grade,lead\nr1,R1,a1,5.8,10\n", nil},              // missing tr column in header/data
-		{"id,name,area,grade,lead,tr,id\nr1,R1,a1,5.8,10,5,r1\n", nil},   // duplicated id column
-		{"id,name,area,grade,lead,tr,abc\nr1,R1,a1,5.8,10,5,def\n", nil}, // extra 'abc' column
-		{"id,name,area,grade,lead,tr\nr1,R1,a1,5.8,10,a\n", nil},         // unparseable tr value
+		{"id,name,area,grade,lead,tr,mpid\nr1,R1,a1,5.8,10,123\n", nil},           // missing tr column in data
+		{"id,name,area,grade,lead,mpid\nr1,R1,a1,5.8,10,123\n", nil},              // missing tr column in header/data
+		{"id,name,area,grade,lead,tr,mpid,id\nr1,R1,a1,5.8,10,5,123,r1\n", nil},   // duplicated id column
+		{"id,name,area,grade,lead,tr,mpid,abc\nr1,R1,a1,5.8,10,5,123,def\n", nil}, // extra 'abc' column
+		{"id,name,area,grade,lead,tr,mpid\nr1,R1,a1,5.8,10,a,123\n", nil},         // unparseable tr value
 	} {
 		if rs, err := readRoutes(strings.NewReader(tc.in)); err != nil {
 			if tc.out != nil {

@@ -102,6 +102,7 @@ export interface Area {
   id?: string; // only in sortedData
   name: string;
   routes?: Route[]; // only in sortedData
+  mpId?: string; // Mountain Project ID
 }
 
 // Route contains information about a climbing route.
@@ -113,6 +114,7 @@ export interface Route {
   area?: string; // only in indexedData
   lead: number;
   tr: number;
+  mpId?: string; // Mountain Project ID
 }
 
 // IndexedData corresponds to the global/indexedData Firestore doc.

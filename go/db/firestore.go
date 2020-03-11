@@ -121,6 +121,8 @@ type Area struct {
 	Name string `firestore:"name"`
 	// Routes optionally contains sorted routes.
 	Routes []Route `firestore:"routes,omitempty"`
+	// MPID contains the area's Mountain Project ID.
+	MPID string `firestore:"mpId,omitempty"`
 }
 
 // Route contains information about an individual route.
@@ -137,6 +139,8 @@ type Route struct {
 	Lead int `firestore:"lead,omitempty"`
 	// TR contains the number of points awarded for top-roping the route.
 	TR int `firestore:"tr,omitempty"`
+	// MPID contains the route's Mountain Project ID.
+	MPID string `firestore:"mpId,omitempty"`
 }
 
 // climbState describes whether and how a route was climbed.

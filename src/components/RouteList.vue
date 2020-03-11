@@ -24,8 +24,15 @@
       </v-list-item-action>
 
       <v-list-item-content :class="{ filtered: isFiltered(route) }">
-        <!-- The 'name' class here just exists for unit testing. -->
-        <v-list-item-title class="name">{{ route.name }}</v-list-item-title>
+        <v-list-item-title class="route-title">
+          <span class="name">{{ route.name }}</span>
+          <a
+            v-if="route.mpId"
+            :href="`https://www.mountainproject.com/route/${route.mpId}`"
+          >
+            <v-icon class="mp-icon ml-1" :size="20">info</v-icon>
+          </a>
+        </v-list-item-title>
         <v-list-item-subtitle class="details">
           <span class="grade">{{ route.grade }}</span>
           <span class="points"> {{ route.lead }} ({{ route.tr }}) </span>
@@ -96,6 +103,18 @@ export default class RouteList extends Vue {
 <style scoped>
 .filtered {
   opacity: 0.4;
+}
+.route-title {
+  align-items: center;
+  display: flex;
+}
+.name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mp-icon {
+  opacity: 0.5;
 }
 .details {
   display: flex;

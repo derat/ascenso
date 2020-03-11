@@ -27,8 +27,16 @@
         :id="'routes-expand-' + area.id"
       >
         <v-expansion-panel-header>
-          <v-row no-gutters justify="space-between">
-            <v-col class="area">{{ area.name }}</v-col>
+          <v-row no-gutters align="center" justify="space-between">
+            <v-col class="area-col">
+              <span class="area">{{ area.name }}</span>
+              <a
+                v-if="area.mpId"
+                :href="`https://www.mountainproject.com/area/${area.mpId}`"
+              >
+                <v-icon class="mp-icon ml-2" :size="20">info</v-icon>
+              </a>
+            </v-col>
             <v-col class="count mr-6">
               {{ countAvailableRoutes(area.routes) }}
             </v-col>
@@ -562,6 +570,19 @@ export default class Routes extends Mixins(Perf, UserLoader) {
 </script>
 
 <style scoped>
+.area-col {
+  align-items: center;
+  display: flex;
+}
+.area {
+  /* This may not work properly: https://css-tricks.com/flexbox-truncated-text/ */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mp-icon {
+  opacity: 0.5;
+}
 .count {
   opacity: 0.3;
   text-align: right;

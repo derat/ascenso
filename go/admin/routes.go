@@ -66,7 +66,7 @@ func handlePostRoutes(ctx context.Context, w http.ResponseWriter, r *http.Reques
 }
 
 // readAreas reads and returns areas in CSV format from r.
-// The input must begin with a row specifying "id" and "name" columns.
+// The input must begin with a row specifying "id", "name", and "mpid" columns.
 func readAreas(r io.Reader) ([]db.Area, error) {
 	var areas []db.Area
 	if err := readCSV(r, func() map[string]interface{} {
@@ -75,6 +75,7 @@ func readAreas(r io.Reader) ([]db.Area, error) {
 		return map[string]interface{}{
 			"id":   &a.ID,
 			"name": &a.Name,
+			"mpid": &a.MPID,
 		}
 	}); err != nil {
 		return nil, err
@@ -84,7 +85,7 @@ func readAreas(r io.Reader) ([]db.Area, error) {
 
 // readRoutes reads and returns routes in CSV format from r.
 // The input must begin with a row specifying "id", "name", "area", "grade",
-// "lead", and "tr" columns.
+// "lead", "tr", and "mpid" columns.
 func readRoutes(r io.Reader) ([]db.Route, error) {
 	var routes []db.Route
 	if err := readCSV(r, func() map[string]interface{} {
@@ -97,6 +98,7 @@ func readRoutes(r io.Reader) ([]db.Route, error) {
 			"grade": &rt.Grade,
 			"lead":  &rt.Lead,
 			"tr":    &rt.TR,
+			"mpid":  &rt.MPID,
 		}
 	}); err != nil {
 		return nil, err

@@ -38,6 +38,9 @@ Heterogeneous singleton documents:
         `my_area`.
         *   `<area_id>` - Map containing area information:
             *   `name` - String field containing area name, e.g. `My Area`.
+            *   `mpId` - Optional string field containing the area's Mountain
+                Project ID, e.g. `"105833381"` for
+                `"https://www.mountainproject.com/area/105833381/yosemite-national-park"`.
     *   `routes` - Map field containing route information keyed by route ID,
         e.g. `my_route`.
         *   `<route_id>` - Map containing route information:
@@ -49,6 +52,9 @@ Heterogeneous singleton documents:
                 route.
             *   `tr` - Number field containing points awarded for top-roping the
                 route.
+            *   `mpId` - Optional string field containing the route's Mountain
+                Project ID, e.g. `"105836362"` for
+                `"https://www.mountainproject.com/route/105836362/snake-dike"`.
 *   `sortedData` - Document containing sorted area and route information:
     *   `areas` - Array of sorted area maps:
         *   `id` - String field containing area ID, e.g. `my_area`.
@@ -63,6 +69,12 @@ Heterogeneous singleton documents:
                 route.
             *   `tr` - Number field containing points awarded for top-roping the
                 route.
+            *   `mpId` - Optional string field containing the route's Mountain
+                Project ID, e.g. `"105836362"` for
+                `"https://www.mountainproject.com/route/105836362/snake-dike"`.
+        *   `mpId` - Optional string field containing the area's Mountain
+            Project ID, e.g. `"105833381"` for
+            `"https://www.mountainproject.com/area/105833381/yosemite-national-park"`.
 
 [firebase.firestore.Timestamp]: https://firebase.google.com/docs/reference/js/firebase.firestore.Timestamp
 
