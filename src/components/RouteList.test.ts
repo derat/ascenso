@@ -57,7 +57,7 @@ describe('RouteList', () => {
       routes.map(r => r.grade)
     );
     expect(wrapper.findAll('.height').wrappers.map(w => w.text())).toEqual([
-      '55 ft (17m)',
+      "55' (17m)",
     ]);
     expect(wrapper.findAll('.points').wrappers.map(w => w.text())).toEqual(
       routes.map(r => `${r.lead} (${r.tr})`)
