@@ -33,6 +33,8 @@
               <a
                 v-if="area.mpId"
                 :href="`https://www.mountainproject.com/area/${area.mpId}`"
+                target="_blank"
+                @click.stop
               >
                 <v-icon class="mp-icon ml-2" :size="20">info</v-icon>
               </a>

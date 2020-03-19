@@ -29,17 +29,19 @@
           <a
             v-if="route.mpId"
             :href="`https://www.mountainproject.com/route/${route.mpId}`"
+            target="_blank"
+            @click.stop
           >
             <v-icon class="mp-icon ml-1" :size="20">info</v-icon>
           </a>
         </v-list-item-title>
         <v-list-item-subtitle class="details">
           <span class="grade">{{ route.grade }}</span>
-          <span v-if="route.height" class="height ml-3"
-            >{{ route.height }} ft ({{ Math.ceil(route.height / meterFeet) }}m)
+          <span v-if="route.height" class="height ml-2"
+            >{{ route.height }}' ({{ Math.ceil(route.height / meterFeet) }}m)
           </span>
           <v-spacer />
-          <span class="points"> {{ route.lead }} ({{ route.tr }}) </span>
+          <span class="points ml-1"> {{ route.lead }} ({{ route.tr }}) </span>
         </v-list-item-subtitle>
       </v-list-item-content>
     </v-list-item>
@@ -114,11 +116,12 @@ export default class RouteList extends Vue {
 .route-title {
   align-items: center;
   display: flex;
+  overflow: hidden;
 }
 .name {
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .mp-icon {
   opacity: 0.5;
@@ -126,7 +129,13 @@ export default class RouteList extends Vue {
 .details {
   display: flex;
 }
+.grade {
+  min-width: 2.5em;
+}
 .height {
-  opacity: 0.8;
+  white-space: nowrap;
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: clip;
 }
 </style>
