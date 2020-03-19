@@ -55,6 +55,7 @@ const sortedData: SortedData = {
         { id: 'r1', name: 'Route 1', grade: '5.10a', lead: 10, tr: 5 },
         { id: 'r2', name: 'Route 2', grade: '5.7', lead: 6, tr: 3 },
       ],
+      mpId: '123',
     },
     {
       name: 'Area 2',
@@ -121,6 +122,9 @@ describe('Routes', () => {
     expect(wrapper.findAll('.area').wrappers.map(w => w.text())).toEqual(
       sortedData.areas.map(a => a.name)
     );
+    expect(wrapper.findAll('.mp-icon').wrappers.map(w => w.text())).toEqual([
+      'info',
+    ]);
   });
 
   it('passes route and climber data to route lists', () => {

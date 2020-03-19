@@ -45,14 +45,16 @@ func TestReadRoutes(t *testing.T) {
 		out []db.Route // expected output; nil if error is expected
 	}{
 		{
-			in: "id,name,area,grade,lead,tr,mpid\n" +
-				"r1,R1,a1,5.8,10,5,123\n" +
-				"r2,R2,a2,5.10a,8,4,\n" + // mpid is optional
-				"r3,R3,a1,5.12d,20,10,456\n",
+			in: "id,name,area,grade,lead,tr,mpid,height\n" +
+				"r1,R1,a1,5.8,10,5,123,80\n" +
+				"r2,R2,a2,5.10a,8,4,,64\n" + // mpid is optional
+				"r3,R3,a1,5.12d,20,10,456,\n" + // height is optional
+				"r4,R4,a2,5.9,12,6,,\n",
 			out: []db.Route{
-				{ID: "r1", Name: "R1", Area: "a1", Grade: "5.8", Lead: 10, TR: 5, MPID: "123"},
-				{ID: "r2", Name: "R2", Area: "a2", Grade: "5.10a", Lead: 8, TR: 4, MPID: ""},
+				{ID: "r1", Name: "R1", Area: "a1", Grade: "5.8", Lead: 10, TR: 5, MPID: "123", Height: 80},
+				{ID: "r2", Name: "R2", Area: "a2", Grade: "5.10a", Lead: 8, TR: 4, Height: 64},
 				{ID: "r3", Name: "R3", Area: "a1", Grade: "5.12d", Lead: 20, TR: 10, MPID: "456"},
+				{ID: "r4", Name: "R4", Area: "a2", Grade: "5.9", Lead: 12, TR: 6},
 			},
 		},
 		{"", nil}, // empty data, i.e. no header row

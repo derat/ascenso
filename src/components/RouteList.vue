@@ -35,6 +35,10 @@
         </v-list-item-title>
         <v-list-item-subtitle class="details">
           <span class="grade">{{ route.grade }}</span>
+          <span v-if="route.height" class="height ml-3"
+            >{{ route.height }} ft ({{ Math.ceil(route.height / meterFeet) }}m)
+          </span>
+          <v-spacer />
           <span class="points"> {{ route.lead }} ({{ route.tr }}) </span>
         </v-list-item-subtitle>
       </v-list-item-content>
@@ -66,6 +70,9 @@ export default class RouteList extends Vue {
   @Prop({ validator: v => v in GradeIndexes }) maxGrade?: string;
 
   readonly ClimbState = ClimbState;
+
+  // Number of feet in a meter.
+  readonly meterFeet = 3.2808;
 
   // Indexes into the Grades array for |minGrade| and |maxGrade|, or -1 if the
   // min and/or max are not set.
@@ -118,6 +125,8 @@ export default class RouteList extends Vue {
 }
 .details {
   display: flex;
-  justify-content: space-between;
+}
+.height {
+  opacity: 0.8;
 }
 </style>

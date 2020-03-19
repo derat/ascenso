@@ -89,6 +89,8 @@
           />
         </v-card-text>
 
+        <!-- TODO: Support filtering by height. -->
+
         <v-divider />
         <v-card-actions>
           <v-btn text @click="onCancelFilters" v-t="'Routes.cancelButton'" />

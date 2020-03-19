@@ -20,8 +20,8 @@ describe('RouteList', () => {
   ];
   const routes = [
     { id: 'r1', name: 'Route 1', grade: '5.10a', lead: 10, tr: 5 },
-    { id: 'r2', name: 'Route 2', grade: '5.8', lead: 6, tr: 3 },
-    { id: 'r3', name: 'Route 3', grade: '5.12c', lead: 20, tr: 10 },
+    { id: 'r2', name: 'Route 2', grade: '5.8', lead: 6, tr: 3, mpId: 123 },
+    { id: 'r3', name: 'Route 3', grade: '5.12c', lead: 20, tr: 10, height: 55 },
   ];
 
   let wrapper: Wrapper<Vue>;
@@ -50,9 +50,15 @@ describe('RouteList', () => {
     expect(wrapper.findAll('.name').wrappers.map(w => w.text())).toEqual(
       routes.map(r => r.name)
     );
+    expect(wrapper.findAll('.mp-icon').wrappers.map(w => w.text())).toEqual([
+      'info',
+    ]);
     expect(wrapper.findAll('.grade').wrappers.map(w => w.text())).toEqual(
       routes.map(r => r.grade)
     );
+    expect(wrapper.findAll('.height').wrappers.map(w => w.text())).toEqual([
+      '55 ft (17m)',
+    ]);
     expect(wrapper.findAll('.points').wrappers.map(w => w.text())).toEqual(
       routes.map(r => `${r.lead} (${r.tr})`)
     );

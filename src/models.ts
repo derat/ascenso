@@ -115,6 +115,7 @@ export interface Route {
   lead: number;
   tr: number;
   mpId?: string; // Mountain Project ID
+  height?: number; // in feet
 }
 
 // IndexedData corresponds to the global/indexedData Firestore doc.

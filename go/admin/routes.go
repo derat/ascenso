@@ -92,13 +92,14 @@ func readRoutes(r io.Reader) ([]db.Route, error) {
 		routes = append(routes, db.Route{})
 		rt := &routes[len(routes)-1]
 		return map[string]interface{}{
-			"id":    &rt.ID,
-			"name":  &rt.Name,
-			"area":  &rt.Area,
-			"grade": &rt.Grade,
-			"lead":  &rt.Lead,
-			"tr":    &rt.TR,
-			"mpid":  &rt.MPID,
+			"id":     &rt.ID,
+			"name":   &rt.Name,
+			"area":   &rt.Area,
+			"grade":  &rt.Grade,
+			"lead":   &rt.Lead,
+			"tr":     &rt.TR,
+			"mpid":   &rt.MPID,
+			"height": &rt.Height,
 		}
 	}); err != nil {
 		return nil, err
@@ -144,7 +145,9 @@ func readCSV(r io.Reader, f rowDestFunc) error {
 			case *string:
 				*td = row[i]
 			case *int:
-				if *td, err = strconv.Atoi(row[i]); err != nil {
+				if len(row[i]) == 0 {
+					*td = 0
+				} else if *td, err = strconv.Atoi(row[i]); err != nil {
 					return fmt.Errorf("failed to parse %q in %q: %v", row[i], row, err)
 				}
 			default:

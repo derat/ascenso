@@ -141,6 +141,8 @@ type Route struct {
 	TR int `firestore:"tr,omitempty"`
 	// MPID contains the route's Mountain Project ID.
 	MPID string `firestore:"mpId,omitempty"`
+	// Route height in feet.
+	Height int `firestore:"height,omitempty"`
 }
 
 // climbState describes whether and how a route was climbed.
