@@ -31,7 +31,7 @@
     "vue-router": "^3.0.7",
     "vue-the-mask": "^0.11.1",
     "vuefire": "^2.1.0",
-    "vuetify": "^2.2.15"
+    "vuetify": "^2.2.18"
   },
   "devDependencies": {
     "@firebase/testing": "^0.12.0",
