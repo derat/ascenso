@@ -15,6 +15,8 @@
     "test:unit:only": "vue-cli-service test:unit --testPathPattern"
   },
   "dependencies": {
+    "@babel/core": "^7.10.1",
+    "@babel/helper-compilation-targets": "^7.10.1",
     "@typescript-eslint/eslint-plugin": "^2.16.0",
     "@typescript-eslint/parser": "^2.16.0",
     "acorn": "^7.1.1",
@@ -48,7 +50,6 @@
     "@vue/eslint-config-typescript": "^5.0.1",
     "@vue/test-utils": "^1.0.0-beta.29",
     "axios": "^0.19.0",
-    "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^25.1.0",
     "chromedriver": "^80.0.1",
