@@ -14,7 +14,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 
-	"ascenso/go/db"
+	"github.com/derat/ascenso/go/db"
 )
 
 // handlePostRoutes handles a "routes" POST request.

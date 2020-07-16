@@ -13,7 +13,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
 
-	"ascenso/go/db"
+	"github.com/derat/ascenso/go/db"
 )
 
 // handleClearScores handles an "clearScores" POST request.

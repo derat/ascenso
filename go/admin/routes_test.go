@@ -5,10 +5,11 @@
 package admin
 
 import (
-	"ascenso/go/db"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/derat/ascenso/go/db"
 )
 
 func TestReadAreas(t *testing.T) {

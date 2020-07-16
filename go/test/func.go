@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"ascenso/go/db"
+	"github.com/derat/ascenso/go/db"
 )
 
 // We can't name this file "test.go" since we don't want it to be picked up by "go test".
@@ -75,7 +75,7 @@ func deleteUser(ctx context.Context, email string) error {
 	log.Printf("Deleting user %v with email %v", uid, email)
 
 	// Initialize Cloud Firestore.
-	client, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT")) // automatically set by runtime
+	client, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT")) // set at deployment
 	if err != nil {
 		return fmt.Errorf("failed creating Firestore client: %v", err)
 	}

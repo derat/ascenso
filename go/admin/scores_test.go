@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"testing"
 
-	"ascenso/go/db"
+	"github.com/derat/ascenso/go/db"
 )
 
 func TestComputeScore(t *testing.T) {
