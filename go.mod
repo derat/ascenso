@@ -1,4 +1,4 @@
-module ascenso
+module github.com/derat/ascenso
 
 go 1.12
 

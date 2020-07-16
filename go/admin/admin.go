@@ -16,7 +16,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 
-	"ascenso/go/db"
+	"github.com/derat/ascenso/go/db"
 )
 
 const maxRequestBytes = 10 << 20 // memory for parsing HTTP requests
@@ -33,7 +33,7 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Initialize Cloud Firestore.
-		client, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT")) // automatically set by runtime
+		client, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT")) // set at deployment
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed creating Firestore client: %v", err), http.StatusInternalServerError)
 			return

@@ -72,7 +72,7 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	// will get timestamps 200 ms later than when they actually happened.
 	clientOffset := now.Sub(time.Unix(0, body.Data.Now*int64(time.Millisecond)))
 
-	client, err := logging.NewClient(ctx, os.Getenv("GCP_PROJECT")) // automatically set by runtime
+	client, err := logging.NewClient(ctx, os.Getenv("GCP_PROJECT")) // set at deployment
 	if err != nil {
 		log.Print("Failed creating Stackdriver client: ", err)
 		http.Error(w, "Failed creating logging client", http.StatusInternalServerError)
