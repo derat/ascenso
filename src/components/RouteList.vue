@@ -30,6 +30,7 @@
             v-if="route.mpId"
             :href="`https://www.mountainproject.com/route/${route.mpId}`"
             target="_blank"
+            class="mp-link"
             @click.stop
           >
             <v-icon class="mp-icon ml-1" :size="20">info</v-icon>
@@ -68,8 +69,8 @@ export default class RouteList extends Vue {
 
   // Minimum and maximum grades that the user plans to climb, e.g. '5.10a'.
   // Routes outside of the supplied range are visually deemphasized.
-  @Prop({ validator: v => v in GradeIndexes }) minGrade?: string;
-  @Prop({ validator: v => v in GradeIndexes }) maxGrade?: string;
+  @Prop({ validator: (v) => v in GradeIndexes }) minGrade?: string;
+  @Prop({ validator: (v) => v in GradeIndexes }) maxGrade?: string;
 
   readonly ClimbState = ClimbState;
 
@@ -122,6 +123,9 @@ export default class RouteList extends Vue {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.mp-link {
+  text-decoration: none;
 }
 .mp-icon {
   opacity: 0.5;
