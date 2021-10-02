@@ -21,6 +21,7 @@
     "@typescript-eslint/eslint-plugin": "^2.16.0",
     "@typescript-eslint/parser": "^2.16.0",
     "acorn": "^7.1.1",
+    "browserslist": "^4.17.2",
     "core-js": "^3.4.4",
     "firebase": "^7.14.5",
     "firebaseui": "^4.0.0",
