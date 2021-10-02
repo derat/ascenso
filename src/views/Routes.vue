@@ -34,6 +34,7 @@
                 v-if="area.mpId"
                 :href="`https://www.mountainproject.com/area/${area.mpId}`"
                 target="_blank"
+                class="mp-link"
                 @click.stop
               >
                 <v-icon class="mp-icon ml-2" :size="20">info</v-icon>
@@ -310,7 +311,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       .update({
         ['users.' + uid + '.climbs.' + ev.route]: value,
       })
-      .catch(err => {
+      .catch((err) => {
         this.$emit(
           'error-msg',
           this.$t('Routes.failedSettingClimbStateError', [err])
@@ -470,7 +471,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
 
   mounted() {
     // We can't use this.firestore yet.
-    getFirestore().then(db => {
+    getFirestore().then((db) => {
       this.$bind('sortedData', db.collection('global').doc('sortedData')).then(
         () => {
           this.loadedSortedData = true;
@@ -485,7 +486,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
             );
           }
         },
-        err => {
+        (err) => {
           this.$emit(
             'error-msg',
             this.$t('Routes.failedLoadingRoutesError', [err])
@@ -499,7 +500,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
           this.loadedConfig = true;
           this.recordEvent('loadedConfig');
         },
-        err => {
+        (err) => {
           this.$emit(
             'error-msg',
             this.$t('Routes.failedLoadingConfigError', [err])
@@ -539,7 +540,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   // Handles the 'Apply' button being clicked in the filters dialog.
   // The updated filter settings are saved to Cloud Firestore.
   onApplyFilters() {
-    new Promise(resolve => {
+    new Promise((resolve) => {
       const min = this.filtersDialogGrades[0];
       const max = this.filtersDialogGrades[1];
       logInfo('update_route_filters', { min, max });
@@ -559,7 +560,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
         })
       );
     })
-      .catch(err => {
+      .catch((err) => {
         this.$emit(
           'error-msg',
           this.$t('Routes.failedUpdatingFiltersError', [err.message])
@@ -583,6 +584,9 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.mp-link {
+  text-decoration: none;
 }
 .mp-icon {
   opacity: 0.5;
