@@ -21,28 +21,28 @@ func TestComputeScore(t *testing.T) {
 	)
 
 	routes := rm{
-		r1: db.Route{Lead: 10, TR: 5},
-		r2: db.Route{Lead: 6, TR: 3},
+		r1: db.Route{Lead: 10, TR: 5, Height: 60},
+		r2: db.Route{Lead: 6, TR: 3, Height: 30},
 	}
 
 	for _, tc := range []struct {
-		climbs        cm
-		routes        rm
-		points, count int
+		climbs                cm
+		routes                rm
+		points, count, height int
 	}{
-		{nil, nil, 0, 0},
-		{nil, rm{}, 0, 0},
-		{cm{}, nil, 0, 0},
-		{cm{}, rm{}, 0, 0},
-		{cm{}, routes, 0, 0},
-		{cm{r1: db.Lead}, routes, 10, 1},
-		{cm{r1: db.Lead, r2: db.TopRope}, routes, 13, 2},
-		{cm{r1: db.Lead, "bogus": db.Lead}, routes, 10, 1},
+		{nil, nil, 0, 0, 0},
+		{nil, rm{}, 0, 0, 0},
+		{cm{}, nil, 0, 0, 0},
+		{cm{}, rm{}, 0, 0, 0},
+		{cm{}, routes, 0, 0, 0},
+		{cm{r1: db.Lead}, routes, 10, 1, 60},
+		{cm{r1: db.Lead, r2: db.TopRope}, routes, 13, 2, 90},
+		{cm{r1: db.Lead, "bogus": db.Lead}, routes, 10, 1, 60},
 	} {
-		points, count := computeScore(tc.climbs, tc.routes)
-		if points != tc.points || count != tc.count {
-			t.Errorf("computeScore(%v, %v) = (%v, %v); want (%v, %v)",
-				tc.climbs, tc.routes, points, count, tc.points, tc.count)
+		points, count, height := computeScore(tc.climbs, tc.routes)
+		if points != tc.points || count != tc.count || height != tc.height {
+			t.Errorf("computeScore(%v, %v) = (%v, %v, %v); want (%v, %v, %v)",
+				tc.climbs, tc.routes, points, count, height, tc.points, tc.count, tc.height)
 		}
 	}
 }
@@ -50,8 +50,8 @@ func TestComputeScore(t *testing.T) {
 func TestWriteScores(t *testing.T) {
 	var b bytes.Buffer
 	if err := writeScores(&b, []teamSummary{
-		{"Team A", 123, 10, []userSummary{{"User 1", 100, 8}, {"User 2", 23, 2}}},
-		{"Team B", 45, 5, []userSummary{{"User 3", 25, 3}, {"User 4", 20, 2}}},
+		{"Team A", 123, 10, 800, []userSummary{{"User 1", 100, 8, 500}, {"User 2", 23, 2, 300}}},
+		{"Team B", 45, 5, 600, []userSummary{{"User 3", 25, 3, 400}, {"User 4", 20, 2, 200}}},
 	}); err != nil {
 		t.Fatal("writeScores failed: ", err)
 	}

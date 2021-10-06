@@ -55,10 +55,11 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 		// Iterate over the team's members.
 		for _, u := range team.Users {
-			score, climbs := computeScore(u.Climbs, indexed.Routes)
+			score, climbs, height := computeScore(u.Climbs, indexed.Routes)
 			summary.Score += score
 			summary.NumClimbs += climbs
-			summary.Users = append(summary.Users, userSummary{u.Name, score, climbs})
+			summary.Height += height
+			summary.Users = append(summary.Users, userSummary{u.Name, score, climbs, height})
 		}
 		sort.Slice(summary.Users, func(i, j int) bool {
 			return summary.Users[i].Score > summary.Users[j].Score
@@ -74,11 +75,11 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// computeScore iterates over the supplied climbs and returns the user's total score
-// and number of climbs.
-func computeScore(climbs map[string]db.ClimbState, routes map[string]db.Route) (points, count int) {
+// computeScore iterates over the supplied climbs and returns the user's total score, number of
+// climbs, and total height.
+func computeScore(climbs map[string]db.ClimbState, routes map[string]db.Route) (points, count, height int) {
 	if climbs == nil || routes == nil {
-		return 0, 0
+		return 0, 0, 0
 	}
 
 	for id, state := range climbs {
@@ -93,8 +94,9 @@ func computeScore(climbs map[string]db.ClimbState, routes map[string]db.Route) (
 			points += rt.TR
 			count++
 		}
+		height += rt.Height
 	}
-	return points, count
+	return points, count, height
 }
 
 // teamSummary describes a team's performance.
@@ -102,6 +104,7 @@ type teamSummary struct {
 	Name      string
 	Score     int
 	NumClimbs int
+	Height    int
 	Users     []userSummary
 }
 
@@ -110,6 +113,7 @@ type userSummary struct {
 	Name      string
 	Score     int
 	NumClimbs int
+	Height    int
 }
 
 // writeScores writes an HTML document describing the scores in teams to w.
@@ -160,15 +164,18 @@ const scoreTemplate = `
         <th>Team</th>
         <th>Score</th>
         <th>Climbs</th>
+        <th>Height</th>
         <th>Climber</th>
         <th>Score</th>
         <th>Climbs</th>
+        <th>Height</th>
       </tr>
 {{- range .Teams}}
       <tr>
         <td rowspan="{{len .Users}}">{{.Name}}</td>
         <td rowspan="{{len .Users}}" class="num">{{.Score}}</td>
         <td rowspan="{{len .Users}}" class="num">{{.NumClimbs}}</td>
+        <td rowspan="{{len .Users}}" class="num">{{.Height}}'</td>
 {{- range $i, $user := .Users}}
 {{- if ne $i 0}}
       <tr>
@@ -176,6 +183,7 @@ const scoreTemplate = `
         <td>{{$user.Name}}</td>
         <td class="num">{{$user.Score}}</td>
         <td class="num">{{$user.NumClimbs}}</td>
+        <td class="num">{{$user.Height}}'</td>
       </tr>
 {{- end}}
 {{- end}}
