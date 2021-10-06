@@ -98,8 +98,10 @@ export default {
     climbsCard: 'Rutas',
     failedLoadingRoutesError: 'Error en cargar las rutas: {0}',
     failedLoadingUserOrTeamError: 'Error en cargar usuario o equipo: {0}',
+    heightStat: 'Altura (pies)',
     individualTab: 'Individual',
     leadStat: 'Lead', // TODO: See ClimbDropdown above.
+    otherCard: 'Otro',
     pointsCard: 'Puntos',
     teamTab: 'Equipo',
     topRopeStat: 'Top-rope', // TODO: See ClimbDropdown above.

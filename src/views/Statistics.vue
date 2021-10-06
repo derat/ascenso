@@ -77,6 +77,7 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
     let lead = 0;
     let topRope = 0;
     let score = 0;
+    let height = 0;
     const areas: Record<string, boolean> = {};
 
     for (const climbs of climbsArray) {
@@ -96,6 +97,7 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
         }
         if (state == ClimbState.LEAD || state == ClimbState.TOP_ROPE) {
           all++;
+          if (route.height) height += route.height;
           if (route.area) areas[route.area] = true;
         }
       }
@@ -119,6 +121,10 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
           ),
         ],
       },
+      {
+        name: this.$t('Statistics.otherCard'),
+        items: [new Statistic(this.$t('Statistics.heightStat'), height)],
+      },
     ];
   }
 
@@ -134,7 +140,7 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
     // climbs, and also fill in team stats.
     if (this.teamDoc && this.teamDoc.users) {
       const users = this.teamDoc.users;
-      const userClimbs = Object.keys(users).map(uid => users[uid].climbs);
+      const userClimbs = Object.keys(users).map((uid) => users[uid].climbs);
 
       this.userCards = this.computeStats(
         users[this.user.uid].climbs ? [users[this.user.uid].climbs] : []
@@ -166,14 +172,14 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
   mounted() {
     getFirestore()
-      .then(db =>
+      .then((db) =>
         this.$bind('indexedData', db.collection('global').doc('indexedData'))
       )
       .then(() => {
         this.recordEvent('loadedIndexedData'), (this.indexedDataLoaded = true);
         this.updateItems();
       })
-      .catch(err => {
+      .catch((err) => {
         this.$emit(
           'error-msg',
           this.$t('Statistics.failedLoadingRoutesError', [err])

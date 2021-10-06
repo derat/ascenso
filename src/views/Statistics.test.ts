@@ -26,7 +26,7 @@ describe('Statistics', () => {
     MockFirebase.currentUser = new MockUser(uid, userName);
     MockFirebase.setDoc('global/indexedData', {
       routes: {
-        r1: { area: 'a1', lead: 10, tr: 5 },
+        r1: { area: 'a1', lead: 10, tr: 5, height: 20 },
         r2: { area: 'a2', lead: 16, tr: 8 },
       },
     });
@@ -58,7 +58,7 @@ describe('Statistics', () => {
   it('displays statistics for a team', () => {
     const cardStats: Statistic[][] = wrapper
       .findAll(StatisticsList)
-      .wrappers.map(w => w.props('items'));
+      .wrappers.map((w) => w.props('items'));
     expect(cardStats).toEqual([
       // Team tab.
       [new Statistic('Total points', 34)],
@@ -69,6 +69,7 @@ describe('Statistics', () => {
         ]),
         new Statistic('Areas climbed', 2),
       ],
+      [new Statistic('Height (feet)', 20)],
       // Individual tab.
       [new Statistic('Total points', 18)],
       [
@@ -78,6 +79,7 @@ describe('Statistics', () => {
         ]),
         new Statistic('Areas climbed', 2),
       ],
+      [new Statistic('Height (feet)', 20)],
     ]);
   });
 });
