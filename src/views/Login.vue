@@ -4,11 +4,8 @@
 
 <template>
   <div id="login-wrapper">
-    <!-- We use v-show rather than v-if here so that FirebaseUI can find the
-         auth container in the DOM immediately. -->
-    <v-container class="container text-center" ref="container" v-show="showUI">
+    <v-container class="container text-center">
       <v-row justify="center">
-        <!-- These widths are chosen to match those of the <Card> below. -->
         <v-col cols="12" sm="8" md="6">
           <v-img :src="logoURL" :alt="competitionName" contain />
         </v-col>
@@ -17,7 +14,13 @@
         <div id="firebaseui-auth-container"></div>
       </v-row>
     </v-container>
-    <Spinner v-if="!showUI" />
+    <v-overlay
+      v-if="pendingRedirect || completingLogin"
+      ref="spinner"
+      opacity="0.1"
+    >
+      <v-progress-circular indeterminate size="48" color="grey darken-2" />
+    </v-overlay>
   </div>
 </template>
 
@@ -27,13 +30,9 @@ import { Component, Mixins } from 'vue-property-decorator';
 import { logError, logInfo } from '@/log';
 import { getAuth, getFirebase, getFirebaseUI, getFirestore } from '@/firebase';
 
-import Card from '@/components/Card.vue';
 import Perf from '@/mixins/Perf';
-import Spinner from '@/components/Spinner.vue';
 
-@Component({
-  components: { Card, Spinner },
-})
+@Component({})
 export default class Login extends Mixins(Perf) {
   readonly logoURL = process.env.VUE_APP_LOGO_URL;
   readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
@@ -45,11 +44,6 @@ export default class Login extends Mixins(Perf) {
   // True when signin is complete and process is finishing (e.g.
   // checking/creating the user doc in Firestore).
   completingLogin = false;
-
-  get showUI() {
-    // Hide the login elements when we don't need anything else from the user.
-    return !this.pendingRedirect && !this.completingLogin;
-  }
 
   mounted() {
     Promise.all([getAuth(), getFirebase(), getFirebaseUI()]).then(
@@ -98,7 +92,7 @@ export default class Login extends Mixins(Perf) {
                 const user = auth.currentUser;
                 if (!user) throw new Error('Not logged in');
                 const ref = db.collection('users').doc(user.uid);
-                ref.get().then(snap => {
+                ref.get().then((snap) => {
                   if (snap.exists) {
                     // If the user has logged in before, send them to the routes
                     // view.
@@ -114,7 +108,7 @@ export default class Login extends Mixins(Perf) {
                       .then(() => {
                         this.$router.replace('profile');
                       })
-                      .catch(err => {
+                      .catch((err) => {
                         this.$emit('error-msg', `Failed creating user: ${err}`);
                         logError('create_user_failed', err);
                       });
