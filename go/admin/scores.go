@@ -83,10 +83,10 @@ func handlePostScoresUsersCSV(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 	sort.Slice(users, func(i, j int) bool { return users[i].Name < users[j].Name })
 
-	recs := [][]string{{"name", "score", "climbs", "height"}}
+	recs := [][]string{{"name", "team", "score", "climbs", "height"}}
 	for _, u := range users {
 		recs = append(recs, []string{
-			u.Name, strconv.Itoa(u.Score), strconv.Itoa(u.NumClimbs), strconv.Itoa(u.Height),
+			u.Name, u.Team, strconv.Itoa(u.Score), strconv.Itoa(u.NumClimbs), strconv.Itoa(u.Height),
 		})
 	}
 
@@ -132,7 +132,13 @@ func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, er
 			summary.Score += score
 			summary.NumClimbs += climbs
 			summary.Height += height
-			summary.Users = append(summary.Users, userSummary{u.Name, score, climbs, height})
+			summary.Users = append(summary.Users, userSummary{
+				Name:      u.Name,
+				Team:      team.Name,
+				Score:     score,
+				NumClimbs: climbs,
+				Height:    height,
+			})
 		}
 		sort.Slice(summary.Users, func(i, j int) bool {
 			return summary.Users[i].Score > summary.Users[j].Score
@@ -180,6 +186,7 @@ type teamSummary struct {
 // userSummary describes an individual climber's performance.
 type userSummary struct {
 	Name      string
+	Team      string // redundant, but used for per-user CSV
 	Score     int
 	NumClimbs int
 	Height    int
