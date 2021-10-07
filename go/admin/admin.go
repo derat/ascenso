@@ -58,6 +58,10 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 			handlePostRoutes(ctx, w, r, client)
 		case "scores":
 			handlePostScores(ctx, w, r, client)
+		case "scoresTeamsCsv":
+			handlePostScoresTeamsCSV(ctx, w, r, client)
+		case "scoresUsersCsv":
+			handlePostScoresUsersCSV(ctx, w, r, client)
 		default:
 			http.Error(w, fmt.Sprintf("Bad action %q", action), http.StatusBadRequest)
 		}
@@ -98,6 +102,9 @@ const getHTML = `
       .label {
         min-width: 100px;
       }
+      button {
+        margin-right: 5px;
+      }
     </style>
   </head>
   <body>
@@ -114,6 +121,8 @@ const getHTML = `
       <p>View a scoreboard listing all teams.</p>
       <div class="input-row">
         <button name="action" value="scores" type="submit">View scores</button>
+        <button name="action" value="scoresTeamsCsv" type="submit">Teams (CSV)</button>
+        <button name="action" value="scoresUsersCsv" type="submit">Users (CSV)</button>
       </div>
 
       <h2>Update routes</h2>

@@ -6,11 +6,13 @@ package admin
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"cloud.google.com/go/firestore"
@@ -22,12 +24,85 @@ import (
 // handlePostScores handles a "scores" POST request.
 // It reads teams' scores from Cloud Firestore and writes an HTML scoreboard document to w.
 func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
+	teams, err := getScores(ctx, client)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed loading scores: %v", err), http.StatusInternalServerError)
+		return
+	}
+	sort.Slice(teams, func(i, j int) bool { return teams[i].Score > teams[j].Score })
+	if err := writeScores(w, teams); err != nil {
+		http.Error(w, fmt.Sprintf("Failed writing template: %v", err), http.StatusInternalServerError)
+		return
+	}
+}
+
+// handlePostScoresTeamsCSV handles a "scoresTeamsCsv" POST request.
+func handlePostScoresTeamsCSV(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
+	teams, err := getScores(ctx, client)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed loading scores: %v", err), http.StatusInternalServerError)
+		return
+	}
+	sort.Slice(teams, func(i, j int) bool { return teams[i].Name < teams[j].Name })
+
+	recs := [][]string{{"team", "name_1", "name_2", "score", "climbs", "height"}}
+	for _, team := range teams {
+		rec := []string{team.Name}
+		if len(team.Users) > 0 {
+			rec = append(rec, team.Users[0].Name)
+		} else {
+			rec = append(rec, "")
+		}
+		if len(team.Users) > 1 {
+			rec = append(rec, team.Users[1].Name)
+		} else {
+			rec = append(rec, "")
+		}
+		rec = append(rec, strconv.Itoa(team.Score), strconv.Itoa(team.NumClimbs), strconv.Itoa(team.Height))
+
+		recs = append(recs, rec)
+	}
+
+	// Using text/plain rather than text/csv since Chrome OS seems to use a buggy CSV viewer.
+	w.Header().Set("Content-Type", "text/plain")
+	if err := csv.NewWriter(w).WriteAll(recs); err != nil {
+		http.Error(w, fmt.Sprintf("Failed writing teams: %v", err), http.StatusInternalServerError)
+	}
+}
+
+// handlePostScoresUsersCSV handles a "scoresUsersCsv" POST request.
+func handlePostScoresUsersCSV(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
+	teams, err := getScores(ctx, client)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed loading scores: %v", err), http.StatusInternalServerError)
+		return
+	}
+	var users []userSummary
+	for _, t := range teams {
+		users = append(users, t.Users...)
+	}
+	sort.Slice(users, func(i, j int) bool { return users[i].Name < users[j].Name })
+
+	recs := [][]string{{"name", "score", "climbs", "height"}}
+	for _, u := range users {
+		recs = append(recs, []string{
+			u.Name, strconv.Itoa(u.Score), strconv.Itoa(u.NumClimbs), strconv.Itoa(u.Height),
+		})
+	}
+
+	// Using text/plain rather than text/csv since Chrome OS seems to use a buggy CSV viewer.
+	w.Header().Set("Content-Type", "text/plain")
+	if err := csv.NewWriter(w).WriteAll(recs); err != nil {
+		http.Error(w, fmt.Sprintf("Failed writing users: %v", err), http.StatusInternalServerError)
+	}
+}
+
+// getScores reads teams' scores from Cloud Firestore and returns summarized data.
+func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, error) {
 	// First, load the indexed data so we can look up the points for each route.
 	var indexed db.IndexedData
 	if err := db.GetDoc(ctx, client.Doc(db.IndexedDataDocPath), &indexed); err != nil {
-		http.Error(w, fmt.Sprintf("Failed getting indexed data: %v", err),
-			http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("failed getting indexed data: %v", err)
 	}
 
 	// Iterate over all of the teams.
@@ -38,13 +113,11 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		if err == iterator.Done {
 			break
 		} else if err != nil {
-			http.Error(w, fmt.Sprintf("Failed getting team ref: %v", err), http.StatusInternalServerError)
-			return
+			return nil, fmt.Errorf("failed getting team ref: %v", err)
 		}
 		var team db.Team
 		if err := db.GetDoc(ctx, ref, &team); err != nil {
-			http.Error(w, fmt.Sprintf("Failed getting team doc: %v", err), http.StatusInternalServerError)
-			return
+			return nil, fmt.Errorf("failed getting team doc: %v", err)
 		}
 
 		if len(team.Users) == 0 {
@@ -68,11 +141,7 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		teams = append(teams, summary)
 	}
 
-	sort.Slice(teams, func(i, j int) bool { return teams[i].Score > teams[j].Score })
-	if err := writeScores(w, teams); err != nil {
-		http.Error(w, fmt.Sprintf("Failed writing template: %v", err), http.StatusInternalServerError)
-		return
-	}
+	return teams, nil
 }
 
 // computeScore iterates over the supplied climbs and returns the user's total score, number of
@@ -118,7 +187,7 @@ type userSummary struct {
 
 // writeScores writes an HTML document describing the scores in teams to w.
 func writeScores(w io.Writer, teams []teamSummary) error {
-	tmpl, err := template.New("").Parse(strings.TrimLeft(scoreTemplate, "\n"))
+	tmpl, err := template.New("").Parse(strings.TrimLeft(scoresTemplate, "\n"))
 	if err != nil {
 		return err
 	}
@@ -129,7 +198,7 @@ func writeScores(w io.Writer, teams []teamSummary) error {
 	})
 }
 
-const scoreTemplate = `
+const scoresTemplate = `
 <!DOCTYPE html>
 <html>
   <head>
