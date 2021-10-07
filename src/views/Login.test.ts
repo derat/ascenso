@@ -39,9 +39,8 @@ describe('Login', () => {
     // MockAuthUI.pendingRedirect as needed.
   });
 
-  // Returns true if the container holding the login UI is shown.
-  function isContainerShown() {
-    return wrapper.find({ ref: 'container' }).element.style.display != 'none';
+  function isSpinnerShown() {
+    return wrapper.find({ ref: 'spinner' }).exists();
   }
 
   it('calls AuthUI.start when mounted', async () => {
@@ -54,18 +53,18 @@ describe('Login', () => {
     ]);
   });
 
-  it('displays the UI when not logged in', async () => {
+  it("doesn't display the spinner when not logged in", async () => {
     MockAuthUI.pendingRedirect = false;
     await flushPromises();
-    expect(isContainerShown()).toBe(true);
+    expect(isSpinnerShown()).toBe(false);
   });
 
   it('creates user doc and goes to profile after first login', async () => {
     MockAuthUI.pendingRedirect = true;
     await flushPromises();
 
-    // The UI shouldn't be shown when we redirect back to the page.
-    expect(isContainerShown()).toBe(false);
+    // The spinner should be shown when we redirect back to the page.
+    expect(isSpinnerShown()).toBe(true);
 
     // Simulate signin completing successfully.
     MockAuthUI.config!.callbacks!.signInSuccessWithAuthResult!();
@@ -100,7 +99,7 @@ describe('Login', () => {
   it('goes to routes view after subsequent logins', async () => {
     MockAuthUI.pendingRedirect = true;
     await flushPromises();
-    expect(isContainerShown()).toBe(false);
+    expect(isSpinnerShown()).toBe(true);
 
     // Create a user doc to simulate the user previously having signed in.
     const user = MockFirebase.currentUser!;
