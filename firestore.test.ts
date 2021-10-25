@@ -65,7 +65,7 @@ describe('Firestore', () => {
 
   afterAll(async () => {
     // Clean up the apps.
-    await Promise.all(firebase.apps().map(app => app.delete()));
+    await Promise.all(firebase.apps().map((app) => app.delete()));
   });
 
   // State describes documents to create for testing.
@@ -145,11 +145,29 @@ describe('Firestore', () => {
     await allow(authDB.doc(userPath).set({ name }));
   });
 
+  it('denies creating user doc when readonly is set to true', async () => {
+    await adminDB.doc(configPath).set({ readonly: true });
+    await deny(authDB.doc(userPath).set({ name }));
+  });
+
+  it('allows creating user doc when readonly is set to false', async () => {
+    await adminDB.doc(configPath).set({ readonly: false });
+    await allow(authDB.doc(userPath).set({ name }));
+  });
+
   it('allows reading and updating own user doc', async () => {
     await writeDocs(State.NO_TEAM);
     const ref = authDB.doc(userPath);
     await allow(ref.get());
     await allow(ref.update({ name: otherName }));
+  });
+
+  it('allows reading but denies updating own user doc when readonly', async () => {
+    await writeDocs(State.NO_TEAM);
+    await adminDB.doc(configPath).set({ readonly: true });
+    const ref = authDB.doc(userPath);
+    await allow(ref.get());
+    await deny(ref.update({ name: otherName }));
   });
 
   it('denies deleting own user doc', async () => {
@@ -188,6 +206,14 @@ describe('Firestore', () => {
     await allow(ref.get());
     await allow(ref.update({ name: otherName }));
     await deny(ref.delete());
+  });
+
+  it('allows reading but denies updating team doc when readonly', async () => {
+    await writeDocs(State.ON_TEAM);
+    await adminDB.doc(configPath).set({ readonly: true });
+    const ref = authDB.doc(teamPath);
+    await allow(ref.get());
+    await deny(ref.update({ name: otherName }));
   });
 
   it('denies updating invite code in team doc', async () => {

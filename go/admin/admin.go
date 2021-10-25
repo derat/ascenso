@@ -54,6 +54,8 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 			handleClearScores(ctx, w, r, client)
 		case "emptyTeams":
 			handleEmptyTeams(ctx, w, r, client)
+		case "readonly":
+			handleReadonly(ctx, w, r, client)
 		case "routes":
 			handlePostRoutes(ctx, w, r, client)
 		case "scores":
@@ -62,6 +64,8 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 			handlePostScoresTeamsCSV(ctx, w, r, client)
 		case "scoresUsersCsv":
 			handlePostScoresUsersCSV(ctx, w, r, client)
+		case "writable":
+			handleWritable(ctx, w, r, client)
 		default:
 			http.Error(w, fmt.Sprintf("Bad action %q", action), http.StatusBadRequest)
 		}
@@ -142,6 +146,13 @@ const getHTML = `
         <button name="action" value="routes" type="submit">
           Update routes
         </button>
+      </div>
+
+      <h2>Lock or unlock database</h2>
+      <p>Set database to be read-only or writable.</p>
+      <div class="input-row">
+        <button name="action" value="readonly" type="submit">Read-only</button>
+        <button name="action" value="writable" type="submit">Writable</button>
       </div>
 
       <h2>Delete empty teams</h2>
