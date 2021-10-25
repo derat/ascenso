@@ -145,8 +145,13 @@ func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, er
 				Height:    height,
 			})
 		}
+
+		// Sort the team's members by descending score and then alphabetically.
 		sort.Slice(summary.Users, func(i, j int) bool {
-			return summary.Users[i].Score > summary.Users[j].Score
+			if si, sj := summary.Users[i].Score, summary.Users[j].Score; si != sj {
+				return si > sj
+			}
+			return summary.Users[i].Name < summary.Users[j].Name
 		})
 
 		teams = append(teams, summary)
