@@ -33,6 +33,8 @@ Heterogeneous singleton documents:
         competition start time.
     *   `endTime` - [firebase.firestore.Timestamp] field containing competition
         end time.
+    *   `readonly` - Boolean field that can be set to true to prevent users from
+        updating data.
 *   `indexedData` - Document containing indexed area and route information:
     *   `areas` - Map field containing area information keyed by area ID, e.g.
         `my_area`.

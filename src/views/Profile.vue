@@ -379,7 +379,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     // Sort by UID to get stable ordering.
     return Object.keys(this.teamDoc.users)
       .sort()
-      .map(uid => {
+      .map((uid) => {
         // Required by TypeScript.
         if (!this.teamDoc.users) return { name: '', climbs: {} };
         return this.teamDoc.users[uid];
@@ -421,7 +421,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       return;
     }
 
-    new Promise(resolve => {
+    new Promise((resolve) => {
       logInfo('set_user_name', { name: name });
       if (!this.userRef) throw new Error('No ref to user doc');
       const batch = this.firestore.batch();
@@ -431,7 +431,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         batch.update(this.teamRef, { [key]: name });
       }
       resolve(batch.commit());
-    }).catch(err => {
+    }).catch((err) => {
       this.$emit(
         'error-msg',
         this.$t('Profile.failedSettingUserNameError', [err.message])
@@ -449,11 +449,11 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       return;
     }
 
-    new Promise(resolve => {
+    new Promise((resolve) => {
       logInfo('set_team_name', { team: this.userDoc.team, name: name });
       if (!this.teamRef) throw new Error('No ref to team doc');
       resolve(this.teamRef.update({ name: name }));
-    }).catch(err => {
+    }).catch((err) => {
       this.$emit(
         'error-msg',
         this.$t('Profile.failedSettingTeamNameError', [err.message])
@@ -513,7 +513,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         );
         this.createTeamName = '';
       })
-      .catch(err => {
+      .catch((err) => {
         this.$emit(
           'error-msg',
           this.$t('Profile.failedCreatingTeamError', [err.message])
@@ -548,7 +548,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .collection('invites')
       .doc(this.joinInviteCode)
       .get()
-      .then(inviteSnap => {
+      .then((inviteSnap) => {
         // Now get the team doc.
         const data = inviteSnap.data();
         if (!data) {
@@ -559,7 +559,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         teamRef = this.firestore.collection('teams').doc(data.team);
         return teamRef.get();
       })
-      .then(teamSnap => {
+      .then((teamSnap) => {
         // These checks are required by TypeScript.
         if (!this.userRef) throw new Error('No ref to user doc');
         if (!teamRef) throw new Error('No ref to team doc');
@@ -599,7 +599,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
           this.$t('Profile.joinedTeamMessage', [teamName])
         );
       })
-      .catch(err => {
+      .catch((err) => {
         this.$emit(
           'error-msg',
           this.$t('Profile.failedJoiningTeamError', [err.message])
@@ -622,7 +622,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     // Grab this before leaving so we can use it in a message later.
     const teamName = this.teamDoc.name;
 
-    new Promise(resolve => {
+    new Promise((resolve) => {
       if (!this.userRef) throw new Error('No user ref');
       if (!this.teamRef) throw new Error('No team ref');
 
@@ -655,10 +655,10 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         );
         this.leaveDialogShown = false;
       })
-      .catch(err => {
+      .catch((err) => {
         this.$emit(
           'error-msg',
-          this.$t('Profile.failedLeavingTeam', [err.message])
+          this.$t('Profile.failedLeavingTeamError', [err.message])
         );
         logError('leave_team_failed', err);
       })
@@ -680,7 +680,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .collection('invites')
       .doc(code)
       .get()
-      .then(snap => {
+      .then((snap) => {
         if (!snap.exists) return code;
         if (remainingTries == 0) {
           throw new Error(this.$t('Profile.cantFindUnusedCodeError'));

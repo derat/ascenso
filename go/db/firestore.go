@@ -15,6 +15,7 @@ import (
 const (
 	// Document paths in Cloud Firestore.
 	AuthDocPath        = "global/auth"
+	ConfigDocPath      = "global/config"
 	IndexedDataDocPath = "global/indexedData"
 	SortedDataDocPath  = "global/sortedData"
 

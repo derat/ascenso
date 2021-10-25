@@ -12,8 +12,9 @@ rules_version = '2';
 // Basic stuff to keep in mind:
 // - resource.data is a Map containing the doc's data before an update.
 // - request.resource.data is a Map containing the doc's data after an update.
-// - getAfter() returns a Map containing a doc's data after the current
-//   transaction or batched write finishes.
+// - getAfter() returns a rules.firestore.Resource with a 'data' field
+//   containing a map of doc's data after the current transaction or batched
+//   write finishes. get() is similar, but returns the initial data.
 // - Field existence checks take this form:
 //     "key" in request.resource.data
 // - Null checks should only be used when checking non-document data like
@@ -41,6 +42,16 @@ function inviteCodeValid(code) {
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Returns true if the database has been set to readonly mode (via a
+    // 'readonly' boolean field in the /global/config doc). There's no 'deny'
+    // directive in the rules language, so we need to check this all over the
+    // place instead of just rejecting all creates and updates in a single
+    // place.
+    function readonly() {
+      let path = /databases/$(database)/documents/global/config;
+      return exists(path) && get(path).data.get("readonly", false);
+    }
+
     // Let anyone get /global/config.
     match /global/config {
       allow get: if true;
@@ -96,13 +107,13 @@ service cloud.firestore {
 
       // When the user is created, they shouldn't be on a team yet.
       allow create:
-        if loggedIn() && request.auth.uid == uid &&
+        if loggedIn() && request.auth.uid == uid && !readonly() &&
             userDocValid(request.resource.data) &&
             !("team" in request.resource.data);
 
       // For updates, we additionally check the team field.
       allow update:
-        if loggedIn() && request.auth.uid == uid &&
+        if loggedIn() && request.auth.uid == uid && !readonly() &&
             userDocValid(request.resource.data) &&
             checkUserDocTeam(request.resource.data, resource.data);
     }
@@ -128,7 +139,7 @@ service cloud.firestore {
 
       // All logged-in users can create new teams.
       allow create:
-        if loggedIn() &&
+        if loggedIn() && !readonly() &&
             teamDocValid(request.resource.data, request.auth.uid) &&
             // User is only member of new team.
             request.resource.data.users.size() == 1 &&
@@ -139,7 +150,7 @@ service cloud.firestore {
 
       // Users can add themselves to incomplete teams.
       allow update:
-        if loggedIn() &&
+        if loggedIn() && !readonly() &&
             teamDocValid(request.resource.data, request.auth.uid) &&
             // Old team isn't full and doesn't contain user.
             resource.data.users.size() < 2 &&
@@ -156,7 +167,7 @@ service cloud.firestore {
       // Let users update their team docs as long as they don't change the users
       // on the team or its invite code.
       allow update:
-        if loggedIn() &&
+        if loggedIn() && !readonly() &&
             teamDocValid(request.resource.data, request.auth.uid) &&
             request.auth.uid in resource.data.users &&
             request.resource.data.users.keys().hasOnly(resource.data.users.keys()) &&
@@ -165,7 +176,7 @@ service cloud.firestore {
       // Let users remove themselves from their team if they hadn't reported any
       // climbs and don't make any other changes to the doc.
       allow update:
-        if loggedIn() &&
+        if loggedIn() && !readonly() &&
             // Skip teamDocValid() since it expects user to be on team.
             request.auth.uid in resource.data.users &&
             resource.data.users[request.auth.uid].climbs.size() == 0 &&
@@ -181,7 +192,7 @@ service cloud.firestore {
       // Let all logged-in users read or create invites. When creating a doc, it
       // must point at a team that points back at the invite doc.
       allow get: if loggedIn();
-      allow create: if loggedIn() &&
+      allow create: if loggedIn() && !readonly() &&
         inviteCodeValid(invite) &&
         "team" in request.resource.data &&
         getAfter(/databases/$(database)/documents/teams/$(request.resource.data.team)).data.invite == invite;
