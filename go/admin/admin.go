@@ -58,10 +58,12 @@ func HandleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 			handleReadonly(ctx, w, r, client)
 		case "routes":
 			handlePostRoutes(ctx, w, r, client)
-		case "scores":
-			handlePostScores(ctx, w, r, client)
+		case "scoresTeams":
+			handlePostScoresTeams(ctx, w, r, client)
 		case "scoresTeamsCsv":
 			handlePostScoresTeamsCSV(ctx, w, r, client)
+		case "scoresUsers":
+			handlePostScoresUsers(ctx, w, r, client)
 		case "scoresUsersCsv":
 			handlePostScoresUsersCSV(ctx, w, r, client)
 		case "writable":
@@ -122,9 +124,10 @@ const getHTML = `
       </div>
 
       <h2>View scores</h2>
-      <p>View a scoreboard listing all teams.</p>
+      <p>View per-team or per-user scoreboards.</p>
       <div class="input-row">
-        <button name="action" value="scores" type="submit">View scores</button>
+        <button name="action" value="scoresTeams" type="submit">Teams</button>
+        <button name="action" value="scoresUsers" type="submit">Users</button>
         <button name="action" value="scoresTeamsCsv" type="submit">Teams (CSV)</button>
         <button name="action" value="scoresUsersCsv" type="submit">Users (CSV)</button>
       </div>
