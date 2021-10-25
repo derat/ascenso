@@ -21,16 +21,30 @@ import (
 	"github.com/derat/ascenso/go/db"
 )
 
-// handlePostScores handles a "scores" POST request.
+// handlePostScoresTeams handles a "scoresTeams" POST request.
 // It reads teams' scores from Cloud Firestore and writes an HTML scoreboard document to w.
-func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
-	teams, err := getScores(ctx, client)
+func handlePostScoresTeams(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
+	teams, _, err := getScores(ctx, client)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed loading scores: %v", err), http.StatusInternalServerError)
 		return
 	}
 	sort.Slice(teams, func(i, j int) bool { return teams[i].Score > teams[j].Score })
-	if err := writeScores(w, teams); err != nil {
+	if err := writeScores(w, teams, nil); err != nil {
+		http.Error(w, fmt.Sprintf("Failed writing template: %v", err), http.StatusInternalServerError)
+		return
+	}
+}
+
+// handlePostScoresUsers handles a "scoresUsers" POST request.
+// It reads users' scores from Cloud Firestore and writes an HTML scoreboard document to w.
+func handlePostScoresUsers(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
+	_, users, err := getScores(ctx, client)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed loading scores: %v", err), http.StatusInternalServerError)
+		return
+	}
+	if err := writeScores(w, nil, users); err != nil {
 		http.Error(w, fmt.Sprintf("Failed writing template: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -38,7 +52,7 @@ func handlePostScores(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 // handlePostScoresTeamsCSV handles a "scoresTeamsCsv" POST request.
 func handlePostScoresTeamsCSV(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
-	teams, err := getScores(ctx, client)
+	teams, _, err := getScores(ctx, client)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed loading scores: %v", err), http.StatusInternalServerError)
 		return
@@ -71,16 +85,11 @@ func handlePostScoresTeamsCSV(ctx context.Context, w http.ResponseWriter, r *htt
 
 // handlePostScoresUsersCSV handles a "scoresUsersCsv" POST request.
 func handlePostScoresUsersCSV(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
-	teams, err := getScores(ctx, client)
+	_, users, err := getScores(ctx, client)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed loading scores: %v", err), http.StatusInternalServerError)
 		return
 	}
-	var users []userSummary
-	for _, t := range teams {
-		users = append(users, t.Users...)
-	}
-	sort.Slice(users, func(i, j int) bool { return users[i].Name < users[j].Name })
 
 	recs := [][]string{{"name", "team", "score", "climbs", "height"}}
 	for _, u := range users {
@@ -102,62 +111,73 @@ func setCSVHeaders(h http.Header, fn string) {
 	h.Set("Content-Disposition", "attachment; filename="+fn)
 }
 
-// getScores reads teams' scores from Cloud Firestore and returns summarized data.
-func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, error) {
-	// First, load the indexed data so we can look up the points for each route.
+// getScores reads scores from Cloud Firestore and returns summarized data.
+func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, []userSummary, error) {
+	// First, load the indexed data so we can look up the points and heights for each route.
 	var indexed db.IndexedData
 	if err := db.GetDoc(ctx, client.Doc(db.IndexedDataDocPath), &indexed); err != nil {
-		return nil, fmt.Errorf("failed getting indexed data: %v", err)
+		return nil, nil, fmt.Errorf("failed getting indexed data: %v", err)
 	}
 
 	// Iterate over all of the teams.
 	var teams []teamSummary
+	var users []userSummary
 	it := client.Collection(db.TeamCollectionPath).DocumentRefs(ctx)
 	for {
 		ref, err := it.Next()
 		if err == iterator.Done {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("failed getting team ref: %v", err)
+			return nil, nil, fmt.Errorf("failed getting team ref: %v", err)
 		}
 		var team db.Team
 		if err := db.GetDoc(ctx, ref, &team); err != nil {
-			return nil, fmt.Errorf("failed getting team doc: %v", err)
+			return nil, nil, fmt.Errorf("failed getting team doc: %v", err)
 		}
 
 		if len(team.Users) == 0 {
 			continue
 		}
 
-		summary := teamSummary{Name: team.Name}
+		ts := teamSummary{Name: team.Name}
 
 		// Iterate over the team's members.
 		for _, u := range team.Users {
 			score, climbs, height := computeScore(u.Climbs, indexed.Routes)
-			summary.Score += score
-			summary.NumClimbs += climbs
-			summary.Height += height
-			summary.Users = append(summary.Users, userSummary{
+			ts.Score += score
+			ts.NumClimbs += climbs
+			ts.Height += height
+			us := userSummary{
 				Name:      u.Name,
 				Team:      team.Name,
 				Score:     score,
 				NumClimbs: climbs,
 				Height:    height,
-			})
+			}
+			ts.Users = append(ts.Users, us)
+			users = append(users, us)
 		}
 
 		// Sort the team's members by descending score and then alphabetically.
-		sort.Slice(summary.Users, func(i, j int) bool {
-			if si, sj := summary.Users[i].Score, summary.Users[j].Score; si != sj {
+		sort.Slice(ts.Users, func(i, j int) bool {
+			if si, sj := ts.Users[i].Score, ts.Users[j].Score; si != sj {
 				return si > sj
 			}
-			return summary.Users[i].Name < summary.Users[j].Name
+			return ts.Users[i].Name < ts.Users[j].Name
 		})
 
-		teams = append(teams, summary)
+		teams = append(teams, ts)
 	}
 
-	return teams, nil
+	// Sort the users by descending score and then alphabetically.
+	sort.Slice(users, func(i, j int) bool {
+		if si, sj := users[i].Score, users[j].Score; si != sj {
+			return si > sj
+		}
+		return users[i].Name < users[j].Name
+	})
+
+	return teams, users, nil
 }
 
 // computeScore iterates over the supplied climbs and returns the user's total score, number of
@@ -202,8 +222,9 @@ type userSummary struct {
 	Height    int
 }
 
-// writeScores writes an HTML document describing the scores in teams to w.
-func writeScores(w io.Writer, teams []teamSummary) error {
+// writeScores writes an HTML document describing the scores in teams (if non-empty)
+// or users (otherwise) to w.
+func writeScores(w io.Writer, teams []teamSummary, users []userSummary) error {
 	tmpl, err := template.New("").Parse(strings.TrimLeft(scoresTemplate, "\n"))
 	if err != nil {
 		return err
@@ -211,9 +232,11 @@ func writeScores(w io.Writer, teams []teamSummary) error {
 	return tmpl.Execute(w, struct {
 		SorttableJS template.JS
 		Teams       []teamSummary
+		Users       []userSummary
 	}{
 		SorttableJS: template.JS(sorttableJS),
 		Teams:       teams,
+		Users:       users,
 	})
 }
 
@@ -257,6 +280,7 @@ const scoresTemplate = `
     <table class="sortable">
       <thead>
         <tr>
+{{- if .Teams}}
           <th>Team</th>
           <th>Score</th>
           <th>Climbs</th>
@@ -265,9 +289,17 @@ const scoresTemplate = `
           <th class="sorttable_nosort">Score</th>
           <th class="sorttable_nosort">Climbs</th>
           <th class="sorttable_nosort">Height</th>
+{{- else}}
+          <th>User</th>
+          <th>Team</th>
+          <th>Score</th>
+          <th>Climbs</th>
+          <th>Height</th>
+{{- end}}
         </tr>
       </thead>
       <tbody>
+{{- if .Teams}}
 {{- range .Teams}}
         <tr>
           <td>{{.Name}}</td>
@@ -295,6 +327,17 @@ const scoresTemplate = `
 {{- end}}
           </td>
         </tr>
+{{- end}}
+{{- else}}
+{{- range .Users}}
+        <tr>
+          <td>{{.Name}}</td>
+          <td>{{.Team}}</td>
+          <td class="num">{{.Score}}</td>
+          <td class="num">{{.NumClimbs}}</td>
+          <td class="num" sorttable_customkey="{{.Height}}">{{.Height}}'</td>
+        </tr>
+{{- end}}
 {{- end}}
       </tbody>
     </table>

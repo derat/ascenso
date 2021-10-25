@@ -58,7 +58,7 @@ func TestWriteScores(t *testing.T) {
 			{"User 3", "Team B", 25, 3, 400},
 			{"User 4", "Team B", 20, 2, 200},
 		}},
-	}); err != nil {
+	}, nil); err != nil {
 		t.Fatal("writeScores failed: ", err)
 	}
 	// Uncomment this to view template output.
