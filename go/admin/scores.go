@@ -63,8 +63,7 @@ func handlePostScoresTeamsCSV(ctx context.Context, w http.ResponseWriter, r *htt
 		recs = append(recs, rec)
 	}
 
-	// Using text/plain rather than text/csv since Chrome OS seems to use a buggy CSV viewer.
-	w.Header().Set("Content-Type", "text/plain")
+	setCSVHeaders(w.Header(), "teams.csv")
 	if err := csv.NewWriter(w).WriteAll(recs); err != nil {
 		http.Error(w, fmt.Sprintf("Failed writing teams: %v", err), http.StatusInternalServerError)
 	}
@@ -90,11 +89,17 @@ func handlePostScoresUsersCSV(ctx context.Context, w http.ResponseWriter, r *htt
 		})
 	}
 
-	// Using text/plain rather than text/csv since Chrome OS seems to use a buggy CSV viewer.
-	w.Header().Set("Content-Type", "text/plain")
+	setCSVHeaders(w.Header(), "users.csv")
 	if err := csv.NewWriter(w).WriteAll(recs); err != nil {
 		http.Error(w, fmt.Sprintf("Failed writing users: %v", err), http.StatusInternalServerError)
 	}
+}
+
+// setCSVHeaders sets headers on h to indicate a CSV attachment with the given filename.
+func setCSVHeaders(h http.Header, fn string) {
+	h.Set("Content-Encoding", "UTF-8")
+	h.Set("Content-Type", "text/csv; charset=UTF-8")
+	h.Set("Content-Disposition", "attachment; filename="+fn)
 }
 
 // getScores reads teams' scores from Cloud Firestore and returns summarized data.
