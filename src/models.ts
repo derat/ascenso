@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import type firebase from 'firebase';
+
 // ClimbState describes whether and how a climber has climbed a route.
 export enum ClimbState {
   NOT_CLIMBED = 0,
@@ -20,7 +22,7 @@ export class ClimberInfo {
   ) {
     this.initials = name
       .split(/\s+/, 3)
-      .map(w => (w ? w[0] : ''))
+      .map((w) => (w ? w[0] : ''))
       .join('')
       .toUpperCase();
   }

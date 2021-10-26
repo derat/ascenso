@@ -297,7 +297,9 @@
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 // @ts-ignore: No TypeScript definitions for vue-the-mask. :-/
 import { mask } from 'vue-the-mask';
+import firebase from 'firebase/app';
 
+import { app } from '@/firebase';
 import { logInfo, logError } from '@/log';
 import { TeamSize, TeamUserData } from '@/models';
 
@@ -424,7 +426,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     new Promise((resolve) => {
       logInfo('set_user_name', { name: name });
       if (!this.userRef) throw new Error('No ref to user doc');
-      const batch = this.firestore.batch();
+      const batch = app.firestore().batch();
       batch.update(this.userRef, { name: name });
       if (this.teamRef) {
         const key = 'users.' + this.user.uid + '.name';
@@ -483,12 +485,12 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         });
 
         // Generate an ID for a new team document. This works offline.
-        const teamRef = this.firestore.collection('teams').doc();
+        const teamRef = app.firestore().collection('teams').doc();
 
         // Perform a single batched write that creates the team document, creates
         // an invite document containing the team ID, and updates the user doc to
         // contain the team ID.
-        const batch = this.firestore.batch();
+        const batch = app.firestore().batch();
         batch.set(teamRef, {
           name: this.createTeamName,
           users: {
@@ -496,7 +498,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
           },
           invite: inviteCode,
         });
-        batch.set(this.firestore.collection('invites').doc(inviteCode), {
+        batch.set(app.firestore().collection('invites').doc(inviteCode), {
           team: teamRef.id,
         });
 
@@ -544,7 +546,8 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     let teamName = '';
 
     // First get the invite doc to find the team ID.
-    this.firestore
+    app
+      .firestore()
       .collection('invites')
       .doc(this.joinInviteCode)
       .get()
@@ -556,7 +559,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         }
         const team = data.team;
         if (!team) throw new Error('No team ID in invite');
-        teamRef = this.firestore.collection('teams').doc(data.team);
+        teamRef = app.firestore().collection('teams').doc(data.team);
         return teamRef.get();
       })
       .then((teamSnap) => {
@@ -567,7 +570,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         teamName = teamSnap.get('name');
 
         // Update the team doc and the user doc atomically.
-        const batch = this.firestore.batch();
+        const batch = app.firestore().batch();
 
         const uid = this.user.uid;
         const users = teamSnap.get('users');
@@ -577,7 +580,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
           // as no longer having left.
           batch.update(teamRef, {
             [`users.${uid}.name`]: this.userDoc.name,
-            [`users.${uid}.left`]: this.firebase.firestore.FieldValue.delete(),
+            [`users.${uid}.left`]: firebase.firestore.FieldValue.delete(),
           });
         } else if (Object.keys(users).length < TeamSize) {
           // Otherwise, we're joining the team for the first time.
@@ -629,7 +632,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       logInfo('leave_team', { team: this.teamRef.id });
 
       // Perform a batched update that updates the team and user docs.
-      const batch = this.firestore.batch();
+      const batch = app.firestore().batch();
 
       const uid = this.user.uid;
       if (this.numClimbs != 0) {
@@ -639,12 +642,12 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       } else {
         // Otherwise, delete our user entry so someone else can take our place.
         batch.update(this.teamRef, {
-          [`users.${uid}`]: this.firebase.firestore.FieldValue.delete(),
+          [`users.${uid}`]: firebase.firestore.FieldValue.delete(),
         });
       }
 
       batch.update(this.userRef, {
-        team: this.firebase.firestore.FieldValue.delete(),
+        team: firebase.firestore.FieldValue.delete(),
       });
       resolve(batch.commit());
     })
@@ -676,7 +679,8 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .slice(2, 2 + this.inviteCodeLength);
 
     // Check if the code is already taken. If it is, call ourselves again.
-    return this.firestore
+    return app
+      .firestore()
       .collection('invites')
       .doc(code)
       .get()

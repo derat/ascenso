@@ -5,6 +5,8 @@
 import Vue from 'vue';
 import { deepCopy } from '@/testutil';
 
+import type firebase from 'firebase';
+
 type DocumentReference = firebase.firestore.DocumentReference;
 
 // Firestore document data as property names to values.
@@ -144,7 +146,7 @@ class MockWriteBatch {
     this._ops.push(new BatchUpdate(ref.path, props));
   }
   commit() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       for (const op of this._ops) {
         if (op instanceof BatchSet) {
           MockFirebase.setDoc(op.path, op.data);
@@ -250,7 +252,7 @@ export const MockFirebase = new (class {
   // Map of global mocks that should be passed to vue-test-utils's mount() or
   // shallowMount().
   mountMocks: Record<string, any> = {
-    $bind: function(name: string, ref: DocumentReference) {
+    $bind: function (name: string, ref: DocumentReference) {
       if (!Object.prototype.hasOwnProperty.call(MockFirebase._docs, ref.path)) {
         return Promise.reject(`No document at ${ref.path}`);
       }
@@ -268,12 +270,12 @@ export const MockFirebase = new (class {
       return Promise.resolve(data);
     },
 
-    $unbind: function(name: string) {
+    $unbind: function (name: string) {
       // Unregister the binding so the Vue's data property won't be updated.
       const vm = this as Vue;
       for (const path of Object.keys(MockFirebase._bindings)) {
         MockFirebase._bindings[path] = MockFirebase._bindings[path].filter(
-          b => !(b.vm == vm && b.name == name)
+          (b) => !(b.vm == vm && b.name == name)
         );
       }
       vm.$data[name] = null;
@@ -281,8 +283,8 @@ export const MockFirebase = new (class {
   };
 })();
 
-export const MockEmailAuthProviderID = 'email';
-export const MockGoogleAuthProviderID = 'google';
+export const MockEmailAuthProviderID = 'password';
+export const MockGoogleAuthProviderID = 'google.com';
 
 jest.mock('firebase');
 jest.mock('firebase/app', () => {
@@ -296,7 +298,7 @@ jest.mock('firebase/app', () => {
         return MockFirebase.currentUser;
       },
       onAuthStateChanged: (observer: any) => {
-        new Promise(resolve => {
+        new Promise((resolve) => {
           observer(MockFirebase.currentUser);
           resolve();
         });
@@ -315,8 +317,18 @@ jest.mock('firebase/app', () => {
     }),
   };
 
-  // Also set sentinel value for deleting fields and static Timestamp.fromMillis
-  // function, both of which live on the firestore method.
+  // Various Firebase constants and sentinels are implemented via static
+  // variables or methods on classes in the firebase.auth and firebase.firestore
+  // namespaces. I've wasted hours trying to find the right way to mock this
+  // without any luck, so I'm just simulating these by setting properties on the
+  // corresponding methods instead. This is totally wrong and would fall apart
+  // if these code were type-checked.
+  (app.auth as any).EmailAuthProvider = {
+    PROVIDER_ID: MockEmailAuthProviderID,
+  };
+  (app.auth as any).GoogleAuthProvider = {
+    PROVIDER_ID: MockGoogleAuthProviderID,
+  };
   (app.firestore as any).FieldValue = {
     delete: () => mockDeleteSentinel,
   };
@@ -328,16 +340,9 @@ jest.mock('firebase/app', () => {
     }),
   };
 
-  // Set some random const properties on the auth method.
-  const authAny = app.auth as any;
-  authAny.EmailAuthProvider = { PROVIDER_ID: MockEmailAuthProviderID };
-  authAny.GoogleAuthProvider = { PROVIDER_ID: MockGoogleAuthProviderID };
-
   return app;
 });
 
-// TODO: Is this actually necessary? These modules are imported for their side
-// effects in the code that's being tested.
 jest.mock('firebase/auth');
 jest.mock('firebase/firestore');
 jest.mock('firebase/functions');

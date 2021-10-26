@@ -25,10 +25,12 @@
 </template>
 
 <script lang="ts">
+import firebase from 'firebase/app';
+import firebaseui from 'firebaseui';
 import { Component, Mixins } from 'vue-property-decorator';
 
+import { app } from '@/firebase';
 import { logError, logInfo } from '@/log';
-import { getAuth, getFirebase, getFirebaseUI, getFirestore } from '@/firebase';
 
 import Perf from '@/mixins/Perf';
 
@@ -46,84 +48,78 @@ export default class Login extends Mixins(Perf) {
   completingLogin = false;
 
   mounted() {
-    Promise.all([getAuth(), getFirebase(), getFirebaseUI()]).then(
-      ([auth, firebase, firebaseui]) => {
-        // See https://github.com/firebase/firebaseui-web/issues/293.
-        let ui = firebaseui.auth.AuthUI.getInstance();
-        if (!ui) ui = new firebaseui.auth.AuthUI(auth);
+    // See https://github.com/firebase/firebaseui-web/issues/293.
+    let ui = firebaseui.auth.AuthUI.getInstance();
+    if (!ui) ui = new firebaseui.auth.AuthUI(app.auth());
 
-        this.pendingRedirect = ui.isPendingRedirect();
-        if (!this.pendingRedirect) this.logReady('login_loaded');
+    this.pendingRedirect = ui.isPendingRedirect();
+    if (!this.pendingRedirect) this.logReady('login_loaded');
 
-        // As far as I can tell, there's no way to localize FirebaseUI's auth
-        // interface without loading a completely different version of the
-        // library from the CDN:
-        //
-        // https://github.com/firebase/firebaseui-web#localized-widget
-        // https://github.com/firebase/firebaseui-web/issues/9
-        // https://github.com/firebase/firebaseui-web/issues/242
-        //
-        // Best comment on that last bug:
-        //
-        // > > Each internationalized version is a separate build. Including all
-        // > > the versions in one file is not feasible.
-        //
-        // > Oh dear. Looks like you've used the wrong implementation architecture
-        // > to support i18n for SPA web apps!
-        //
-        // There *is* a |languageCode| field on firebase.auth.Auth, but I'm not
-        // sure what it does:
-        // https://firebase.google.com/docs/reference/js/firebase.auth.Auth.html#languagecode
-        ui.start('#firebaseui-auth-container', {
-          // Disable the account chooser, which is ugly and doesn't seem to work
-          // correctly with this logic (i.e. after signing out and trying to
-          // sign in with email, I just see a spinner):
-          // https://stackoverflow.com/q/37369929
-          credentialHelper: firebaseui.auth.CredentialHelper.NONE,
-          signInOptions: [
-            firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-            firebase.auth.EmailAuthProvider.PROVIDER_ID,
-          ],
-          callbacks: {
-            signInSuccessWithAuthResult: () => {
-              this.completingLogin = true;
+    // As far as I can tell, there's no way to localize FirebaseUI's auth
+    // interface without loading a completely different version of the
+    // library from the CDN:
+    //
+    // https://github.com/firebase/firebaseui-web#localized-widget
+    // https://github.com/firebase/firebaseui-web/issues/9
+    // https://github.com/firebase/firebaseui-web/issues/242
+    //
+    // Best comment on that last bug:
+    //
+    // > > Each internationalized version is a separate build. Including all
+    // > > the versions in one file is not feasible.
+    //
+    // > Oh dear. Looks like you've used the wrong implementation architecture
+    // > to support i18n for SPA web apps!
+    //
+    // There *is* a |languageCode| field on firebase.auth.Auth, but I'm not
+    // sure what it does:
+    // https://firebase.google.com/docs/reference/js/firebase.auth.Auth.html#languagecode
+    ui.start('#firebaseui-auth-container', {
+      // Disable the account chooser, which is ugly and doesn't seem to work
+      // correctly with this logic (i.e. after signing out and trying to
+      // sign in with email, I just see a spinner):
+      // https://stackoverflow.com/q/37369929
+      credentialHelper: firebaseui.auth.CredentialHelper.NONE,
+      signInOptions: [
+        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+        firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      ],
+      callbacks: {
+        signInSuccessWithAuthResult: () => {
+          this.completingLogin = true;
 
-              Promise.all([getAuth(), getFirestore()]).then(([auth, db]) => {
-                const user = auth.currentUser;
-                if (!user) throw new Error('Not logged in');
-                const ref = db.collection('users').doc(user.uid);
-                ref.get().then((snap) => {
-                  if (snap.exists) {
-                    // If the user has logged in before, send them to the routes
-                    // view.
-                    this.$router.replace('routes');
-                  } else {
-                    // Otherwise, create the doc using their display name and
-                    // send them to the profile view. Note that the name is null
-                    // when using the email provider.
-                    const name = user.displayName || 'Unknown Climber';
-                    logInfo('create_user', { name });
-                    ref
-                      .set({ name }, { merge: true })
-                      .then(() => {
-                        this.$router.replace('profile');
-                      })
-                      .catch((err) => {
-                        this.$emit('error-msg', `Failed creating user: ${err}`);
-                        logError('create_user_failed', err);
-                      });
-                  }
+          const user = app.auth().currentUser;
+          if (!user) throw new Error('Not logged in');
+          const ref = app.firestore().collection('users').doc(user.uid);
+          ref.get().then((snap) => {
+            if (snap.exists) {
+              // If the user has logged in before, send them to the routes
+              // view.
+              this.$router.replace('routes');
+            } else {
+              // Otherwise, create the doc using their display name and
+              // send them to the profile view. Note that the name is null
+              // when using the email provider.
+              const name = user.displayName || 'Unknown Climber';
+              logInfo('create_user', { name });
+              ref
+                .set({ name }, { merge: true })
+                .then(() => {
+                  this.$router.replace('profile');
+                })
+                .catch((err) => {
+                  this.$emit('error-msg', `Failed creating user: ${err}`);
+                  logError('create_user_failed', err);
                 });
-              });
+            }
+          });
 
-              // Don't redirect automatically; we handle that above.
-              return false;
-            },
-            uiShown: () => this.recordEvent('loginShown'),
-          },
-        });
-      }
-    );
+          // Don't redirect automatically; we handle that above.
+          return false;
+        },
+        uiShown: () => this.recordEvent('loginShown'),
+      },
+    });
   }
 }
 </script>

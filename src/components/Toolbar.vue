@@ -92,7 +92,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { getAuth } from '@/firebase';
+import { app } from '@/firebase';
 import DialogCard from '@/components/DialogCard.vue';
 import LocalePicker from '@/components/LocalePicker.vue';
 
@@ -195,11 +195,12 @@ export default class Toolbar extends Vue {
 
   // Handles the "Sign out" button being clicked in the "Sign out" dialog.
   signOut() {
-    getAuth().then(auth => {
-      auth.signOut().then(() => {
+    app
+      .auth()
+      .signOut()
+      .then(() => {
         this.$router.replace('login');
       });
-    });
   }
 }
 </script>
