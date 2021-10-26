@@ -113,14 +113,11 @@
 </template>
 
 <script lang="ts">
+import firebase from 'firebase/app';
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 import humanizeDuration from 'humanize-duration';
 
-import {
-  getFirestore,
-  getFirestorePersistence,
-  FirestorePersistence,
-} from '@/firebase';
+import { app, getFirestorePersistence, FirestorePersistence } from '@/firebase';
 import { logInfo, logError } from '@/log';
 import {
   ClimberInfo,
@@ -303,7 +300,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
     // Just delete the map entry instead of recording a not-climbed state.
     const value =
       ev.state == ClimbState.NOT_CLIMBED
-        ? this.firebase.firestore.FieldValue.delete()
+        ? firebase.firestore.FieldValue.delete()
         : ev.state;
 
     if (!this.teamRef) throw new Error('No ref to team doc');
@@ -320,9 +317,12 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       });
 
     this.pendingWrites++;
-    this.firestore.waitForPendingWrites().then(() => {
-      this.pendingWrites--;
-    });
+    app
+      .firestore()
+      .waitForPendingWrites()
+      .then(() => {
+        this.pendingWrites--;
+      });
   }
 
   // Returns the number of routes in |routes| that are still available, i.e. not
@@ -470,45 +470,43 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   }
 
   mounted() {
-    // We can't use this.firestore yet.
-    getFirestore().then((db) => {
-      this.$bind('sortedData', db.collection('global').doc('sortedData')).then(
-        () => {
-          this.loadedSortedData = true;
-          this.recordEvent('loadedSortedData');
+    const db = app.firestore();
+    this.$bind('sortedData', db.collection('global').doc('sortedData')).then(
+      () => {
+        this.loadedSortedData = true;
+        this.recordEvent('loadedSortedData');
 
-          // Display a warning to the user if offline Firestore is unavailable.
-          // TODO: Would it be better to just display this once?
-          if (getFirestorePersistence() == FirestorePersistence.DISABLED) {
-            this.$emit(
-              'warning-msg',
-              this.$t('Routes.offlineUnsupportedMessage')
-            );
-          }
-        },
-        (err) => {
+        // Display a warning to the user if offline Firestore is unavailable.
+        // TODO: Would it be better to just display this once?
+        if (getFirestorePersistence() == FirestorePersistence.DISABLED) {
           this.$emit(
-            'error-msg',
-            this.$t('Routes.failedLoadingRoutesError', [err])
+            'warning-msg',
+            this.$t('Routes.offlineUnsupportedMessage')
           );
-          logError('routes_load_sorted_data_failed', err);
         }
-      );
+      },
+      (err) => {
+        this.$emit(
+          'error-msg',
+          this.$t('Routes.failedLoadingRoutesError', [err])
+        );
+        logError('routes_load_sorted_data_failed', err);
+      }
+    );
 
-      this.$bind('config', db.collection('global').doc('config')).then(
-        () => {
-          this.loadedConfig = true;
-          this.recordEvent('loadedConfig');
-        },
-        (err) => {
-          this.$emit(
-            'error-msg',
-            this.$t('Routes.failedLoadingConfigError', [err])
-          );
-          logError('routes_load_config_failed', err);
-        }
-      );
-    });
+    this.$bind('config', db.collection('global').doc('config')).then(
+      () => {
+        this.loadedConfig = true;
+        this.recordEvent('loadedConfig');
+      },
+      (err) => {
+        this.$emit(
+          'error-msg',
+          this.$t('Routes.failedLoadingConfigError', [err])
+        );
+        logError('routes_load_config_failed', err);
+      }
+    );
 
     // Listen for events emitted by the RoutesNav view.
     this.$root.$on('show-route-filters', this.onShowFilters);
@@ -556,7 +554,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
         this.userRef.update({
           filters: Object.keys(filters).length
             ? filters
-            : this.firebase.firestore.FieldValue.delete(),
+            : firebase.firestore.FieldValue.delete(),
         })
       );
     })

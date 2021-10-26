@@ -39,7 +39,7 @@
 <script lang="ts">
 import { Component, Mixins, Watch } from 'vue-property-decorator';
 
-import { getFirestore } from '@/firebase';
+import { app } from '@/firebase';
 import { logError } from '@/log';
 import { ClimbState, Statistic, IndexedData } from '@/models';
 
@@ -171,10 +171,10 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
   }
 
   mounted() {
-    getFirestore()
-      .then((db) =>
-        this.$bind('indexedData', db.collection('global').doc('indexedData'))
-      )
+    this.$bind(
+      'indexedData',
+      app.firestore().collection('global').doc('indexedData')
+    )
       .then(() => {
         this.recordEvent('loadedIndexedData'), (this.indexedDataLoaded = true);
         this.updateItems();

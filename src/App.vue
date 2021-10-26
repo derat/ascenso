@@ -43,7 +43,7 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator';
 
-import { getAuth } from '@/firebase';
+import { app } from '@/firebase';
 import Perf from '@/mixins/Perf';
 import Toolbar from '@/components/Toolbar.vue';
 
@@ -77,10 +77,8 @@ export default class App extends Mixins(Perf) {
   }
 
   mounted() {
-    getAuth().then(auth => {
-      auth.onAuthStateChanged(user => {
-        this.signedIn = !!user;
-      });
+    app.auth().onAuthStateChanged((user: any) => {
+      this.signedIn = !!user;
     });
 
     this.$nextTick(() => {

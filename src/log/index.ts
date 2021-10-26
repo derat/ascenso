@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { Logger, LogFunc } from './logger';
-import { getAuth, getFunctions } from '@/firebase';
+import { app } from '@/firebase';
 
 enum LogDest {
   STACKDRIVER,
@@ -24,12 +24,10 @@ const devLogDest = process.env.VUE_APP_LOG_TO_CONSOLE
 function getLogFunc(): LogFunc | Promise<LogFunc> {
   // @ts-ignore: Make it easy to manually change |devLogDest|.
   if (isProd || (isDev && devLogDest == LogDest.STACKDRIVER)) {
-    // Return a promise so that importing this module doesn't require
-    // synchronously loading bulky Firebase code.
-    return getFunctions().then(functions => functions.httpsCallable('Log'));
+    return app.functions().httpsCallable('Log');
   }
   if (isDev && devLogDest == LogDest.CONSOLE) {
-    return data => {
+    return (data) => {
       for (const rec of data.records) {
         console.log(
           `${rec.severity} ${rec.code}: ${JSON.stringify(rec.payload)}`
@@ -51,21 +49,15 @@ const defaultLogger = new Logger(
 // Helper function that sends a log message to Stackdriver.
 // See the Logger class's log method for more details.
 function log(severity: string, code: string, payload: Record<string, any>) {
-  getAuth()
-    .then(auth => {
-      const user = auth.currentUser;
-      if (!user) {
-        defaultLogger.log(severity, code, payload);
-        return;
-      }
-      user.getIdToken().then(
-        token => defaultLogger.log(severity, code, payload, token),
-        err => console.log('Failed to get ID token:', err)
-      );
-    })
-    .catch(err => {
-      console.error(`Failed to import Firebase auth code: ${err}`);
-    });
+  const user = app.auth().currentUser;
+  if (!user) {
+    defaultLogger.log(severity, code, payload);
+    return;
+  }
+  user.getIdToken().then(
+    (token) => defaultLogger.log(severity, code, payload, token),
+    (err) => console.log('Failed to get ID token:', err)
+  );
 }
 
 // Sends a record to Stackdriver with DEBUG severity.

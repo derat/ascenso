@@ -43,16 +43,14 @@
       </table>
     </div>
 
-    <div id="footer">
-      Total Points _________
-    </div>
+    <div id="footer">Total Points _________</div>
   </div>
   <Spinner v-else />
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { getFirestore } from '@/firebase';
+import { app } from '@/firebase';
 import { Area, SortedData } from '@/models';
 import Spinner from '@/components/Spinner.vue';
 
@@ -122,12 +120,11 @@ export default class Print extends Vue {
   }
 
   mounted() {
-    getFirestore().then(db => {
-      this.$bind('sortedData', db.collection('global').doc('sortedData')).catch(
-        err => {
-          this.$emit('error-msg', `Failed loading route data: ${err}`);
-        }
-      );
+    this.$bind(
+      'sortedData',
+      app.firestore().collection('global').doc('sortedData')
+    ).catch((err) => {
+      this.$emit('error-msg', `Failed loading route data: ${err}`);
     });
   }
 }

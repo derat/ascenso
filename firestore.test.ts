@@ -14,7 +14,7 @@
 //   https://firebase.google.com/docs/firestore/security/test-rules-emulator
 //   https://github.com/firebase/quickstart-nodejs/tree/master/firestore-emulator/typescript-quickstart
 
-import * as firebase from '@firebase/testing';
+import * as firebase from '@firebase/rules-unit-testing';
 
 const projectId = `firestore-test-${Date.now()}`;
 
