@@ -59,7 +59,7 @@ func handlePostScoresTeamsCSV(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 	sort.Slice(teams, func(i, j int) bool { return teams[i].Name < teams[j].Name })
 
-	recs := [][]string{{"team", "name_1", "name_2", "score", "climbs", "height"}}
+	recs := [][]string{{"team", "climber_1", "climber_2", "score", "climbs", "height"}}
 	for _, team := range teams {
 		rec := []string{team.Name}
 		if len(team.Users) > 0 {
@@ -91,7 +91,7 @@ func handlePostScoresUsersCSV(ctx context.Context, w http.ResponseWriter, r *htt
 		return
 	}
 
-	recs := [][]string{{"name", "team", "score", "climbs", "height"}}
+	recs := [][]string{{"climber", "team", "score", "climbs", "height"}}
 	for _, u := range users {
 		recs = append(recs, []string{
 			u.Name, u.Team, strconv.Itoa(u.Score), strconv.Itoa(u.NumClimbs), strconv.Itoa(u.Height),
@@ -290,7 +290,7 @@ const scoresTemplate = `
           <th class="sorttable_nosort">Climbs</th>
           <th class="sorttable_nosort">Height</th>
 {{- else}}
-          <th>User</th>
+          <th>Climber</th>
           <th>Team</th>
           <th>Score</th>
           <th>Climbs</th>
