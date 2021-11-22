@@ -296,6 +296,7 @@ jest.mock('firebase/app', () => {
   // e.g. firebase.firestore() is called. I think we can get away with it for
   // now since all of these are just wrappers around groups of methods, though.
   const app = {
+    mocked: true, // checked by src/firebase/index.ts
     initializeApp: () => app,
     auth: () => ({
       get currentUser() {

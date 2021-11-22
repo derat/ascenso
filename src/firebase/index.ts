@@ -8,6 +8,14 @@ import 'firebase/auth';
 import 'firebase/firestore';
 import 'firebase/functions';
 
+// Make sure that we're not using the real Firebase in tests.
+if (
+  process.env.NODE_ENV == 'test' &&
+  !Object.prototype.hasOwnProperty.call(firebase, 'mocked')
+) {
+  throw new Error("Test must import '@/firebase/mock' first");
+}
+
 export const app = firebase.initializeApp({
   apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
   authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
