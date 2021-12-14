@@ -4,6 +4,7 @@ const srcDir = '.e2e_js';
 const logDir = '.test_artifacts/e2e';
 
 module.exports = {
+  // https://nightwatchjs.org/guide/configuration/settings.html
   src_folders: [srcDir + '/tests'],
   page_objects_path: srcDir + '/pages',
   globals_path: srcDir + '/globals.js',
@@ -22,10 +23,20 @@ module.exports = {
     // chromedriver.log is created within this directory.
     log_path: logDir,
   },
+  // https://nightwatchjs.org/guide/browser-drivers-setup/chromedriver.html
   test_settings: {
     default: {
       desiredCapabilities: {
         browserName: 'chrome',
+        chromeOptions: {
+          args: [
+            // Needed to prevent random crashes on Cloud Build:
+            // https://stackoverflow.com/a/53970825/6882947
+            '--disable-dev-shm-usage',
+            // Needed for Chrome to start on Cloud Build.
+            '--no-sandbox',
+          ],
+        },
         // Needed to be able to get console messages via getLog():
         // https://stackoverflow.com/q/29443804/
         loggingPrefs: { browser: 'ALL' },

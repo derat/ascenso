@@ -1,0 +1,111 @@
+steps:
+  # Load a previously-saved copy of NPM's node_modules/ directory from GCS to
+  # make the 'npm install' command take a few seconds instead of several
+  # minutes. This is inspired by this blog post:
+  # https://blog.truaro.dev/improving-cloud-build-with-dependencies-cache/
+  - id: load_npm_cache
+    name: $_CONT
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        echo $(date -u) "Copying ${_NPM_CACHE_URL} to ${_NPM_CACHE_FILE}..."
+        gsutil cp "$_NPM_CACHE_URL" "$_NPM_CACHE_FILE" || exit 0
+        echo $(date -u) "Decompressing ${_NPM_CACHE_FILE}..."
+        tar zxf "$_NPM_CACHE_FILE" || exit 0
+        echo $(date -u) "Done restoring node_modules"
+
+  - id: npm_install
+    name: $_CONT
+    entrypoint: npm
+    args: ['--no-audit', 'install']
+
+  # I initially tried running unit_tests, firestore_tests, and e2e_tests in
+  # parallel, but I think that the builder is slow enough that it can cause
+  # timeouts in firestore_tests (e.g. "Could not reach Cloud Firestore backend"
+  # and "Timeout - Async callback was not invoked within the 5000ms timeout
+  # specified by jest.setTimeout").
+  - id: unit_tests
+    name: $_CONT
+    entrypoint: npm
+    args: ['run', 'test:unit']
+
+  - id: firestore_tests
+    name: $_CONT
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        npx firebase setup:emulators:firestore
+        npm run test:firestore
+
+  - id: e2e_tests
+    name: $_CONT
+    entrypoint: bash
+    args: ['-e', '--', 'build/run_e2e_tests.sh']
+    env:
+      # Copy some Cloud Build variables to the script's environment.
+      - PROJECT_ID=$PROJECT_ID
+      - BUILD_ID=$BUILD_ID
+      # These environment variables are public; see .env.example.
+      - DETECT_CHROMEDRIVER_VERSION=true
+      - E2E_URL=http://localhost:8080/
+      - VUE_APP_APPLE_MASK_COLOR=#d50000
+      - VUE_APP_APPLE_MASK_PATH=assets-fallback/safari-pinned-tab.svg
+      - VUE_APP_APPLE_TOUCH_ICON_PATH=assets-fallback/apple-touch-icon.png
+      - VUE_APP_COMPETITION_NAME=Ascenso
+      - VUE_APP_FAVICON_16_PATH=assets-fallback/favicon-16x16.png
+      - VUE_APP_FAVICON_32_PATH=assets-fallback/favicon-32x32.png
+      - VUE_APP_FAVICON_URL=/assets-fallback/favicon.ico
+      - VUE_APP_LOGO_URL=/assets-fallback/logo.png
+      - VUE_APP_LOG_TO_CONSOLE=1
+      - VUE_APP_MANIFEST_ICON_192_URL=/assets-fallback/android-chrome-192x192.png
+      - VUE_APP_MANIFEST_ICON_512_URL=/assets-fallback/android-chrome-512x512.png
+      - VUE_APP_MANIFEST_SHORT_NAME=Ascenso
+      - VUE_APP_META_DESCRIPTION=Ascenso
+      - VUE_APP_MS_TILE_150_PATH=assets-fallback/mstile-150x150.png
+      - VUE_APP_MS_TILE_COLOR=#ffc40d
+      # These variables are private and are set via substitution variables in
+      # the build trigger.
+      - E2E_EMAIL_1=$_E2E_EMAIL_1
+      - E2E_EMAIL_2=$_E2E_EMAIL_2
+      - E2E_PASSWORD_1=$_E2E_PASSWORD_1
+      - E2E_PASSWORD_2=$_E2E_PASSWORD_2
+      - E2E_TEST_FUNC_URL=$_E2E_TEST_FUNC_URL
+      - VUE_APP_FIREBASE_API_KEY=$_VUE_APP_FIREBASE_API_KEY
+      - VUE_APP_FIREBASE_APP_ID=$_VUE_APP_FIREBASE_APP_ID
+      - VUE_APP_FIREBASE_AUTH_DOMAIN=$_VUE_APP_FIREBASE_AUTH_DOMAIN
+      - VUE_APP_FIREBASE_DATABASE_URL=$_VUE_APP_FIREBASE_DATABASE_URL
+      - VUE_APP_FIREBASE_MESSAGING_SENDER_ID=$_VUE_APP_FIREBASE_MESSAGING_SENDER_ID
+      - VUE_APP_FIREBASE_PROJECT_ID=$_VUE_APP_FIREBASE_PROJECT_ID
+      - VUE_APP_FIREBASE_STORAGE_BUCKET=$_VUE_APP_FIREBASE_STORAGE_BUCKET
+
+  # Save the node_modules/ directory to GCS so the next build can use it.
+  - id: save_npm_cache
+    name: $_CONT
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        echo $(date -u) "Creating ${_NPM_CACHE_FILE}..."
+        tar zcf $_NPM_CACHE_FILE node_modules
+        echo $(date -u) "Copying ${_NPM_CACHE_FILE} to ${_NPM_CACHE_URL}..."
+        gsutil cp $_NPM_CACHE_FILE $_NPM_CACHE_URL
+        echo $(date -u) "Done saving node_modules"
+
+  - id: go_test
+    waitFor: ['-']
+    name: golang
+    entrypoint: go
+    args: ['test', '-v', './...']
+
+substitutions:
+  # This container is built from Dockerfile.
+  _CONT: gcr.io/${PROJECT_ID}/ascenso-test
+  # This tarball contains a cached copy of the NPM node_modules/ dir.
+  _NPM_CACHE_URL: gs://${PROJECT_ID}-cache/ascenso-test_node_modules.tgz
+  _NPM_CACHE_FILE: node_modules.tgz
+
+tags:
+  - commit-$COMMIT_SHA
+  - trigger-name-$TRIGGER_NAME
