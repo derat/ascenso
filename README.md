@@ -1,5 +1,7 @@
 # Ascenso
 
+![Build Status](https://storage.googleapis.com/derat-build-badges/e9a38d2f-e27e-47cb-ad63-fc8ba84702ca.svg)
+
 Ascenso is a mobile web app that can be used to track scores in endurance
 rock-climbing competitions.
 
@@ -7,8 +9,6 @@ It uses [TypeScript], [Vue.js], and [Vuetify] in its frontend and [Firebase] as
 its backend.
 
 See [INSTALL.md] for installation instructions.
-
-[![Build Status](https://travis-ci.org/derat/ascenso.svg?branch=master)](https://travis-ci.org/derat/ascenso)
 
 [TypeScript]: https://www.typescriptlang.org/
 [Vue.js]: https://vuejs.org/
