@@ -1,6 +1,6 @@
 # Ascenso
 
-![Build Status](https://storage.googleapis.com/derat-build-badges/e9a38d2f-e27e-47cb-ad63-fc8ba84702ca.svg)
+[![Build Status](https://storage.googleapis.com/derat-build-badges/e9a38d2f-e27e-47cb-ad63-fc8ba84702ca.svg)](https://storage.googleapis.com/derat-build-badges/e9a38d2f-e27e-47cb-ad63-fc8ba84702ca.html)
 
 Ascenso is a mobile web app that can be used to track scores in endurance
 rock-climbing competitions.
