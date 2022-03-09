@@ -24,6 +24,7 @@ describe('Statistics', () => {
     const uid = 'test-user';
     const userName = 'Test Name';
     MockFirebase.currentUser = new MockUser(uid, userName);
+    MockFirebase.setDoc('global/config', {});
     MockFirebase.setDoc('global/indexedData', {
       routes: {
         r1: { area: 'a1', lead: 10, tr: 5, height: 20 },

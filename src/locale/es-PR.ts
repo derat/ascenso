@@ -99,6 +99,10 @@ export default {
     failedLoadingRoutesError: 'Error en cargar las rutas: {0}',
     failedLoadingUserOrTeamError: 'Error en cargar usuario o equipo: {0}',
     heightStat: 'Altura (pies)',
+    imageClimbs: '0 rutas | 1 ruta | {n} rutas',
+    imageFeet: '0 pies | 1 pie | {n} pies',
+    imagePoints: '0 puntos | 1 punto | {n} puntos',
+    imageTab: 'Imagen',
     individualTab: 'Individual',
     leadStat: 'Lead', // TODO: See ClimbDropdown above.
     otherCard: 'Otro',
