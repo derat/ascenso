@@ -20,4 +20,20 @@ export default new VueI18n({
   // https://github.com/kazupon/vue-i18n/issues/89#issuecomment-344233814.
   fallbackLocale: 'en-US',
   messages: { ['en-US']: enUs, ['es-PR']: esPr },
+  dateTimeFormats: {
+    'en-US': {
+      date: {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      },
+    },
+    'es-PR': {
+      date: {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      },
+    },
+  },
 });

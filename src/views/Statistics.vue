@@ -7,6 +7,11 @@
     <v-tabs v-model="tab">
       <v-tab href="#team" v-if="teamCards.length" v-t="'Statistics.teamTab'" />
       <v-tab href="#user" v-t="'Statistics.individualTab'" />
+      <v-tab
+        href="#image"
+        v-t="'Statistics.imageTab'"
+        @change="onImageTabClick"
+      />
 
       <v-tab-item key="team" value="team" v-if="teamCards.length">
         <Card
@@ -31,6 +36,12 @@
           <StatisticsList :items="card.items" />
         </Card>
       </v-tab-item>
+
+      <v-tab-item key="image" value="image">
+        <Card class="mt-3 mx-0">
+          <img class="stats-img" :src="imageData" />
+        </Card>
+      </v-tab-item>
     </v-tabs>
   </div>
   <Spinner v-else />
@@ -41,7 +52,13 @@ import { Component, Mixins, Watch } from 'vue-property-decorator';
 
 import { app } from '@/firebase';
 import { logError } from '@/log';
-import { ClimbState, Statistic, IndexedData } from '@/models';
+import {
+  ClimbState,
+  Config,
+  GradeIndexes,
+  IndexedData,
+  Statistic,
+} from '@/models';
 
 import Card from '@/components/Card.vue';
 import Perf from '@/mixins/Perf';
@@ -58,14 +75,17 @@ interface StatisticsCard {
   components: { Card, Spinner, StatisticsList },
 })
 export default class Statistics extends Mixins(Perf, UserLoader) {
+  readonly config: Partial<Config> = {};
   readonly indexedData: Partial<IndexedData> = {};
   userCards: StatisticsCard[] = [];
   teamCards: StatisticsCard[] = [];
 
+  configLoaded = false;
   indexedDataLoaded = false;
   haveStats = false;
 
   tab: any = null;
+  imageData = '';
 
   // Takes an array where each element is a dict mapping a route to a
   // state (e.g. lead, top rope). Computes the score and other stats based
@@ -176,7 +196,8 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
       app.firestore().collection('global').doc('indexedData')
     )
       .then(() => {
-        this.recordEvent('loadedIndexedData'), (this.indexedDataLoaded = true);
+        this.recordEvent('loadedIndexedData');
+        this.indexedDataLoaded = true;
         this.updateItems();
       })
       .catch((err) => {
@@ -186,6 +207,122 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
         );
         logError('stats_bind_indexed_data_failed', err);
       });
+
+    this.$bind(
+      'config',
+      app.firestore().collection('global').doc('config')
+    ).then(() => {
+      this.recordEvent('loadedConfig');
+      this.configLoaded = true;
+    });
+  }
+
+  onImageTabClick() {
+    // TODO: Only updating the image when its tab is activated (and when the
+    // Firestore docs have also all been bound) is pretty bogus.
+    this.updateImage();
+  }
+
+  // Draws individual stats to a canvas and updates |imageData|.
+  updateImage() {
+    if (
+      !this.configLoaded ||
+      !this.indexedDataLoaded ||
+      !this.userLoaded ||
+      !this.userDoc.name ||
+      !this.teamDoc ||
+      !this.teamDoc.users ||
+      !this.teamDoc.users[this.user.uid]
+    ) {
+      return;
+    }
+
+    const routes = this.indexedData.routes || {};
+    const climbs = this.teamDoc.users[this.user.uid].climbs;
+    const filterClimbs = (state: ClimbState) =>
+      Object.entries(climbs)
+        .filter(([id, s]) => s === state && routes[id])
+        .map(([id, s]) => id)
+        .sort((a, b) => {
+          const ga = GradeIndexes[routes[a].grade] || 0;
+          const gb = GradeIndexes[routes[b].grade] || 0;
+          return ga === gb
+            ? routes[a].name.localeCompare(routes[b].name)
+            : gb - ga;
+        });
+    const lead = filterClimbs(ClimbState.LEAD);
+    const tr = filterClimbs(ClimbState.TOP_ROPE);
+
+    const numClimbs = lead.length + tr.length;
+    const points =
+      lead.reduce((sum, id) => sum + routes[id].lead, 0) +
+      tr.reduce((sum, id) => sum + routes[id].tr, 0);
+    const feet = lead
+      .concat(tr)
+      .reduce((sum, id) => sum + (routes[id].height || 0), 0);
+
+    const margin = 32;
+    const logoHeight = 360;
+    const textY = margin + logoHeight + 128;
+    const fontSize = 48;
+    const fontList = 'Roboto, sans-serif';
+    const labelColor = '#888';
+    const lineHeight = fontSize + 20;
+
+    const numLines =
+      3 + // name, points, date
+      (lead.length ? 2 + lead.length : 0) + // blank line, label, routes
+      (tr.length ? 2 + tr.length : 0); // blank line, label, routes
+
+    const canvas = document.createElement('canvas') as HTMLCanvasElement;
+    canvas.width = 1080; // https://help.instagram.com/1631821640426723
+    canvas.height = textY + numLines * lineHeight;
+
+    const ctx = canvas.getContext('2d')!;
+
+    const logo = new Image();
+    logo.src = process.env.VUE_APP_LOGO_URL || '';
+    logo.addEventListener('load', () => {
+      const w = logo.width * (logoHeight / logo.height);
+      const x = (canvas.width - w) / 2;
+      ctx.drawImage(logo, x, margin, w, logoHeight);
+      this.imageData = canvas.toDataURL('image/png');
+    });
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = `${fontSize}px ${fontList}`;
+    let lines = 0;
+    const drawText = (text: string, color = 'black') => {
+      ctx.fillStyle = color;
+      ctx.fillText(text, margin, textY + lines * lineHeight);
+      lines++;
+    };
+
+    drawText(this.userDoc.name);
+
+    const ps = this.$tc('Statistics.imagePoints', points, { n: points });
+    const cs = this.$tc('Statistics.imageClimbs', numClimbs, { n: numClimbs });
+    const fs = this.$tc('Statistics.imageFeet', feet, { n: feet });
+    drawText(`${ps} (${cs}, ${fs})`);
+
+    drawText(
+      this.config.startTime
+        ? this.$d(this.config.startTime.toDate(), 'date')
+        : new Date().getFullYear().toString()
+    );
+
+    const drawRoutes = (label: string, ids: string[]) => {
+      drawText('');
+      drawText(label, labelColor);
+      ids.forEach((id) => {
+        const r = routes[id];
+        drawText(`${r.name} (${r.grade})`);
+      });
+    };
+    drawRoutes(this.$t('Statistics.leadStat'), lead);
+    drawRoutes(this.$t('Statistics.topRopeStat'), tr);
   }
 }
 </script>
@@ -196,5 +333,11 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
    * white background that doesn't match the rest of the app's slightly-gray
    * background. */
   background-color: rgba(1, 1, 1, 0);
+}
+
+.stats-img {
+  border: solid 1px #aaa;
+  height: 100%;
+  width: 100%;
 }
 </style>
