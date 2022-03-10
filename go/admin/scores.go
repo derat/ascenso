@@ -113,10 +113,14 @@ func setCSVHeaders(h http.Header, fn string) {
 
 // getScores reads scores from Cloud Firestore and returns summarized data.
 func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, []userSummary, error) {
-	// First, load the indexed data so we can look up the points and heights for each route.
+	// First, load data so we can look up the points and heights for each route.
 	var indexed db.IndexedData
 	if err := db.GetDoc(ctx, client.Doc(db.IndexedDataDocPath), &indexed); err != nil {
 		return nil, nil, fmt.Errorf("failed getting indexed data: %v", err)
+	}
+	var sorted db.SortedData
+	if err := db.GetDoc(ctx, client.Doc(db.SortedDataDocPath), &sorted); err != nil {
+		return nil, nil, fmt.Errorf("failed getting sorted data: %v", err)
 	}
 
 	// Iterate over all of the teams.
@@ -148,11 +152,12 @@ func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, []
 			ts.NumClimbs += climbs
 			ts.Height += height
 			us := userSummary{
-				Name:      u.Name,
-				Team:      team.Name,
-				Score:     score,
-				NumClimbs: climbs,
-				Height:    height,
+				Name:       u.Name,
+				Team:       team.Name,
+				Score:      score,
+				NumClimbs:  climbs,
+				Height:     height,
+				ClimbsDesc: makeClimbsDesc(u.Climbs, sorted.Areas),
 			}
 			ts.Users = append(ts.Users, us)
 			users = append(users, us)
@@ -204,6 +209,24 @@ func computeScore(climbs map[string]db.ClimbState, routes map[string]db.Route) (
 	return points, count, height
 }
 
+// makeClimbsDesc generates a multiline list of a user's climbs.
+func makeClimbsDesc(climbs map[string]db.ClimbState, areas []db.Area) string {
+	var lines []string
+	for _, a := range areas {
+		for _, r := range a.Routes {
+			if s, ok := climbs[r.ID]; ok {
+				switch s {
+				case db.Lead:
+					lines = append(lines, r.Name+" (L)")
+				case db.TopRope:
+					lines = append(lines, r.Name+" (TR)")
+				}
+			}
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
 // teamSummary describes a team's performance.
 type teamSummary struct {
 	Name      string
@@ -215,11 +238,12 @@ type teamSummary struct {
 
 // userSummary describes an individual climber's performance.
 type userSummary struct {
-	Name      string
-	Team      string // redundant, but used for per-user CSV
-	Score     int
-	NumClimbs int
-	Height    int
+	Name       string
+	Team       string // redundant, but used for per-user CSV
+	Score      int
+	NumClimbs  int
+	Height     int
+	ClimbsDesc string // multiline string for title attr
 }
 
 // writeScores writes an HTML document describing the scores in teams (if non-empty)
@@ -308,7 +332,7 @@ const scoresTemplate = `
           <td class="num" sorttable_customkey="{{.Height}}">{{.Height}}'</td>
           <td>
 {{- range .Users}}
-            {{.Name}}<br>
+            <span title="{{.ClimbsDesc}}">{{.Name}}</span><br>
 {{- end}}
           </td>
           <td class="num">
@@ -331,7 +355,7 @@ const scoresTemplate = `
 {{- else}}
 {{- range .Users}}
         <tr>
-          <td>{{.Name}}</td>
+          <td title="{{.ClimbsDesc}}">{{.Name}}</td>
           <td>{{.Team}}</td>
           <td class="num">{{.Score}}</td>
           <td class="num">{{.NumClimbs}}</td>
