@@ -263,20 +263,18 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
     const margin = 32;
     const logoHeight = 360;
-    const textY = margin + logoHeight + 128;
-    const fontSize = 48;
     const fontList = 'Roboto, sans-serif';
+    const bigFontSize = 48;
+    const maxRouteFontSize = 24;
+    const lineHeight = 1.3333;
     const labelColor = '#888';
-    const lineHeight = fontSize + 20;
 
-    const numLines =
-      3 + // name, points, date
-      (lead.length ? 2 + lead.length : 0) + // blank line, label, routes
-      (tr.length ? 2 + tr.length : 0); // blank line, label, routes
+    let textX = margin;
+    let textY = margin + logoHeight + 80;
 
     const canvas = document.createElement('canvas') as HTMLCanvasElement;
     canvas.width = 1080; // https://help.instagram.com/1631821640426723
-    canvas.height = textY + numLines * lineHeight;
+    canvas.height = 1350;
 
     const ctx = canvas.getContext('2d')!;
 
@@ -292,37 +290,59 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.font = `${fontSize}px ${fontList}`;
-    let lines = 0;
-    const drawText = (text: string, color = 'black') => {
+    const drawText = (text: string, size: number, color = 'black') => {
+      ctx.font = `${size}px ${fontList}`;
       ctx.fillStyle = color;
-      ctx.fillText(text, margin, textY + lines * lineHeight);
-      lines++;
+      ctx.fillText(text, textX, textY);
+      textY += size * lineHeight;
     };
 
-    drawText(this.userDoc.name);
+    drawText(this.userDoc.name, bigFontSize);
 
     const ps = this.$tc('Statistics.imagePoints', points, { n: points });
     const cs = this.$tc('Statistics.imageClimbs', numClimbs, { n: numClimbs });
     const fs = this.$tc('Statistics.imageFeet', feet, { n: feet });
-    drawText(`${ps} (${cs}, ${fs})`);
+    drawText(`${ps} (${cs}, ${fs})`, bigFontSize);
 
     drawText(
       this.config.startTime
         ? this.$d(this.config.startTime.toDate(), 'date')
-        : new Date().getFullYear().toString()
+        : new Date().getFullYear().toString(),
+      bigFontSize
     );
 
-    const drawRoutes = (label: string, ids: string[]) => {
-      drawText('');
-      drawText(label, labelColor);
-      ids.forEach((id) => {
-        const r = routes[id];
-        drawText(`${r.name} (${r.grade})`);
-      });
+    if (!lead.length && !tr.length) return;
+
+    const lines = [] as [string, string][]; // [text, color]
+    const addRoutes = (label: string, ids: string[]) => {
+      if (!ids.length) return;
+      if (lines.length) lines.push(['', 'black']);
+      lines.push([label, labelColor]);
+      for (const id of ids) {
+        lines.push([`${routes[id].name} (${routes[id].grade})`, 'black']);
+      }
     };
-    drawRoutes(this.$t('Statistics.leadStat'), lead);
-    drawRoutes(this.$t('Statistics.topRopeStat'), tr);
+    addRoutes(this.$t('Statistics.leadStat'), lead);
+    addRoutes(this.$t('Statistics.topRopeStat'), tr);
+
+    // Scale the font size down if needed to fit all the routes in two columns.
+    const routeY = textY;
+    const routeLineSize = Math.min(
+      maxRouteFontSize * lineHeight,
+      Math.floor((canvas.height - routeY) / Math.ceil(lines.length / 2))
+    );
+    const routeFontSize = routeLineSize / lineHeight;
+
+    for (const line of lines) {
+      // Wrap to a second column.
+      if (textX === margin && textY + routeLineSize > canvas.height) {
+        textX += canvas.width / 2;
+        textY = routeY;
+      }
+      // Skip blank lines at top.
+      if (textY === routeY && !line[0]) continue;
+      drawText(line[0], routeFontSize, line[1]);
+    }
   }
 }
 </script>
