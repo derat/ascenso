@@ -8,6 +8,7 @@
       <v-tab href="#team" v-if="teamCards.length" v-t="'Statistics.teamTab'" />
       <v-tab href="#user" v-t="'Statistics.individualTab'" />
       <v-tab
+        v-if="teamDoc"
         href="#image"
         v-t="'Statistics.imageTab'"
         @change="onImageTabClick"
@@ -37,7 +38,7 @@
         </Card>
       </v-tab-item>
 
-      <v-tab-item key="image" value="image">
+      <v-tab-item v-if="teamDoc" key="image" value="image">
         <Card class="mt-3 mx-0">
           <img class="stats-img" :src="imageData" />
         </Card>

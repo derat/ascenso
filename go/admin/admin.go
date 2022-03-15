@@ -169,6 +169,10 @@ const getHTML = `
       <h2>Clear scores</h2>
       <p>Clear scores for all teams and users.</p>
       <div class="input-row">
+        <input id="deleteTeams" name="deleteTeams" value="1" type="checkbox">
+        <label for="deleteTeams">Also delete all teams</label>
+      </div>
+      <div class="input-row">
         <span class="label">Confirm</span>
         <input
           name="confirm"

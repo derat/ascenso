@@ -73,7 +73,7 @@ export default class UserLoader extends Vue {
           this.userLoadError = err;
         });
     } else {
-      this.$unbind('teamDoc');
+      if (this.$firestoreRefs.teamDoc) this.$unbind('teamDoc');
       this.teamDoc = {};
       this.teamRef = null;
     }
