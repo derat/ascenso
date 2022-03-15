@@ -267,7 +267,7 @@ export const MockFirebase = new (class {
       // Assign the data to the Vue.
       const data = deepCopy(MockFirebase._docs[ref.path]);
       (this as Vue).$data[name] = data;
-      (this as Vue).$firestoreRefs[name] = data;
+      (this as any).$firestoreRefs[name] = data;
       return Promise.resolve(data);
     },
 
@@ -280,10 +280,10 @@ export const MockFirebase = new (class {
         );
       }
       vm.$data[name] = null;
-      delete vm.$firestoreRefs[name];
+      delete (vm as any).$firestoreRefs[name];
     },
 
-    $firestoreRefs: {} as Record<String, any>,
+    $firestoreRefs: {} as Record<string, any>,
   };
 })();
 
