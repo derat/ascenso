@@ -18,11 +18,14 @@ import (
 
 // handleClearScores handles an "clearScores" POST request.
 // It clears all scores from Cloud Firestore.
+// If the "deleteTeams" parameter is set to "1", all teams and invite codes are also deleted.
 func handleClearScores(ctx context.Context, w http.ResponseWriter, r *http.Request, client *firestore.Client) {
 	if r.FormValue("confirm") != "REALLY CLEAR SCORES" {
 		http.Error(w, "Didn't confirm that we really want to clear scores", http.StatusBadRequest)
 		return
 	}
+
+	deleteTeams := r.FormValue("deleteTeams") == "1"
 
 	// First, iterate over team documents.
 	it := client.Collection(db.TeamCollectionPath).DocumentRefs(ctx)
@@ -34,6 +37,17 @@ func handleClearScores(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			http.Error(w, fmt.Sprintf("Failed getting team ref: %v", err), http.StatusInternalServerError)
 			return
 		}
+
+		if deleteTeams {
+			log.Printf("Deleting team doc %s", ref.Path)
+			if _, err := ref.Delete(ctx); err != nil {
+				http.Error(w, fmt.Sprintf("Failed deleting team doc %v: %v", ref.Path, err),
+					http.StatusInternalServerError)
+				return
+			}
+			continue
+		}
+
 		var team db.Team
 		if err := db.GetDoc(ctx, ref, &team); err != nil {
 			http.Error(w, fmt.Sprintf("Failed getting team doc: %v", err), http.StatusInternalServerError)
@@ -73,20 +87,39 @@ func handleClearScores(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		// Clear the "climbs" map at the top level of the document.
-		var newClimbs interface{} = map[string]db.ClimbState{}
-		// If the user is on a team, we delete the map (since their climbs are
-		// stored in the team doc).
-		if user.Team != "" {
-			newClimbs = firestore.Delete
+		updates := []firestore.Update{{Path: "climbs", Value: firestore.Delete}}
+		if deleteTeams {
+			updates = append(updates, firestore.Update{Path: "team", Value: firestore.Delete})
 		}
-
-		log.Printf("Clearing score from user doc %s (%+v)", ref.Path, user)
-		if _, err := ref.Update(ctx, []firestore.Update{{Path: "climbs", Value: newClimbs}}); err != nil {
+		log.Printf("Updating user doc %s (%+v)", ref.Path, user)
+		if _, err := ref.Update(ctx, updates); err != nil {
 			http.Error(w, fmt.Sprintf("Failed updating user: %v", err), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	fmt.Fprintln(w, "Cleared all scores")
+	if deleteTeams {
+		it := client.Collection(db.InviteCollectionPath).DocumentRefs(ctx)
+		for {
+			ref, err := it.Next()
+			if err == iterator.Done {
+				break
+			} else if err != nil {
+				http.Error(w, fmt.Sprintf("Failed getting invite ref: %v", err), http.StatusInternalServerError)
+				return
+			}
+			log.Printf("Deleting invite doc %s", ref.Path)
+			if _, err := ref.Delete(ctx); err != nil {
+				http.Error(w, fmt.Sprintf("Failed deleting invite doc %v: %v", ref.Path, err),
+					http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	if deleteTeams {
+		fmt.Fprintln(w, "Cleared all scores and teams")
+	} else {
+		fmt.Fprintln(w, "Cleared all scores")
+	}
 }
