@@ -67,6 +67,16 @@ import Spinner from '@/components/Spinner.vue';
 import StatisticsList from '@/components/StatisticsList.vue';
 import UserLoader from '@/mixins/UserLoader';
 
+// Aggregate statistics about a user's or team's climbs.
+interface Stats {
+  all: number; // total number of climbs
+  lead: number; // number of lead climbs
+  topRope: number; // number of top-rope climbs
+  score: number; // total points
+  height: number; // total feet climbed
+  areas: Record<string, boolean>; // areas with climbed routs
+}
+
 interface StatisticsCard {
   name: string;
   items: Statistic[];
@@ -88,63 +98,72 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
   tab: any = null;
   imageData = '';
 
-  // Takes an array where each element is a dict mapping a route to a
-  // state (e.g. lead, top rope). Computes the score and other stats based
-  // on this array.
-  computeStats(climbsArray: Record<string, ClimbState>[]): StatisticsCard[] {
+  // Computes the score and other stats given an array of dicts mapping a route
+  // to a state (e.g. lead, top rope).
+  computeStats(climbsArray: Record<string, ClimbState>[]): Stats {
     if (!this.indexedData.routes) throw new Error('No routes defined');
 
-    let all = 0;
-    let lead = 0;
-    let topRope = 0;
-    let score = 0;
-    let height = 0;
-    const areas: Record<string, boolean> = {};
+    const stats: Stats = {
+      all: 0,
+      lead: 0,
+      topRope: 0,
+      score: 0,
+      height: 0,
+      areas: {},
+    };
 
     for (const climbs of climbsArray) {
       for (const id of Object.keys(climbs)) {
         const route = this.indexedData.routes[id];
-        if (!route) {
-          continue;
-        }
+        if (!route) continue;
 
         const state = climbs[id];
         if (state == ClimbState.LEAD) {
-          lead++;
-          score += route.lead;
+          stats.lead++;
+          stats.score += route.lead;
         } else if (state == ClimbState.TOP_ROPE) {
-          topRope++;
-          score += route.tr;
+          stats.topRope++;
+          stats.score += route.tr;
         }
         if (state == ClimbState.LEAD || state == ClimbState.TOP_ROPE) {
-          all++;
-          if (route.height) height += route.height;
-          if (route.area) areas[route.area] = true;
+          stats.all++;
+          if (route.height) stats.height += route.height;
+          if (route.area) stats.areas[route.area] = true;
         }
       }
     }
 
+    return stats;
+  }
+
+  // Computes cards to display given an array of dicts mapping a route to a
+  // state (e.g. lead, top rope).
+  computeCards(climbsArray: Record<string, ClimbState>[]): StatisticsCard[] {
+    const stats = this.computeStats(climbsArray);
+
     return [
       {
         name: this.$t('Statistics.pointsCard'),
-        items: [new Statistic(this.$t('Statistics.totalPointsStat'), score)],
+        items: [
+          new Statistic(this.$t('Statistics.totalPointsStat'), stats.score),
+        ],
       },
       {
         name: this.$t('Statistics.climbsCard'),
         items: [
-          new Statistic(this.$t('Statistics.totalClimbsStat'), all, [
-            new Statistic(this.$t('Statistics.leadStat'), lead),
-            new Statistic(this.$t('Statistics.topRopeStat'), topRope),
+          new Statistic(this.$t('Statistics.totalClimbsStat'), stats.all, [
+            new Statistic(this.$t('Statistics.leadStat'), stats.lead),
+            new Statistic(this.$t('Statistics.topRopeStat'), stats.topRope),
           ]),
           new Statistic(
             this.$t('Statistics.areasClimbedStat'),
-            Object.keys(areas).length
+            Object.keys(stats.areas).length
           ),
         ],
       },
       {
         name: this.$t('Statistics.otherCard'),
-        items: [new Statistic(this.$t('Statistics.heightStat'), height)],
+        items: [new Statistic(this.$t('Statistics.heightStat'), stats.height)],
       },
     ];
   }
@@ -163,11 +182,11 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
       const users = this.teamDoc.users;
       const userClimbs = Object.keys(users).map((uid) => users[uid].climbs);
 
-      this.userCards = this.computeStats(
+      this.userCards = this.computeCards(
         users[this.user.uid].climbs ? [users[this.user.uid].climbs] : []
       );
 
-      this.teamCards = this.computeStats(userClimbs);
+      this.teamCards = this.computeCards(userClimbs);
     } else {
       // TODO: Should we track individual stats separately for the case where a
       // user switches teams? Probably enough of an edge case to not bother...
@@ -232,16 +251,23 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
       !this.userLoaded ||
       !this.userDoc.name ||
       !this.teamDoc ||
+      !this.teamDoc.name ||
       !this.teamDoc.users ||
-      !this.teamDoc.users[this.user.uid]
+      !this.teamDoc.users[this.user.uid] ||
+      !this.teamDoc.users[this.user.uid].climbs
     ) {
       return;
     }
 
+    const users = this.teamDoc.users;
+    const userStats = this.computeStats([users[this.user.uid].climbs]);
+    const teamStats = this.computeStats(
+      Object.keys(users).map((uid) => users[uid].climbs)
+    );
+
     const routes = this.indexedData.routes || {};
-    const climbs = this.teamDoc.users[this.user.uid].climbs;
-    const filterClimbs = (state: ClimbState) =>
-      Object.entries(climbs)
+    const filterClimbs = (uid: string, state: ClimbState) =>
+      Object.entries(users[uid].climbs)
         .filter(([id, s]) => s === state && routes[id])
         .map(([id, s]) => id)
         .sort((a, b) => {
@@ -251,21 +277,13 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
             ? routes[a].name.localeCompare(routes[b].name)
             : gb - ga;
         });
-    const lead = filterClimbs(ClimbState.LEAD);
-    const tr = filterClimbs(ClimbState.TOP_ROPE);
-
-    const numClimbs = lead.length + tr.length;
-    const points =
-      lead.reduce((sum, id) => sum + routes[id].lead, 0) +
-      tr.reduce((sum, id) => sum + routes[id].tr, 0);
-    const feet = lead
-      .concat(tr)
-      .reduce((sum, id) => sum + (routes[id].height || 0), 0);
+    const lead = filterClimbs(this.user.uid, ClimbState.LEAD);
+    const tr = filterClimbs(this.user.uid, ClimbState.TOP_ROPE);
 
     const margin = 32;
     const logoHeight = 360;
     const fontList = 'Roboto, sans-serif';
-    const bigFontSize = 48;
+    const bigFontSize = 36;
     const maxRouteFontSize = 24;
     const lineHeight = 1.3333;
     const labelColor = '#888';
@@ -293,17 +311,31 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
     const drawText = (text: string, size: number, color = 'black') => {
       ctx.font = `${size}px ${fontList}`;
+
+      // Shrink the text if it's too wide.
+      const metrics = ctx.measureText(text);
+      const avail = canvas.width - textX - margin;
+      if (avail > 0 && metrics.width > avail) {
+        size *= avail / metrics.width;
+        ctx.font = `${size}px ${fontList}`;
+      }
+
       ctx.fillStyle = color;
       ctx.fillText(text, textX, textY);
       textY += size * lineHeight;
     };
 
-    drawText(this.userDoc.name, bigFontSize);
-
-    const ps = this.$tc('Statistics.imagePoints', points, { n: points });
-    const cs = this.$tc('Statistics.imageClimbs', numClimbs, { n: numClimbs });
-    const fs = this.$tc('Statistics.imageFeet', feet, { n: feet });
-    drawText(`${ps} (${cs}, ${fs})`, bigFontSize);
+    const drawStats = (name: string, stats: Stats) => {
+      const ps = this.$tc('Statistics.imagePoints', stats.score, {
+        n: stats.score,
+      });
+      const cs = this.$tc('Statistics.imageClimbs', stats.all, {
+        n: stats.all,
+      });
+      drawText(`${name}: ${ps} (${cs}, ${stats.height}')`, bigFontSize);
+    };
+    drawStats(this.userDoc.name, userStats);
+    drawStats(this.teamDoc.name, teamStats);
 
     drawText(
       this.config.startTime
