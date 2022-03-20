@@ -27,10 +27,18 @@ export default new VueI18n({
         month: 'long',
         day: 'numeric',
       },
+      monthDay: {
+        month: 'long',
+        day: 'numeric',
+      },
     },
     'es-PR': {
       date: {
         year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      },
+      monthDay: {
         month: 'long',
         day: 'numeric',
       },

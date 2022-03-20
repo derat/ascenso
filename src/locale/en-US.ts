@@ -70,6 +70,18 @@ export default {
     teamTitle: 'Team',
     yourNameLabel: 'Your Name',
   },
+  Print: {
+    climberNamesLabel: 'Climber Names',
+    dateLabel: 'Date',
+    favoriteClimberLabel: 'Favorite Climber',
+    leadLabel: 'Lead',
+    pointsLabel: 'Points',
+    teamNameLabel: 'Team Name',
+    teamNumLabel: 'Team #',
+    timeLabel: 'Starting Time',
+    topRopeLabel: 'Top-rope',
+    totalPointsLabel: 'Total Points',
+  },
   Routes: {
     applyButton: 'Apply',
     cancelButton: 'Cancel',

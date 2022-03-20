@@ -57,6 +57,19 @@ export function newVuetifyMountOptions(
       i18n: new VueI18n({
         locale: 'en-US',
         messages: { ['en-US']: enUs },
+        dateTimeFormats: {
+          'en-US': {
+            date: {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            },
+            monthDay: {
+              month: 'long',
+              day: 'numeric',
+            },
+          },
+        },
       }),
     },
     baseOptions

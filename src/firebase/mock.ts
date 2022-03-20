@@ -341,6 +341,7 @@ jest.mock('firebase/app', () => {
   // instead, but I'm not sure how to get at it.
   (app.firestore as any).Timestamp = {
     fromMillis: (ms: number) => ({
+      toDate: () => new Date(ms),
       toMillis: () => ms,
     }),
   };

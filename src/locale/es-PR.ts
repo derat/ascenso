@@ -74,6 +74,18 @@ export default {
     teamTitle: 'Equipo',
     yourNameLabel: 'Tu nombre',
   },
+  Print: {
+    climberNamesLabel: 'Nombres de escaladores',
+    dateLabel: 'Fecha',
+    favoriteClimberLabel: 'Escalador(a) favorito/a',
+    leadLabel: 'Lead',
+    pointsLabel: 'Puntos',
+    teamNameLabel: 'Nombre de equipo',
+    teamNumLabel: '# de equipo',
+    timeLabel: 'Hora de comienzo',
+    topRopeLabel: 'Top-rope',
+    totalPointsLabel: 'Puntos totales',
+  },
   Routes: {
     applyButton: 'Aplicar',
     cancelButton: 'Cancelar',

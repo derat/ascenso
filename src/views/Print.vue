@@ -4,46 +4,67 @@
 
 <template>
   <div id="container" v-if="ready">
-    <div id="header">
-      <span id="compName">{{ competitionName }}</span>
-      <span># _____</span>
-      <span>Team Name ___________________</span>
-      <span>Member #1 ___________________</span>
-      <span>Member #2 ___________________</span>
-      <!-- Do we need an 'Hora' field to match the original scorecard? -->
-      <span>Favorite Route ___________________</span>
+    <div class="header">
+      <span id="compName">{{ competitionName }} {{ competitionYear }}</span>
+      <span>
+        <span id="teamNumSpan">{{ $t('Print.teamNumLabel') }} _____</span>
+        <span>{{ $t('Print.teamNameLabel') }} ___________________________</span>
+      </span>
+    </div>
+    <div class="header">
+      <span>
+        <span id="dateSpan">
+          <template v-if="competitionDate">{{ competitionDate }}</template>
+          <template v-else
+            >{{ $t('Print.dateLabel') }} _________________</template
+          >
+        </span>
+        <span>{{ $t('Print.timeLabel') }} ___________</span>
+      </span>
+      <span>
+        {{ $t('Print.favoriteClimberLabel') }}
+        ___________________________
+      </span>
     </div>
 
     <div id="routes" :style="'font-size:' + routesFontSize">
-      <table v-for="(areas, i) in columns" :key="i">
+      <table v-for="(areas, i) in pages" :key="i">
+        <col width="40%" />
+        <col width="15%" />
+        <col width="15%" />
+        <col width="15%" />
+        <col width="15%" />
+        <col width="10%" />
+        <tr class="climbers">
+          <td>{{ $t('Print.climberNamesLabel') }}</td>
+          <td colspan="2"></td>
+          <td colspan="2"></td>
+          <td></td>
+        </tr>
         <template v-for="area in areas">
           <tr class="head" :key="area.id">
             <td>{{ area.name }}</td>
-            <td>Lead</td>
-            <td>Initials</td>
-            <td>Lead</td>
-            <td>Initials</td>
-            <td>TR</td>
-            <td>Initials</td>
-            <td>Points</td>
+            <td>{{ $t('Print.leadLabel') }}</td>
+            <td>{{ $t('Print.topRopeLabel') }}</td>
+            <td>{{ $t('Print.leadLabel') }}</td>
+            <td>{{ $t('Print.topRopeLabel') }}</td>
+            <td>{{ $t('Print.pointsLabel') }}</td>
           </tr>
           <tr v-for="route in area.routes" :key="route.id">
             <td>
               {{ route.name }} <span class="grade">{{ route.grade }}</span>
             </td>
             <td>☐ {{ route.lead }}</td>
-            <td></td>
-            <td>☐ {{ route.lead }}</td>
-            <td></td>
             <td>☐ {{ route.tr }}</td>
-            <td></td>
+            <td>☐ {{ route.lead }}</td>
+            <td>☐ {{ route.tr }}</td>
             <td></td>
           </tr>
         </template>
       </table>
     </div>
 
-    <div id="footer">Total Points _________</div>
+    <div id="footer">{{ $t('Print.totalPointsLabel') }} _________</div>
   </div>
   <Spinner v-else />
 </template>
@@ -51,7 +72,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { app } from '@/firebase';
-import { Area, SortedData } from '@/models';
+import { Area, Config, SortedData } from '@/models';
 import Spinner from '@/components/Spinner.vue';
 
 function countRows(areas: Area[]) {
@@ -66,41 +87,56 @@ function countRows(areas: Area[]) {
 })
 export default class Print extends Vue {
   readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
+  readonly config: Partial<Config> = {};
   readonly sortedData: Partial<SortedData> = {};
 
-  // Columns of areas and routes to display.
-  get columns(): Area[][] {
+  configLoaded = false;
+
+  // Pages of areas and routes to display.
+  get pages(): Area[][] {
     if (!this.sortedData || !this.sortedData.areas) return [];
 
     const totalRows = countRows(this.sortedData.areas);
 
-    // We just use two columns for now, packing areas sequentially into the left
-    // column before moving to the right one. We avoid breaking up an area
-    // across two columns, while preserving the area order and trying to keep
-    // the two columns as balanced as possible.
-    let leftRows = 0;
-    const leftAreas = [];
-    const rightAreas = [];
+    // We just use two pages for now, packing areas sequentially into the first
+    // page before moving to the second one. We avoid breaking up an area across
+    // two pages, while preserving the area order and trying to keep the two
+    // pages as balanced as possible.
+    let firstRows = 0;
+    const firstAreas = [];
+    const secondAreas = [];
     for (const area of this.sortedData.areas) {
       if (!area || !area.routes) continue; // required by TypeScript
       const areaRows = countRows([area]);
-      // If we haven't started putting areas in the right column yet, and the
-      // two columns will be more balanced if we put this area on the left
-      // instead of the right, then put it on the left.
-      if (!rightAreas.length && leftRows + 0.5 * areaRows < 0.5 * totalRows) {
-        leftAreas.push(area);
-        leftRows += areaRows;
+      // If we haven't started putting areas in the second page yet, and the
+      // two pages will be more balanced if we put this area on the first page
+      // instead of the second, then put it on the second.
+      if (!secondAreas.length && firstRows + 0.5 * areaRows < 0.5 * totalRows) {
+        firstAreas.push(area);
+        firstRows += areaRows;
       } else {
-        rightAreas.push(area);
+        secondAreas.push(area);
       }
     }
-    return [leftAreas, rightAreas];
+    return [firstAreas, secondAreas];
+  }
+
+  get competitionDate() {
+    return this.config.startTime
+      ? this.$d(this.config.startTime.toDate(), 'monthDay')
+      : null;
+  }
+
+  get competitionYear() {
+    return this.config.startTime
+      ? this.config.startTime.toDate().getFullYear().toString()
+      : new Date().getFullYear().toString();
   }
 
   // Dynamically-computed CSS font-size property for area and route rows.
   get routesFontSize() {
     let maxRows = 0;
-    for (const areas of this.columns) {
+    for (const areas of this.pages) {
       maxRows = Math.max(maxRows, countRows(areas));
     }
 
@@ -108,15 +144,13 @@ export default class Print extends Vue {
 
     // '1vh' is 1% of the viewport height; see
     // https://css-tricks.com/viewport-sized-typography/. We want to make the
-    // route text as big as possible without overflowing the page. 60 seems
-    // about right here given the amount of space needed for the header and
-    // footer and the padding between rows.
-    const size = Math.min(60.0 / maxRows, 1.5); // cap to header/footer size
+    // route text as big as possible without overflowing the page.
+    const size = Math.min(59.0 / maxRows, 1.5); // cap to header/footer size
     return size.toString() + 'vh';
   }
 
   get ready() {
-    return this.sortedData && this.sortedData.areas;
+    return this.sortedData && this.sortedData.areas && this.configLoaded;
   }
 
   mounted() {
@@ -126,13 +160,21 @@ export default class Print extends Vue {
     ).catch((err) => {
       this.$emit('error-msg', `Failed loading route data: ${err}`);
     });
+
+    this.$bind('config', app.firestore().collection('global').doc('config'))
+      .then(() => {
+        this.configLoaded = true;
+      })
+      .catch((err) => {
+        this.$emit('error-msg', `Failed loading config: ${err}`);
+      });
   }
 }
 </script>
 
 <style scoped>
 @page {
-  margin: 5mm;
+  margin: 10mm;
 }
 #container {
   background-color: white;
@@ -140,7 +182,7 @@ export default class Print extends Vue {
   font-size: 1.5vh;
   height: 100%; /* hide Vuetify's weird light gray background */
 }
-#header {
+.header {
   display: flex;
   justify-content: space-between;
   margin-bottom: 1vh;
@@ -148,15 +190,21 @@ export default class Print extends Vue {
 #compName {
   font-weight: bold;
 }
-#routes {
-  display: flex;
-  justify-content: space-between;
+#dateSpan,
+#teamNumSpan {
+  padding-right: 1em;
 }
 #routes table {
   border: solid 1px #888;
   border-collapse: collapse;
   table-layout: fixed;
-  width: calc(50% - 2.5mm); /* same space between as page margin */
+  width: 100%;
+}
+#routes table {
+  break-before: page;
+}
+#routes table:first-child {
+  break-before: avoid-page;
 }
 td {
   border: solid 1px #888;
@@ -165,25 +213,23 @@ td {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-td:nth-child(1) {
-  /* route/area name */
-  width: 40%;
-}
-td:nth-child(2),
-td:nth-child(4),
-td:nth-child(6) {
-  /* lead and tr checkboxes */
-  width: 7%;
-}
-td:nth-child(3),
-td:nth-child(5),
-td:nth-child(7),
-td:nth-child(8) {
-  /* initials and points fields */
-  width: 9%;
-}
 tr:nth-child(odd) {
   background-color: #f3f3f3;
+}
+tr.climbers td {
+  background-color: white;
+  font-size: 1.5vh;
+  padding: 0.75vh;
+}
+tr.climbers td:first-child {
+  border-left-style: hidden;
+  border-top-style: hidden;
+  padding-right: 1vh;
+  text-align: right;
+}
+tr.climbers td:last-child {
+  border-right-style: hidden;
+  border-top-style: hidden;
 }
 tr.head td {
   background-color: #bbb;
