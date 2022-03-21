@@ -17,6 +17,14 @@
     </template>
     <v-list class="climb-state-list">
       <v-list-item @click="syncedState = ClimbState.LEAD">
+        <!-- In general, v-t (vue-i18n's version of Vue's v-text) seems like a
+             bad choice: it sets the element's textContent property, so it
+             overwrites any existing content. The Vuetify guidance is to avoid
+             using it on components:
+             https://github.com/vuetifyjs/vuetify/issues/11792
+             I'm keeping it here since it's apparently more performant than
+             $t() and we create a zillion of these components:
+             https://kazupon.github.io/vue-i18n/guide/directive.html#t-vs-v-t -->
         <v-list-item-title v-t="'ClimbDropdown.leadItem'" />
       </v-list-item>
       <v-list-item @click="syncedState = ClimbState.TOP_ROPE">
