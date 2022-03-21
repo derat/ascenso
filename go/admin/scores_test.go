@@ -50,13 +50,13 @@ func TestComputeScore(t *testing.T) {
 func TestWriteScores(t *testing.T) {
 	var b bytes.Buffer
 	if err := writeScores(&b, []teamSummary{
-		{"Team A", 123, 10, 800, []userSummary{
-			{"User 1", "Team A", 100, 8, 500, ""},
-			{"User 2", "Team A", 23, 2, 300, ""},
+		{"Team A", "1", 123, 10, 800, []userSummary{
+			{"User 1", "Team A", "1", 100, 8, 500, ""},
+			{"User 2", "Team A", "1", 23, 2, 300, ""},
 		}},
-		{"Team B", 45, 5, 600, []userSummary{
-			{"User 3", "Team B", 25, 3, 400, ""},
-			{"User 4", "Team B", 20, 2, 200, ""},
+		{"Team B", "", 45, 5, 600, []userSummary{
+			{"User 3", "Team B", "", 25, 3, 400, ""},
+			{"User 4", "Team B", "", 20, 2, 200, ""},
 		}},
 	}, nil); err != nil {
 		t.Fatal("writeScores failed: ", err)

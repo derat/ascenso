@@ -43,10 +43,13 @@ export default {
     failedLeavingTeamError: 'Error en dejar el equipo: {0}',
     failedLoadingDataError: 'Error en cargar datos: {0}',
     failedSettingTeamNameError: 'Error en establecer el nombre de equipo: {0}',
+    failedSettingTeamNumError: 'Error en establecer el número de equipo: {0}',
     failedSettingUserNameError: 'Error en establecer el nombre de usuario: {0}',
     individualTitle: 'Individual',
     invalidTeamInfoError: 'Información de equipo inválido',
     invalidTeamNameError: 'Nombre de equipo inválido',
+    invalidTeamNumError: 'Número de equipo inválido',
+    invalidTeamNumRule: 'Número de equipo inválido',
     invalidUserNameError: 'Nombre de usuario inválido',
     inviteCodeText:
       'Su compañero de equipo puede ingresar este código ' +
@@ -71,6 +74,7 @@ export default {
     teamMemberLeftLabel: '(se retiró)',
     teamMembersLabel: 'Miembros',
     teamNameLabel: 'Nombre de equipo',
+    teamNumLabel: 'Número de equipo',
     teamTitle: 'Equipo',
     yourNameLabel: 'Tu nombre',
   },

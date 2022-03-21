@@ -59,9 +59,9 @@ func handlePostScoresTeamsCSV(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 	sort.Slice(teams, func(i, j int) bool { return teams[i].Name < teams[j].Name })
 
-	recs := [][]string{{"team", "climber_1", "climber_2", "score", "climbs", "height"}}
+	recs := [][]string{{"team_num", "team_name", "climber_1", "climber_2", "score", "climbs", "height"}}
 	for _, team := range teams {
-		rec := []string{team.Name}
+		rec := []string{team.Num, team.Name}
 		if len(team.Users) > 0 {
 			rec = append(rec, team.Users[0].Name)
 		} else {
@@ -91,10 +91,15 @@ func handlePostScoresUsersCSV(ctx context.Context, w http.ResponseWriter, r *htt
 		return
 	}
 
-	recs := [][]string{{"climber", "team", "score", "climbs", "height"}}
+	recs := [][]string{{"climber", "team_num", "team_name", "score", "climbs", "height"}}
 	for _, u := range users {
 		recs = append(recs, []string{
-			u.Name, u.Team, strconv.Itoa(u.Score), strconv.Itoa(u.NumClimbs), strconv.Itoa(u.Height),
+			u.Name,
+			u.TeamNum,
+			u.TeamName,
+			strconv.Itoa(u.Score),
+			strconv.Itoa(u.NumClimbs),
+			strconv.Itoa(u.Height),
 		})
 	}
 
@@ -144,6 +149,9 @@ func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, []
 		}
 
 		ts := teamSummary{Name: team.Name}
+		if team.Num != 0 {
+			ts.Num = strconv.Itoa(team.Num)
+		}
 
 		// Iterate over the team's members.
 		for _, u := range team.Users {
@@ -153,7 +161,8 @@ func getScores(ctx context.Context, client *firestore.Client) ([]teamSummary, []
 			ts.Height += height
 			us := userSummary{
 				Name:       u.Name,
-				Team:       team.Name,
+				TeamName:   ts.Name,
+				TeamNum:    ts.Num,
 				Score:      score,
 				NumClimbs:  climbs,
 				Height:     height,
@@ -230,6 +239,7 @@ func makeClimbsDesc(climbs map[string]db.ClimbState, areas []db.Area) string {
 // teamSummary describes a team's performance.
 type teamSummary struct {
 	Name      string
+	Num       string
 	Score     int
 	NumClimbs int
 	Height    int
@@ -239,7 +249,8 @@ type teamSummary struct {
 // userSummary describes an individual climber's performance.
 type userSummary struct {
 	Name       string
-	Team       string // redundant, but used for per-user CSV
+	TeamName   string
+	TeamNum    string
 	Score      int
 	NumClimbs  int
 	Height     int
@@ -305,6 +316,7 @@ const scoresTemplate = `
       <thead>
         <tr>
 {{- if .Teams}}
+          <th>Number</th>
           <th>Team</th>
           <th>Score</th>
           <th>Climbs</th>
@@ -326,6 +338,7 @@ const scoresTemplate = `
 {{- if .Teams}}
 {{- range .Teams}}
         <tr>
+          <td class="num">{{.Num}}</td>
           <td>{{.Name}}</td>
           <td class="num">{{.Score}}</td>
           <td class="num">{{.NumClimbs}}</td>
@@ -356,7 +369,7 @@ const scoresTemplate = `
 {{- range .Users}}
         <tr>
           <td title="{{.ClimbsDesc}}">{{.Name}}</td>
-          <td>{{.Team}}</td>
+          <td>{{if .TeamNum}}{{.TeamNum}}. {{end}}{{.TeamName}}</td>
           <td class="num">{{.Score}}</td>
           <td class="num">{{.NumClimbs}}</td>
           <td class="num" sorttable_customkey="{{.Height}}">{{.Height}}'</td>

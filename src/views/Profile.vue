@@ -19,7 +19,7 @@
           id="profile-user-name-field"
           ref="userNameField"
           :value="userDoc.name"
-          :counter="nameMaxLength"
+          :counter="maxNameLength"
           :rules="nameRules"
           :label="$t('Profile.yourNameLabel')"
           @change="updateUserName"
@@ -37,10 +37,22 @@
             id="profile-team-name-field"
             ref="teamNameField"
             :value="teamDoc.name"
-            :counter="nameMaxLength"
+            :counter="maxNameLength"
             :rules="nameRules"
             :label="$t('Profile.teamNameLabel')"
             @change="updateTeamName"
+          />
+        </v-form>
+
+        <v-form v-model="teamNumValid" @submit.prevent>
+          <v-text-field
+            id="profile-team-num-field"
+            ref="teamNumField"
+            type="number"
+            :value="teamDoc.num ? teamDoc.num.toString() : ''"
+            :rules="teamNumRules"
+            :label="$t('Profile.teamNumLabel')"
+            @change="updateTeamNum"
           />
         </v-form>
 
@@ -258,12 +270,23 @@
                     ref="createNameField"
                     v-model="createTeamName"
                     v-if="createDialogShown"
-                    :counter="nameMaxLength"
+                    :counter="maxNameLength"
                     :rules="nameRules"
                     :label="$t('Profile.teamNameLabel')"
                     class="mt-2"
                     autofocus
                     required
+                  />
+
+                  <v-text-field
+                    id="profile-create-num-field"
+                    ref="createNumField"
+                    v-model="createTeamNum"
+                    v-if="createDialogShown"
+                    type="number"
+                    :rules="teamNumRules"
+                    :label="$t('Profile.teamNumLabel')"
+                    class="mt-2"
                   />
                 </v-form>
               </v-card-text>
@@ -302,7 +325,7 @@ import firebase from 'firebase/app';
 
 import { app } from '@/firebase';
 import { logInfo, logError } from '@/log';
-import { TeamSize, TeamUserData } from '@/models';
+import { Team, TeamSize, TeamUserData } from '@/models';
 
 import Card from '@/components/Card.vue';
 import DialogCard from '@/components/DialogCard.vue';
@@ -320,8 +343,8 @@ function cleanName(name: string): string {
   directives: { mask },
 })
 export default class Profile extends Mixins(Perf, UserLoader) {
-  // Maximum length of user and team names.
-  readonly nameMaxLength = 50;
+  readonly maxNameLength = 50; // for both user and team names
+  readonly maxTeamNum = 999;
 
   // Rules for user and team name inputs.
   get nameRules() {
@@ -329,14 +352,27 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       (v: string) => !!v || this.$t('Profile.nameEmptyRule'),
       (v: string) =>
         !v ||
-        v.length <= this.nameMaxLength ||
-        this.$t('Profile.nameTooLongRule', [this.nameMaxLength]),
+        v.length <= this.maxNameLength ||
+        this.$t('Profile.nameTooLongRule', [this.maxNameLength]),
     ];
   }
 
-  // Whether the user and team name text fields contain valid input.
+  // Rules for team number inputs.
+  get teamNumRules() {
+    return [
+      (v: string) => {
+        if (v.trim() === '') return true;
+        const n = parseFloat(v);
+        if (Number.isInteger(n) && n > 0 && n <= this.maxTeamNum) return true;
+        return this.$t('Profile.invalidTeamNumRule');
+      },
+    ];
+  }
+
+  // Whether the user/team name and team number text fields contain valid input.
   userNameValid = false;
   teamNameValid = false;
+  teamNumValid = false;
 
   // Model for "Create team" dialog visibility.
   createDialogShown = false;
@@ -344,6 +380,8 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   createTeamValid = false;
   // Model for team name input in "Create team" dialog.
   createTeamName = '';
+  // Model for team number input in "Create team" dialog.
+  createTeamNum = '';
   // Whether we're in the process of creating a team.
   creatingTeam = false;
 
@@ -425,10 +463,10 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     }
 
     new Promise((resolve) => {
-      logInfo('set_user_name', { name: name });
+      logInfo('set_user_name', { name });
       if (!this.userRef) throw new Error('No ref to user doc');
       const batch = app.firestore().batch();
-      batch.update(this.userRef, { name: name });
+      batch.update(this.userRef, { name });
       if (this.teamRef) {
         const key = 'users.' + this.user.uid + '.name';
         batch.update(this.teamRef, { [key]: name });
@@ -453,7 +491,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     }
 
     new Promise((resolve) => {
-      logInfo('set_team_name', { team: this.userDoc.team, name: name });
+      logInfo('set_team_name', { team: this.userDoc.team, name });
       if (!this.teamRef) throw new Error('No ref to team doc');
       resolve(this.teamRef.update({ name: name }));
     }).catch((err) => {
@@ -462,6 +500,31 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         this.$t('Profile.failedSettingTeamNameError', [err.message])
       );
       logError('set_team_name_failed', err);
+    });
+  }
+
+  // Updates the team's number in Firestore when the team num input is changed.
+  updateTeamNum(str: string) {
+    const num = str.trim() !== '' ? parseFloat(str) : undefined;
+    if (!this.teamNumValid || (num !== undefined && !Number.isInteger(num))) {
+      this.$emit('error-msg', this.$t('Profile.invalidTeamNumError'));
+      return;
+    }
+
+    new Promise((resolve) => {
+      logInfo('set_team_num', { team: this.userDoc.team, num });
+      if (!this.teamRef) throw new Error('No ref to team doc');
+      resolve(
+        this.teamRef.update({
+          num: num || firebase.firestore.FieldValue.delete(),
+        })
+      );
+    }).catch((err) => {
+      this.$emit(
+        'error-msg',
+        this.$t('Profile.failedSettingTeamNumError', [err.message])
+      );
+      logError('set_team_num_failed', err);
     });
   }
 
@@ -482,8 +545,22 @@ export default class Profile extends Mixins(Perf, UserLoader) {
       .then((inviteCode: string) => {
         logInfo('create_team', {
           name: this.createTeamName,
+          num: this.createTeamNum,
           invite: inviteCode,
         });
+
+        const doc: Partial<Team> = {
+          name: this.createTeamName,
+          users: { [this.user.uid!]: { name: this.userDoc.name!, climbs: {} } },
+          invite: inviteCode,
+        };
+        if (
+          this.createTeamNum !== undefined &&
+          this.createTeamNum.trim() !== ''
+        ) {
+          const num = parseFloat(this.createTeamNum);
+          if (Number.isInteger(num)) doc.num = num;
+        }
 
         // Generate an ID for a new team document. This works offline.
         const teamRef = app.firestore().collection('teams').doc();
@@ -492,13 +569,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         // an invite document containing the team ID, and updates the user doc to
         // contain the team ID.
         const batch = app.firestore().batch();
-        batch.set(teamRef, {
-          name: this.createTeamName,
-          users: {
-            [this.user.uid]: { name: this.userDoc.name, climbs: {} },
-          },
-          invite: inviteCode,
-        });
+        batch.set(teamRef, doc);
         batch.set(app.firestore().collection('invites').doc(inviteCode), {
           team: teamRef.id,
         });

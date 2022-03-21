@@ -6,9 +6,11 @@ module.exports = {
   elements: {
     userNameField: '#profile-user-name-field',
     teamNameField: '#profile-team-name-field',
+    teamNumField: '#profile-team-num-field',
     teamMembersDiv: '#profile-team-members',
     createButton: '#profile-create-button',
     createNameField: '#profile-create-name-field',
+    createNumField: '#profile-create-num-field',
     createConfirmButton: '#profile-create-confirm-button',
     inviteButton: '#profile-invite-button',
     inviteCodeDiv: 'div.invite-code',
@@ -33,6 +35,12 @@ module.exports = {
         name
       );
     },
+    setTeamNum(num: string) {
+      return this.waitForElementVisible('@teamNumField').setVTextFieldValue(
+        '@teamNumField',
+        num
+      );
+    },
     // The following methods open dialogs, interact with them, and then dismiss
     // them. Each initially ended with a call to waitForElementNotVisible() on
     // the dismiss button, but this seems to cause occasional failures of the
@@ -53,13 +61,18 @@ module.exports = {
     // To avoid this mess, we instead wait for an opposing button to become
     // visible in the main Profile page. For example, after creating a team, we
     // wait for the "Leave team" button to show up.
-    createTeam(teamName: string, inviteCodeFunc: (code: string) => void) {
+    createTeam(
+      teamName: string,
+      teamNum: string,
+      inviteCodeFunc: (code: string) => void
+    ) {
       return this.waitForElementVisible('@createButton')
         .click('@createButton')
         .setVTextFieldValue('@createNameField', teamName)
+        .setVTextFieldValue('@createNumField', teamNum)
         .click('@createConfirmButton')
         .waitForElementVisible('@inviteCodeDiv')
-        .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
+        .getText('@inviteCodeDiv', (res) => inviteCodeFunc(res.value))
         .click('@inviteDismissButton')
         .waitForElementVisible('@leaveButton', 20_000);
     },
@@ -83,13 +96,17 @@ module.exports = {
       return this.waitForElementVisible('@inviteButton')
         .click('@inviteButton')
         .waitForElementVisible('@inviteCodeDiv')
-        .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
+        .getText('@inviteCodeDiv', (res) => inviteCodeFunc(res.value))
         .click('@inviteDismissButton');
     },
-    checkUserOnTeam(userName: string, teamName: string) {
+    checkUserOnTeam(userName: string, teamName: string, teamNum: string) {
       this.waitForElementVisible('@teamNameField').assert.value(
         '@teamNameField',
         teamName
+      );
+      this.waitForElementVisible('@teamNumField').assert.value(
+        '@teamNumField',
+        teamNum
       );
       this.expect.element('@teamMembersDiv').text.to.contain(userName);
       return this;
@@ -103,7 +120,7 @@ module.exports = {
       // got entered as '082358'. Send each key separately and pause
       // between them to try to avoid this.
       const delayMs = 5;
-      const send = keys => this.pause(delayMs).sendKeys(sel, keys);
+      const send = (keys) => this.pause(delayMs).sendKeys(sel, keys);
       send([this.api.Keys.CONTROL, 'a']);
       send(this.api.Keys.DELETE);
       for (const ch of value.split('')) send(ch);

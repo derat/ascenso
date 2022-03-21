@@ -140,6 +140,7 @@ export interface Config {
 // Team represents a document in the 'teams' collection.
 export interface Team {
   name: string;
+  num?: number;
   invite: string;
   users: Record<string, TeamUserData>;
   abandoned?: boolean; // only if a user left after climbs were recorded

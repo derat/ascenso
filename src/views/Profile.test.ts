@@ -145,6 +145,25 @@ describe('Profile', () => {
     expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
   });
 
+  it('supports changing the team number', async () => {
+    const teamNum = 1;
+    const teamDoc = deepCopy(oneUserTeamDoc);
+    teamDoc.num = teamNum;
+
+    await init(joinedUserDoc, teamDoc);
+    const field = findRef('teamNumField');
+    expect(getValue(field)).toEqual(teamNum.toString());
+
+    const newNum = 45;
+    field.vm.$emit('change', newNum.toString());
+    await flushPromises();
+
+    expect(getValue(field)).toEqual(newNum.toString());
+    const newTeamDoc = deepCopy(teamDoc);
+    newTeamDoc.num = newNum;
+    expect(MockFirebase.getDoc(teamPath)).toEqual(newTeamDoc);
+  });
+
   it('removes excessive whitespace from user and team names', async () => {
     await init(joinedUserDoc, oneUserTeamDoc);
 
@@ -179,9 +198,9 @@ describe('Profile', () => {
 
   it('displays a list of team members', async () => {
     await init(joinedUserDoc, twoUserTeamDoc);
-    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
-      [userName, otherUserName]
-    );
+    expect(
+      wrapper.findAll('.member-name').wrappers.map((w) => w.text())
+    ).toEqual([userName, otherUserName]);
   });
 
   it('reports when a member has left the team', async () => {
@@ -193,7 +212,7 @@ describe('Profile', () => {
         .findAll('.member-name')
         // Need to replace repeated whitespace because Prettier insists on
         // reformatting the template.
-        .wrappers.map(w => w.text().replace(/\s+/g, ' '))
+        .wrappers.map((w) => w.text().replace(/\s+/g, ' '))
     ).toEqual([userName, `${otherUserName} (left)`]);
   });
 
@@ -336,9 +355,9 @@ describe('Profile', () => {
     expect(wrapper.find('.invite-code').text()).toBe(newInvite);
 
     // The main view should be updated to show the team roster now.
-    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
-      [userName]
-    );
+    expect(
+      wrapper.findAll('.member-name').wrappers.map((w) => w.text())
+    ).toEqual([userName]);
   });
 
   it('retries until it finds an unused invite code', async () => {
@@ -349,7 +368,7 @@ describe('Profile', () => {
     let remainingFailures = numFailures;
     let lastPath: string | undefined;
 
-    MockFirebase.getDocHook = path => {
+    MockFirebase.getDocHook = (path) => {
       if (!path.startsWith('invites/')) return null;
 
       if (remainingFailures) {
@@ -387,7 +406,7 @@ describe('Profile', () => {
     await init(singleUserDoc);
 
     // Return a document for all paths in the invites collection.
-    MockFirebase.getDocHook = path =>
+    MockFirebase.getDocHook = (path) =>
       path.startsWith('invites/') ? { team: 'team-id' } : null;
 
     findRef('createButton').trigger('click');
@@ -426,9 +445,9 @@ describe('Profile', () => {
     // The dialog should be dismissed and the main view should be updated to
     // show the team roster.
     expect(getValue(dialog)).toBeFalsy();
-    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
-      [userName]
-    );
+    expect(
+      wrapper.findAll('.member-name').wrappers.map((w) => w.text())
+    ).toEqual([userName]);
   });
 
   it('supports rejoining a team', async () => {

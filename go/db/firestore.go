@@ -160,6 +160,8 @@ const (
 type Team struct {
 	// Name contains the team's name.
 	Name string `firestore:"name"`
+	// Num optionally contains the team's number.
+	Num int `firestore:"num"`
 	// Invite contains the team's invitation code.
 	Invite string `firestore:"invite"`
 	// Users contains information about the team's members, keyed by user ID.

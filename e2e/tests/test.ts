@@ -3,16 +3,18 @@
 // found in the LICENSE file.
 
 module.exports = {
-  Test: function(browser) {
+  Test: function (browser) {
     if (!process.env.E2E_URL) throw new Error('E2E_URL undefined');
 
     // Logs a header at the beginning of a task.
-    const task = msg => browser.perform(() => console.log('✏️ ' + msg));
+    const task = (msg) => browser.perform(() => console.log('✏️ ' + msg));
 
     const userName1 = 'E2E User #1';
     const userName2 = 'E2E User #2';
     const teamName = 'E2E Team';
+    const teamNum = '23';
     const newTeamName = 'E2E Updated Team';
+    const newTeamNum = '101';
 
     // Assigned after creating team.
     let inviteCode;
@@ -43,16 +45,19 @@ module.exports = {
 
     task('Creating team');
     profile
-      .createTeam(teamName, code => {
+      .createTeam(teamName, teamNum, (code) => {
         inviteCode = code;
       })
-      .checkUserOnTeam(userName1, teamName);
+      .checkUserOnTeam(userName1, teamName, teamNum);
 
     task('Changing team name');
     profile.setTeamName(newTeamName);
 
+    task('Changing team number');
+    profile.setTeamNum(newTeamNum);
+
     task('Showing invite code');
-    profile.showInviteCode(code => profile.assert.equal(code, inviteCode));
+    profile.showInviteCode((code) => profile.assert.equal(code, inviteCode));
 
     task('Leaving team');
     profile.leaveTeam();
@@ -61,7 +66,7 @@ module.exports = {
     profile
       // Pass a function so |inviteCode| is initialized before it's used.
       .perform(() => profile.joinTeam(inviteCode))
-      .checkUserOnTeam(userName1, newTeamName);
+      .checkUserOnTeam(userName1, newTeamName, newTeamNum);
 
     task('Signing out');
     toolbar.signOut();
@@ -77,8 +82,8 @@ module.exports = {
     task('Joining team');
     profile
       .perform(() => profile.joinTeam(inviteCode))
-      .checkUserOnTeam(userName1, newTeamName)
-      .checkUserOnTeam(userName2, newTeamName);
+      .checkUserOnTeam(userName1, newTeamName, newTeamNum)
+      .checkUserOnTeam(userName2, newTeamName, newTeamNum);
 
     task('Climbing a route');
     toolbar.clickNavElement('@routes');
@@ -97,7 +102,7 @@ module.exports = {
     task('Checking that route is still climbed');
     routes
       .toggleArea(areaID)
-      .getClimbButtonText(routeID, 0, text => routes.assert.equal(text, 'L'));
+      .getClimbButtonText(routeID, 0, (text) => routes.assert.equal(text, 'L'));
 
     task('Checking stats');
     toolbar.clickNavElement('@stats');

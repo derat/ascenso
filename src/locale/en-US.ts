@@ -39,10 +39,13 @@ export default {
     failedLeavingTeamError: 'Failed leaving team: {0}',
     failedLoadingDataError: 'Failed loading data: {0}',
     failedSettingTeamNameError: 'Failed setting team name: {0}',
+    failedSettingTeamNumError: 'Failed setting team number: {0}',
     failedSettingUserNameError: 'Failed setting user name: {0}',
     individualTitle: 'Individual',
     invalidTeamInfoError: 'Invalid team information',
     invalidTeamNameError: 'Invalid team name',
+    invalidTeamNumError: 'Invalid team number',
+    invalidTeamNumRule: 'Invalid team number',
     invalidUserNameError: 'Invalid user name',
     inviteCodeText:
       'Your teammate can enter this code in their profile ' +
@@ -67,6 +70,7 @@ export default {
     teamMemberLeftLabel: '(left)',
     teamMembersLabel: 'Members',
     teamNameLabel: 'Team name',
+    teamNumLabel: 'Team number',
     teamTitle: 'Team',
     yourNameLabel: 'Your Name',
   },
