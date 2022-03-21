@@ -75,14 +75,12 @@
       max-width="512px"
     >
       <DialogCard :title="$t('Routes.routeFiltersTitle')">
-        <v-subheader ref="filtersGradeLabel">
-          {{
-            $t('Routes.gradeRangeLabel', [
-              filtersDialogGrades[0],
-              filtersDialogGrades[1],
-            ])
-          }}
-        </v-subheader>
+        <v-subheader ref="filtersGradeLabel">{{
+          $t('Routes.gradeRangeLabel', [
+            filtersDialogGrades[0],
+            filtersDialogGrades[1],
+          ])
+        }}</v-subheader>
         <v-card-text>
           <GradeSlider
             ref="filtersGradeSlider"
@@ -96,15 +94,18 @@
 
         <v-divider />
         <v-card-actions>
-          <v-btn text @click="onCancelFilters" v-t="'Routes.cancelButton'" />
+          <v-btn text @click="onCancelFilters">
+            {{ $t('Routes.cancelButton') }}
+          </v-btn>
           <v-spacer />
           <v-btn
             ref="applyFiltersButton"
             text
             color="primary"
             @click="onApplyFilters"
-            v-t="'Routes.applyButton'"
-          />
+          >
+            {{ $t('Routes.applyButton') }}
+          </v-btn>
         </v-card-actions>
       </DialogCard>
     </v-dialog>

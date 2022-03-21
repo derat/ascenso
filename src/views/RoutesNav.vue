@@ -7,12 +7,9 @@
     <!-- Emit an event on the root Vue instance that the Routes view can listen
          for. See https://stackoverflow.com/a/47004242 for more about this
          approach. -->
-    <v-btn
-      text
-      class="white--text"
-      @click="$root.$emit('show-route-filters')"
-      v-t="'RoutesNav.filtersButton'"
-    />
+    <v-btn text class="white--text" @click="$root.$emit('show-route-filters')">
+      {{ $t('RoutesNav.filtersButton') }}
+    </v-btn>
   </v-toolbar-items>
 </template>
 
