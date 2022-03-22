@@ -81,7 +81,6 @@ export default {
     leadLabel: 'Lead',
     pointsLabel: 'Puntos',
     teamNameLabel: 'Nombre de equipo',
-    teamNumLabel: '# de equipo',
     timeLabel: 'Hora de comienzo',
     topRopeLabel: 'Top-rope',
     totalPointsLabel: 'Puntos totales',

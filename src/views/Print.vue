@@ -7,23 +7,23 @@
     <div class="header">
       <span id="compName">{{ competitionName }} {{ competitionYear }}</span>
       <span>
-        <span id="teamNumSpan">{{ $t('Print.teamNumLabel') }} _____</span>
-        <span>{{ $t('Print.teamNameLabel') }} ___________________________</span>
+        {{ $t('Print.teamNameLabel') }}
+        ______________________________
       </span>
     </div>
     <div class="header">
       <span>
         <span id="dateSpan">
           <template v-if="competitionDate">{{ competitionDate }}</template>
-          <template v-else
-            >{{ $t('Print.dateLabel') }} _________________</template
-          >
+          <template v-else>
+            {{ $t('Print.dateLabel') }} _________________
+          </template>
         </span>
         <span>{{ $t('Print.timeLabel') }} ___________</span>
       </span>
       <span>
         {{ $t('Print.favoriteClimberLabel') }}
-        ___________________________
+        ______________________________
       </span>
     </div>
 

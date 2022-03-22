@@ -77,7 +77,6 @@ export default {
     leadLabel: 'Lead',
     pointsLabel: 'Points',
     teamNameLabel: 'Team Name',
-    teamNumLabel: 'Team #',
     timeLabel: 'Starting Time',
     topRopeLabel: 'Top-rope',
     totalPointsLabel: 'Total Points',
