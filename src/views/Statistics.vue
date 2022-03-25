@@ -242,11 +242,13 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
   onImageTabClick() {
     // TODO: Only updating the image when its tab is activated (and when the
-    // Firestore docs have also all been bound) is pretty bogus.
+    // Firestore docs have also all been bound) is pretty bogus, but it seems
+    // safer than running this hacky code unconditionally whenever the
+    // Statistics view is mounted.
     this.updateImage();
   }
 
-  // Draws individual stats to a canvas and updates |imageData|.
+  // Draws individual stats to a canvas and asynchronously updates |imageData|.
   updateImage() {
     if (
       !this.configLoaded ||
@@ -283,16 +285,23 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
     const lead = filterClimbs(this.user.uid, ClimbState.LEAD);
     const tr = filterClimbs(this.user.uid, ClimbState.TOP_ROPE);
 
-    const margin = 32;
+    const margin = 48;
     const logoHeight = 360;
+    const logoColor = '#fbc02d';
+    const logoBottomMargin = 80;
+    const bgStartColor = '#01579b';
+    const bgEndColor = '#002f6c';
+    const borderColor = '#fff3';
+    const borderWidth = margin / 8;
+    const borderRadius = 32;
+    const routeFillColor = '#0003';
+    const routeRadius = 24;
     const fontList = 'Roboto, sans-serif';
+    const textColor = '#fff';
+    const labelColor = '#fffa';
     const bigFontSize = 36;
     const maxRouteFontSize = 24;
     const lineHeight = 1.3333;
-    const labelColor = '#888';
-
-    let textX = margin;
-    let textY = margin + logoHeight + 80;
 
     const canvas = document.createElement('canvas') as HTMLCanvasElement;
     canvas.width = 1080; // https://help.instagram.com/1631821640426723
@@ -300,34 +309,77 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
     const ctx = canvas.getContext('2d')!;
 
+    // Load the logo and render the completed image asynchronously.
     const logo = new Image();
     logo.src = process.env.VUE_APP_LOGO_URL || '';
     logo.addEventListener('load', () => {
       const w = logo.width * (logoHeight / logo.height);
       const x = (canvas.width - w) / 2;
-      ctx.drawImage(logo, x, margin, w, logoHeight);
+
+      // Draw the logo to a different canvas so we can change its color before
+      // drawing it to the main canvas: https://stackoverflow.com/a/4231508
+      const buf = document.createElement('canvas') as HTMLCanvasElement;
+      buf.width = logo.width;
+      buf.height = logo.height;
+      const bctx = buf.getContext('2d')!;
+      bctx.fillStyle = logoColor;
+      bctx.fillRect(0, 0, buf.width, buf.height);
+      bctx.globalCompositeOperation = 'destination-atop';
+      bctx.drawImage(logo, 0, 0);
+
+      ctx.drawImage(buf, x, margin, w, logoHeight);
       this.imageData = canvas.toDataURL('image/png');
     });
 
-    ctx.fillStyle = 'white';
+    // Fill the image with a gradient.
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, canvas.height);
+    gradient.addColorStop(0, bgStartColor);
+    gradient.addColorStop(1, bgEndColor);
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const drawText = (text: string, size: number, color = 'black') => {
+    // Draw a rounded border around the image.
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = borderWidth;
+    roundRect(
+      ctx,
+      margin / 2,
+      margin / 2,
+      canvas.width - margin,
+      canvas.height - margin,
+      borderRadius,
+      true /* stroke */
+    );
+
+    let textX = margin;
+    let textY = margin + logoHeight + logoBottomMargin;
+
+    const drawText = (
+      text: string,
+      size: number,
+      color: string,
+      center = false,
+      maxWidth = canvas.width - margin - textX
+    ) => {
       ctx.font = `${size}px ${fontList}`;
+
+      let x = textX;
 
       // Shrink the text if it's too wide.
       const metrics = ctx.measureText(text);
-      const avail = canvas.width - textX - margin;
-      if (avail > 0 && metrics.width > avail) {
-        size *= avail / metrics.width;
+      if (maxWidth > 0 && metrics.width > maxWidth) {
+        size *= maxWidth / metrics.width;
         ctx.font = `${size}px ${fontList}`;
+      } else if (center) {
+        x += (maxWidth - metrics.width) / 2;
       }
 
       ctx.fillStyle = color;
-      ctx.fillText(text, textX, textY);
+      ctx.fillText(text, x, textY);
       textY += size * lineHeight;
     };
 
+    // Draw the climber's name and stats and the team's name and stats.
     const drawStats = (name: string, stats: Stats) => {
       const ps = this.$tc('Statistics.imagePoints', stats.score, {
         n: stats.score,
@@ -335,27 +387,49 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
       const cs = this.$tc('Statistics.imageClimbs', stats.all, {
         n: stats.all,
       });
-      drawText(`${name}: ${ps} (${cs}, ${stats.height}')`, bigFontSize);
+      drawText(
+        `${name}: ${ps} (${cs}, ${stats.height}')`,
+        bigFontSize,
+        textColor,
+        true /* center */
+      );
     };
     drawStats(this.userDoc.name, userStats);
     drawStats(this.teamDoc.name, teamStats);
 
+    // Draw the competition date.
     drawText(
       this.config.startTime
         ? this.$d(this.config.startTime.toDate(), 'date')
         : new Date().getFullYear().toString(),
-      bigFontSize
+      bigFontSize,
+      textColor,
+      true /* center */
     );
 
     if (!lead.length && !tr.length) return;
 
+    // Draw a rounded rect that will contain the route list.
+    ctx.fillStyle = routeFillColor;
+    roundRect(
+      ctx,
+      margin,
+      textY,
+      canvas.width - 2 * margin,
+      canvas.height - textY - margin,
+      routeRadius
+    );
+
+    textX += 0.5 * margin;
+    textY += margin;
+
     const lines = [] as [string, string][]; // [text, color]
     const addRoutes = (label: string, ids: string[]) => {
       if (!ids.length) return;
-      if (lines.length) lines.push(['', 'black']);
+      if (lines.length) lines.push(['', textColor]);
       lines.push([label, labelColor]);
       for (const id of ids) {
-        lines.push([`${routes[id].name} (${routes[id].grade})`, 'black']);
+        lines.push([`${routes[id].name} (${routes[id].grade})`, textColor]);
       }
     };
     addRoutes(this.$t('Statistics.leadStat'), lead);
@@ -363,16 +437,21 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
     // Scale the font size down if needed to fit all the routes in two columns.
     const routeY = textY;
+    const routeHeight = canvas.height - margin - routeY;
     const routeLineSize = Math.min(
       maxRouteFontSize * lineHeight,
-      Math.floor((canvas.height - routeY) / Math.ceil(lines.length / 2))
+      Math.floor(routeHeight / Math.ceil(lines.length / 2))
     );
     const routeFontSize = routeLineSize / lineHeight;
 
+    // Draw the routes.
     for (const line of lines) {
       // Wrap to a second column.
-      if (textX === margin && textY + routeLineSize > canvas.height) {
-        textX += canvas.width / 2;
+      if (
+        textX < canvas.width / 2 &&
+        textY + routeLineSize > canvas.height - margin
+      ) {
+        textX = canvas.width / 2 + margin;
         textY = routeY;
       }
       // Skip blank lines at top.
@@ -380,6 +459,32 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
       drawText(line[0], routeFontSize, line[1]);
     }
   }
+}
+
+// It seems pretty ridiculous that <canvas> doesn't let you specify a border
+// radius when drawing a rectangle. This function is swiped from
+// http://js-bits.blogspot.com/2010/07/canvas-rounded-corner-rectangles.html.
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  stroke = false // fill if false
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  stroke ? ctx.stroke() : ctx.fill();
 }
 </script>
 
