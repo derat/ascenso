@@ -179,9 +179,9 @@ describe('Profile', () => {
 
   it('displays a list of team members', async () => {
     await init(joinedUserDoc, twoUserTeamDoc);
-    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
-      [userName, otherUserName]
-    );
+    expect(
+      wrapper.findAll('.member-name').wrappers.map((w) => w.text())
+    ).toEqual([userName, otherUserName]);
   });
 
   it('reports when a member has left the team', async () => {
@@ -193,7 +193,7 @@ describe('Profile', () => {
         .findAll('.member-name')
         // Need to replace repeated whitespace because Prettier insists on
         // reformatting the template.
-        .wrappers.map(w => w.text().replace(/\s+/g, ' '))
+        .wrappers.map((w) => w.text().replace(/\s+/g, ' '))
     ).toEqual([userName, `${otherUserName} (left)`]);
   });
 
@@ -302,7 +302,7 @@ describe('Profile', () => {
     // directly -- calling setProps({ value: newTeamName }) on the field's
     // wrapper doesn't appear to update its model.
     const newTeamName = 'Created Team';
-    wrapper.vm.$data.createTeamName = newTeamName;
+    wrapper.vm.$data.createTeamName = `  ${newTeamName}  `; // should trim
     validateForm(findRef('createForm'));
     expect(confirmButton.attributes('disabled')).toBeFalsy();
     confirmButton.trigger('click');
@@ -336,9 +336,9 @@ describe('Profile', () => {
     expect(wrapper.find('.invite-code').text()).toBe(newInvite);
 
     // The main view should be updated to show the team roster now.
-    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
-      [userName]
-    );
+    expect(
+      wrapper.findAll('.member-name').wrappers.map((w) => w.text())
+    ).toEqual([userName]);
   });
 
   it('retries until it finds an unused invite code', async () => {
@@ -349,7 +349,7 @@ describe('Profile', () => {
     let remainingFailures = numFailures;
     let lastPath: string | undefined;
 
-    MockFirebase.getDocHook = path => {
+    MockFirebase.getDocHook = (path) => {
       if (!path.startsWith('invites/')) return null;
 
       if (remainingFailures) {
@@ -387,7 +387,7 @@ describe('Profile', () => {
     await init(singleUserDoc);
 
     // Return a document for all paths in the invites collection.
-    MockFirebase.getDocHook = path =>
+    MockFirebase.getDocHook = (path) =>
       path.startsWith('invites/') ? { team: 'team-id' } : null;
 
     findRef('createButton').trigger('click');
@@ -426,9 +426,9 @@ describe('Profile', () => {
     // The dialog should be dismissed and the main view should be updated to
     // show the team roster.
     expect(getValue(dialog)).toBeFalsy();
-    expect(wrapper.findAll('.member-name').wrappers.map(w => w.text())).toEqual(
-      [userName]
-    );
+    expect(
+      wrapper.findAll('.member-name').wrappers.map((w) => w.text())
+    ).toEqual([userName]);
   });
 
   it('supports rejoining a team', async () => {

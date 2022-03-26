@@ -323,11 +323,13 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   // Maximum length of user and team names.
   readonly nameMaxLength = 50;
 
-  // Rules for user and team name inputs.
+  // Rules for user and team name inputs. Handle undefined values since some
+  // text fields are bound to fields in Firestore docs.
   get nameRules() {
     return [
-      (v: string) => !!v || this.$t('Profile.nameEmptyRule'),
-      (v: string) =>
+      (v?: string) =>
+        (v && !!v.trim().length) || this.$t('Profile.nameEmptyRule'),
+      (v?: string) =>
         !v ||
         v.length <= this.nameMaxLength ||
         this.$t('Profile.nameTooLongRule', [this.nameMaxLength]),
@@ -468,7 +470,8 @@ export default class Profile extends Mixins(Perf, UserLoader) {
   // Creates a new team when the "Create" button is clicked in the "Create
   // team" dialog.
   createTeam() {
-    if (!this.createTeamValid) {
+    const name = cleanName(this.createTeamName);
+    if (!this.createTeamValid || !name.length) {
       this.$emit('error-msg', this.$t('Profile.invalidTeamInfoError'));
       return;
     }
@@ -480,10 +483,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
     this.findUnusedInviteCode()
       .then((inviteCode: string) => {
-        logInfo('create_team', {
-          name: this.createTeamName,
-          invite: inviteCode,
-        });
+        logInfo('create_team', { name, invite: inviteCode });
 
         // Generate an ID for a new team document. This works offline.
         const teamRef = app.firestore().collection('teams').doc();
@@ -493,7 +493,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
         // contain the team ID.
         const batch = app.firestore().batch();
         batch.set(teamRef, {
-          name: this.createTeamName,
+          name,
           users: {
             [this.user.uid]: { name: this.userDoc.name, climbs: {} },
           },
