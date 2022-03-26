@@ -139,9 +139,11 @@ import RouteList from '@/components/RouteList.vue';
 import Spinner from '@/components/Spinner.vue';
 import UserLoader from '@/mixins/UserLoader';
 
-const secMs = 1000;
-const hourMs = 3600 * secMs;
-const dayMs = 24 * hourMs;
+const secondMs = 1000;
+const minuteMs = 60 * secondMs;
+const hourMs = 60 * minuteMs;
+const dayMs = 24 * hourMs; // hack: not handling DST
+const weekMs = 7 * dayMs;
 
 // These functions are exported so they can be exercised by unit tests. Ideally
 // we could use a module that lets tests access them without exporting them,
@@ -151,18 +153,21 @@ const dayMs = 24 * hourMs;
 //   https://github.com/facebook/create-react-app/issues/5662.
 
 // Formats the supplied duration as a string, e.g. '1 day, 3 hours' or '4 hours,
-// 23 minutes, 2 seconds'.
+// 23 minutes'.
 // - If longer than a week, we display it with day granularity.
 // - If longer than a day, we display it with hour granularity.
+// - If longer than an hour, we display it with minute granularity.
 // - Otherwise, we display it with second granularity.
 export function formatDuration(ms: number, language: string): string {
   let units: humanizeDuration.Unit[];
-  if (ms > 7 * dayMs) {
+  if (ms > weekMs) {
     units = ['w', 'd'];
   } else if (ms > dayMs) {
     units = ['d', 'h'];
+  } else if (ms > hourMs) {
+    units = ['h', 'm'];
   } else {
-    units = ['h', 'm', 's'];
+    units = ['m', 's'];
   }
   return humanizeDuration(ms, { units, language, round: true });
 }
@@ -192,9 +197,10 @@ export function getNextTimeout(remainMs: number): number {
 
   // The granularities and thresholds here correspond to when the strings
   // returned by formatDuration() would change.
-  if (remainMs > 7 * dayMs) return f(dayMs, 7 * dayMs);
+  if (remainMs > weekMs) return f(dayMs, weekMs);
   if (remainMs > dayMs) return f(hourMs, dayMs);
-  return f(secMs, 0);
+  if (remainMs > hourMs) return f(minuteMs, hourMs);
+  return f(secondMs, 0);
 }
 
 @Component({

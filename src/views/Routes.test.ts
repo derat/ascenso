@@ -119,18 +119,18 @@ describe('Routes', () => {
   }
 
   it('displays all areas', () => {
-    expect(wrapper.findAll('.area').wrappers.map(w => w.text())).toEqual(
-      sortedData.areas.map(a => a.name)
+    expect(wrapper.findAll('.area').wrappers.map((w) => w.text())).toEqual(
+      sortedData.areas.map((a) => a.name)
     );
-    expect(wrapper.findAll('.mp-icon').wrappers.map(w => w.text())).toEqual([
+    expect(wrapper.findAll('.mp-icon').wrappers.map((w) => w.text())).toEqual([
       'info',
     ]);
   });
 
   it('passes route and climber data to route lists', () => {
     const routeLists = wrapper.findAll(RouteList).wrappers;
-    expect(routeLists.map(w => w.props('routes'))).toEqual(
-      sortedData.areas.map(a => a.routes)
+    expect(routeLists.map((w) => w.props('routes'))).toEqual(
+      sortedData.areas.map((a) => a.routes)
     );
 
     // Each RouteList should be passed the same ClimberInfos.
@@ -139,8 +139,8 @@ describe('Routes', () => {
       const color = (Routes as any).climbColors[i];
       return new ClimberInfo(user.name, user.climbs, color);
     });
-    expect(routeLists.map(w => w.props('climberInfos'))).toEqual(
-      sortedData.areas.map(a => climberInfos)
+    expect(routeLists.map((w) => w.props('climberInfos'))).toEqual(
+      sortedData.areas.map((a) => climberInfos)
     );
   });
 
@@ -256,7 +256,7 @@ describe('Routes', () => {
   it('displays counts of available routes', () => {
     // r2 should be excluded since it's been climbed by both team members.
     const getCounts = () =>
-      wrapper.findAll('.count').wrappers.map(w => w.text());
+      wrapper.findAll('.count').wrappers.map((w) => w.text());
     expect(getCounts()).toEqual(['1', '1']);
 
     // After clearing the climbs, all routes should be included.
@@ -294,7 +294,7 @@ describe('Routes', () => {
       endTime: firebase.firestore.Timestamp.fromMillis(nowMs + 3 * hour),
     });
     expect(bar.isVisible()).toBe(true);
-    expect(bar.text()).toBe('1 hour until competition starts');
+    expect(bar.text()).toBe('60 minutes until competition starts');
 
     const advance = (ms: number) => {
       nowMs += ms;
@@ -328,12 +328,18 @@ test('formatDuration', () => {
   expect(f(500)).toBe('1 second');
   expect(f(1200)).toBe('1 second');
   expect(f(2000)).toBe('2 seconds');
+  expect(f(min - sec)).toBe('59 seconds');
   expect(f(min)).toBe('1 minute');
   expect(f(min + 2 * sec)).toBe('1 minute, 2 seconds');
   expect(f(hour - sec)).toBe('59 minutes, 59 seconds');
-  expect(f(hour)).toBe('1 hour');
-  expect(f(hour + min + sec)).toBe('1 hour, 1 minute, 1 second');
-  expect(f(day - sec)).toBe('23 hours, 59 minutes, 59 seconds');
+  expect(f(hour)).toBe('60 minutes');
+
+  // Durations longer than an hour should be rounded to the nearest minute.
+  expect(f(hour + min)).toBe('1 hour, 1 minute');
+  expect(f(hour + min + sec)).toBe('1 hour, 1 minute');
+  expect(f(day - 31 * sec)).toBe('23 hours, 59 minutes');
+  expect(f(day - 30 * sec)).toBe('24 hours');
+  expect(f(day - sec)).toBe('24 hours');
   expect(f(day)).toBe('24 hours');
 
   // Durations longer than a day should be rounded to the hour.
@@ -354,7 +360,7 @@ test('formatDuration', () => {
 test('getNextTimeout', () => {
   const f = getNextTimeout;
 
-  // For durations of a day or less, we should update once per second.
+  // For durations of an hour or less, we should update once per second.
   // If we're close enough to the next update that we'd already be displaying
   // its time, it should be skipped.
   expect(f(1)).toBe(1);
@@ -365,8 +371,10 @@ test('getNextTimeout', () => {
   expect(f(1500)).toBe(500);
   expect(f(1999)).toBe(999);
   expect(f(2000)).toBe(sec);
-  expect(f(12 * hour)).toBe(sec);
-  expect(f(day)).toBe(sec);
+
+  // Above an hour, we should update once per minute.
+  expect(f(12 * hour)).toBe(min);
+  expect(f(day)).toBe(min);
 
   // For durations over a day, we should update once per hour (or at the 1-day
   // mark if it's less than an hour away).
