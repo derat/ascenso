@@ -58,8 +58,8 @@ module.exports = {
         .click('@createButton')
         .setVTextFieldValue('@createNameField', teamName)
         .click('@createConfirmButton')
-        .waitForElementVisible('@inviteCodeDiv')
-        .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
+        .waitForElementVisible('@inviteCodeDiv', 20_000)
+        .getText('@inviteCodeDiv', (res) => inviteCodeFunc(res.value))
         .click('@inviteDismissButton')
         .waitForElementVisible('@leaveButton', 20_000);
     },
@@ -83,7 +83,7 @@ module.exports = {
       return this.waitForElementVisible('@inviteButton')
         .click('@inviteButton')
         .waitForElementVisible('@inviteCodeDiv')
-        .getText('@inviteCodeDiv', res => inviteCodeFunc(res.value))
+        .getText('@inviteCodeDiv', (res) => inviteCodeFunc(res.value))
         .click('@inviteDismissButton');
     },
     checkUserOnTeam(userName: string, teamName: string) {
@@ -103,7 +103,7 @@ module.exports = {
       // got entered as '082358'. Send each key separately and pause
       // between them to try to avoid this.
       const delayMs = 5;
-      const send = keys => this.pause(delayMs).sendKeys(sel, keys);
+      const send = (keys) => this.pause(delayMs).sendKeys(sel, keys);
       send([this.api.Keys.CONTROL, 'a']);
       send(this.api.Keys.DELETE);
       for (const ch of value.split('')) send(ch);
