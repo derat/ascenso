@@ -17,32 +17,45 @@
         {{ $t('Statistics.imageTab') }}
       </v-tab>
 
-      <v-tab-item key="team" value="team" v-if="teamCards.length">
+      <v-tab-item key="team" value="team" v-if="teamCards.length" class="mt-3">
         <Card
           v-for="(card, i) in teamCards"
           :key="card.name"
           :title="card.name"
-          class="mt-3 mx-0"
-          :class="'team-card-' + i"
+          class="mx-0"
+          :class="{
+            ['team-card-' + i]: true,
+            ['mb-n6']: i < teamCards.length - 1,
+            ['mb-1']: i === teamCards.length - 1,
+          }"
         >
           <StatisticsList :items="card.items" />
         </Card>
       </v-tab-item>
 
-      <v-tab-item key="user" value="user">
+      <v-tab-item key="user" value="user" class="mt-3">
         <Card
           v-for="(card, i) in userCards"
           :key="card.name"
           :title="card.name"
-          class="mt-3 mx-0"
-          :class="'user-card-' + i"
+          class="mx-0"
+          :class="{
+            ['user-card-' + i]: true,
+            ['mb-n6']: i < userCards.length - 1,
+            ['mb-1']: i === userCards.length - 1,
+          }"
         >
           <StatisticsList :items="card.items" />
         </Card>
       </v-tab-item>
 
-      <v-tab-item v-if="teamDoc && teamDoc.users" key="image" value="image">
-        <Card class="mt-3 mx-0">
+      <v-tab-item
+        v-if="teamDoc && teamDoc.users"
+        key="image"
+        value="image"
+        class="mt-3"
+      >
+        <Card class="mx-0">
           <img class="stats-img" :src="imageData" />
         </Card>
       </v-tab-item>

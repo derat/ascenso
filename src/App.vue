@@ -7,7 +7,7 @@
     <Toolbar v-if="showToolbar" :title="$t(`App.${$route.name}Title`)">
       <router-view name="nav" />
     </Toolbar>
-    <v-content>
+    <v-main>
       <!-- Ideally, this could be wrapped in <keep-alive include="Routes"> to
            keep the slow-to-render Routes view alive after navigating away from
            it, but that seems to break vuefire bindings: after switching away
@@ -21,18 +21,16 @@
         @info-msg="onMessage($event, 'info', 3000)"
       />
 
-      <!-- TODO: Change timeout to -1 for Vuetify 2.3+. -->
-      <v-snackbar v-model="showingUpdate" bottom color="success" :timeout="0">
+      <v-snackbar v-model="showingUpdate" bottom color="success" :timeout="-1">
         {{ $t('App.updateAvailableText') }}
-        <!-- TODO: This v-btn and v-icon may need to be wrapped in a template so
-             they can have v-bind="attrs" after upgrading Vuetify and/or Vue.
-             With the current version, doing so makes them not show up. :-/ -->
-        <v-btn text @click="onUpdateReloadClick">
-          {{ $t('App.updateReloadButton') }}
-        </v-btn>
-        <v-icon small @click="onUpdateDismissClick" color="white" class="mx-2"
-          >close</v-icon
-        >
+        <template v-slot:action>
+          <v-btn text @click="onUpdateReloadClick">
+            {{ $t('App.updateReloadButton') }}
+          </v-btn>
+          <v-icon small @click="onUpdateDismissClick" color="white" class="mx-2"
+            >close</v-icon
+          >
+        </template>
       </v-snackbar>
 
       <!-- This component is used to display transient messages. -->
@@ -48,9 +46,13 @@
              https://stackoverflow.com/q/49627750 both suggest the hack of
              setting 'persistent' on the dialog to prevent clicks outside of it
              from closing it, but that's not very user-friendly. -->
-        <v-btn text @click="showSnackbar = false">Close</v-btn>
+        <template v-slot:action>
+          <v-icon small @click="showSnackbar = false" color="white" class="mx-2"
+            >close</v-icon
+          >
+        </template>
       </v-snackbar>
-    </v-content>
+    </v-main>
   </v-app>
 </template>
 
@@ -80,7 +82,7 @@ export default class App extends Mixins(Perf) {
   // automatically sets this to false once the timeout has been reached.
   showSnackbar = false;
   // Amount of time to display snackbar before autohiding, in milliseconds.
-  snackbarTimeoutMs = 0;
+  snackbarTimeoutMs = -1;
 
   get showToolbar() {
     return this.signedIn && this.$route.meta && this.$route.meta.auth;

@@ -27,7 +27,7 @@
       </v-form>
     </Card>
 
-    <Card :title="$t('Profile.teamTitle')" class="py-3">
+    <Card :title="$t('Profile.teamTitle')" class="mt-0">
       <v-spacer class="mt-3" />
 
       <!-- User is on a team -->
