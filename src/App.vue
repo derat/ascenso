@@ -21,6 +21,20 @@
         @info-msg="onMessage($event, 'info', 3000)"
       />
 
+      <!-- TODO: Change timeout to -1 for Vuetify 2.3+. -->
+      <v-snackbar v-model="showingUpdate" bottom color="success" :timeout="0">
+        {{ $t('App.updateAvailableText') }}
+        <!-- TODO: This v-btn and v-icon may need to be wrapped in a template so
+             they can have v-bind="attrs" after upgrading Vuetify and/or Vue.
+             With the current version, doing so makes them not show up. :-/ -->
+        <v-btn text @click="onUpdateReloadClick">
+          {{ $t('App.updateReloadButton') }}
+        </v-btn>
+        <v-icon small @click="onUpdateDismissClick" color="white" class="mx-2"
+          >close</v-icon
+        >
+      </v-snackbar>
+
       <!-- This component is used to display transient messages. -->
       <v-snackbar
         v-model="showSnackbar"
@@ -54,6 +68,10 @@ export default class App extends Mixins(Perf) {
   // Whether the user is currently signed in or not.
   signedIn = false;
 
+  showingUpdate = false; // showing v-snackbar about pending update
+  updateDismissedTime: number | null = null;
+  serviceWorkerReg: ServiceWorkerRegistration | null = null;
+
   // Snackbar text currently (or last) displayed.
   snackbarText = '';
   // Color currently used for the snackbar.
@@ -76,6 +94,29 @@ export default class App extends Mixins(Perf) {
     this.showSnackbar = true;
   }
 
+  created() {
+    // Listen for an 'updated' CustomEvent emitted by register-service-worker.ts
+    // when a new version of the service worker (and app) has been installed but
+    // not yet activated.
+    document.addEventListener('updated', this.onUpdatedEvent);
+
+    // Listen for the service worker changing (due to an update).
+    navigator.serviceWorker?.ready.then(() =>
+      navigator.serviceWorker?.addEventListener(
+        'controllerchange',
+        this.onServiceWorkerChange
+      )
+    );
+  }
+
+  beforeDestroy() {
+    document.removeEventListener('updated', this.onUpdatedEvent);
+    navigator.serviceWorker?.removeEventListener(
+      'controllerchange',
+      this.onServiceWorkerChange
+    );
+  }
+
   mounted() {
     app.auth().onAuthStateChanged((user: any) => {
       this.signedIn = !!user;
@@ -96,6 +137,35 @@ export default class App extends Mixins(Perf) {
       }
       this.logReady('app_loaded', data);
     });
+  }
+
+  onUpdatedEvent(e: Event) {
+    this.showingUpdate = true;
+    this.serviceWorkerReg = (e as CustomEvent)
+      .detail as ServiceWorkerRegistration;
+  }
+
+  onUpdateReloadClick() {
+    this.showingUpdate = false;
+    this.activateNewServiceWorker();
+  }
+
+  onUpdateDismissClick() {
+    this.showingUpdate = false;
+    this.updateDismissedTime = Date.now();
+  }
+
+  activateNewServiceWorker() {
+    // After activation completes, all instances should receive
+    // 'controllerchange' events and reload themselves.
+    console.log('Activating new service worker');
+    this.serviceWorkerReg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    this.serviceWorkerReg = null;
+  }
+
+  onServiceWorkerChange() {
+    console.log('Service worker changed; reloading page to apply update');
+    window.location.reload();
   }
 }
 </script>

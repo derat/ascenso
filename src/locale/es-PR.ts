@@ -10,6 +10,8 @@ export default {
     profileTitle: 'Perfil',
     routesTitle: 'Rutas',
     statsTitle: 'Estadísticas',
+    updateAvailableText: 'Actualización disponible',
+    updateReloadButton: 'Recargar',
   },
   ClimbDropdown: {
     // TODO: http://www.notlostjustdiscovering.com/spanish-climbing-vocabulary/

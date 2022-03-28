@@ -12,6 +12,8 @@ export default {
     profileTitle: 'Profile',
     routesTitle: 'Routes',
     statsTitle: 'Statistics',
+    updateAvailableText: 'Update available',
+    updateReloadButton: 'Reload',
   },
   ClimbDropdown: {
     leadAbbrev: 'L',

@@ -7,10 +7,7 @@ import { register } from 'register-service-worker';
 if (process.env.NODE_ENV === 'production') {
   register(`${process.env.BASE_URL}service-worker.js`, {
     ready() {
-      console.log(
-        'App is being served from cache by a service worker.\n' +
-          'For more details, visit https://goo.gl/AFskqB'
-      );
+      console.log('App is being served from cache by a service worker.');
     },
     registered() {
       console.log('Service worker has been registered.');
@@ -21,8 +18,19 @@ if (process.env.NODE_ENV === 'production') {
     updatefound() {
       console.log('New content is downloading.');
     },
-    updated() {
-      console.log('New content is available; please refresh.');
+    updated(registration) {
+      console.log('New content is available.');
+      // When the site is loaded, the service worker will download a new version
+      // of the app in the background while serving the cached version, but the
+      // new version won't be swapped in while the service worker is still
+      // running. The service worker persists across normal (non-hard) refreshes
+      // and will also keep running if the site is open in a second tab. To try
+      // to get around this mess, emit an event so App.vue can prompt the user
+      // to apply the update by unregistering the service worker and reloading
+      // the app.
+      document.dispatchEvent(
+        new CustomEvent('updated', { detail: registration })
+      );
     },
     offline() {
       console.log(
