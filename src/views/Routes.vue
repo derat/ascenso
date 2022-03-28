@@ -8,6 +8,7 @@
       ref="timeMessageSystemBar"
       v-show="timeMessage"
       :color="timeColor"
+      class="time-system-bar"
       window
     >
       {{ timeMessage }}
@@ -580,6 +581,11 @@ export default class Routes extends Mixins(Perf, UserLoader) {
 </script>
 
 <style scoped>
+.time-system-bar {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .area-col {
   align-items: center;
   display: flex;
