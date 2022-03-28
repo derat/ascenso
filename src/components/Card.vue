@@ -4,7 +4,7 @@
 
 <template>
   <v-row justify="center">
-    <v-col cols="12" sm="8" md="6" class="py-0">
+    <v-col cols="12" sm="8" md="6">
       <v-card class="pa-4">
         <div class="caption" v-if="title">{{ title }}</div>
         <slot></slot>

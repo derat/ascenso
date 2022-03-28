@@ -18,6 +18,7 @@ module.exports = {
   webdriver: {
     start_process: true,
     server_path: 'node_modules/.bin/chromedriver',
+    //server_path: '/usr/local/bin/chromedriver',
     port: 9515,
     verbose: true,
     // chromedriver.log is created within this directory.
