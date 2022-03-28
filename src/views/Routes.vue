@@ -245,14 +245,14 @@ export default class Routes extends Mixins(Perf, UserLoader) {
   // Sorted UIDs from the team. Empty if the user is not currently on a team.
   get teamMembers(): string[] {
     // Sort by UID to get stable ordering.
-    return this.teamDoc.users ? Object.keys(this.teamDoc.users).sort() : [];
+    return Object.keys(this.teamDoc?.users || {}).sort();
   }
 
   // Info for each climber on the team.
   // Empty if the user is not currently on a team.
   get climberInfos(): ClimberInfo[] {
     return this.teamMembers.map((uid, i) => {
-      const data = this.teamDoc.users ? this.teamDoc.users[uid] : null;
+      const data = this.teamDoc?.users ? this.teamDoc.users[uid] : null;
       if (!data) throw new Error('No data found for user ' + uid);
       return new ClimberInfo(
         data.name || '',
@@ -264,9 +264,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
 
   // True if the team is full.
   get teamFull() {
-    return (
-      this.teamDoc.users && Object.keys(this.teamDoc.users).length == TeamSize
-    );
+    return Object.keys(this.teamDoc?.users || {}).length == TeamSize;
   }
 
   // Minimum and maximum grade filters to pass to RouteList components.

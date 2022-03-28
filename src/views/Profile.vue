@@ -379,10 +379,8 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
   // Stably-ordered information about the current team's members.
   get teamMembers(): TeamUserData[] {
-    if (!this.teamDoc || !this.teamDoc.users) return [];
-
     // Sort by UID to get stable ordering.
-    return Object.keys(this.teamDoc.users)
+    return Object.keys(this.teamDoc?.users || {})
       .sort()
       .map((uid) => {
         // Required by TypeScript.
@@ -393,11 +391,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
 
   // Whether the user's current team is full.
   get teamFull() {
-    return (
-      this.teamDoc &&
-      this.teamDoc.users &&
-      Object.keys(this.teamDoc.users).length >= TeamSize
-    );
+    return Object.keys(this.teamDoc?.users || {}).length >= TeamSize;
   }
 
   // Number of climbs that the user has reported for their current team.
@@ -624,7 +618,7 @@ export default class Profile extends Mixins(Perf, UserLoader) {
     this.leavingTeam = true;
 
     // Grab this before leaving so we can use it in a message later.
-    const teamName = this.teamDoc.name;
+    const teamName = this.teamDoc?.name || '';
 
     new Promise((resolve) => {
       if (!this.userRef) throw new Error('No user ref');

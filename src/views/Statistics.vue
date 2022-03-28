@@ -181,7 +181,7 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
     // If the user is on a team, retrieve the user stats from the team
     // climbs, and also fill in team stats.
-    if (this.teamDoc && this.teamDoc.users) {
+    if (this.teamDoc?.users) {
       const users = this.teamDoc.users;
       const userClimbs = Object.keys(users).map((uid) => users[uid].climbs);
 
