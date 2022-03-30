@@ -1,0 +1,22 @@
+steps:
+  - name: 'gcr.io/cloud-builders/gcloud'
+    waitFor: ['-']
+    entrypoint: bash
+    args: ['-e', '--', 'build/deploy_function.sh', 'Admin']
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    waitFor: ['-']
+    entrypoint: bash
+    args: ['-e', '--', 'build/deploy_function.sh', 'Log']
+
+  # The 'Test' function (used by end-to-end tests to set state) is only deployed
+  # to development instances.
+  - name: 'gcr.io/cloud-builders/gcloud'
+    waitFor: ['-']
+    entrypoint: bash
+    args:
+      - '-c'
+      - 'if [ -n "$_DEV" ]; then bash -e -- build/deploy_function.sh Test; fi'
+
+options:
+  env: ['FIREBASE_PROJECT_ID=$_FIREBASE_PROJECT_ID']

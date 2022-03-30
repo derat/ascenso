@@ -21,7 +21,7 @@
   },
   "emulators": {
     "firestore": {
-      "port": "8085"
+      "port": 8085
     }
   }
 }

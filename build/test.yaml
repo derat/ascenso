@@ -20,6 +20,11 @@ steps:
     entrypoint: npm
     args: ['--no-audit', 'install']
 
+  - id: copy_assets
+    name: $_CONT
+    entrypoint: bash
+    args: ['-e', '--', 'build/copy_assets.sh']
+
   # I initially tried running unit_tests, firestore_tests, and e2e_tests in
   # parallel, but I think that the builder is slow enough that it can cause
   # timeouts in firestore_tests (e.g. "Could not reach Cloud Firestore backend"
@@ -50,21 +55,8 @@ steps:
       # These environment variables are public; see .env.example.
       - DETECT_CHROMEDRIVER_VERSION=true
       - E2E_URL=http://localhost:8080/
-      - VUE_APP_APPLE_MASK_COLOR=#d50000
-      - VUE_APP_APPLE_MASK_PATH=assets-fallback/safari-pinned-tab.svg
-      - VUE_APP_APPLE_TOUCH_ICON_PATH=assets-fallback/apple-touch-icon.png
       - VUE_APP_COMPETITION_NAME=Ascenso
-      - VUE_APP_FAVICON_16_PATH=assets-fallback/favicon-16x16.png
-      - VUE_APP_FAVICON_32_PATH=assets-fallback/favicon-32x32.png
-      - VUE_APP_FAVICON_URL=/assets-fallback/favicon.ico
-      - VUE_APP_LOGO_URL=/assets-fallback/logo.png
       - VUE_APP_LOG_TO_CONSOLE=1
-      - VUE_APP_MANIFEST_ICON_192_URL=/assets-fallback/android-chrome-192x192.png
-      - VUE_APP_MANIFEST_ICON_512_URL=/assets-fallback/android-chrome-512x512.png
-      - VUE_APP_MANIFEST_SHORT_NAME=Ascenso
-      - VUE_APP_META_DESCRIPTION=Ascenso
-      - VUE_APP_MS_TILE_150_PATH=assets-fallback/mstile-150x150.png
-      - VUE_APP_MS_TILE_COLOR=#ffc40d
       # These variables are private and are set via substitution variables in
       # the build trigger.
       - E2E_EMAIL_1=$_E2E_EMAIL_1

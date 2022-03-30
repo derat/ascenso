@@ -1,0 +1,58 @@
+steps:
+  - id: npm_install
+    name: node:$_NODE_VERSION
+    entrypoint: npm
+    # 'npm ci' (either 'Continuous Integration' or 'Clean Install') is like 'npm
+    # install' but exits with an error if package-lock.json doesn't satisfy the
+    # dependencies in package.json instead of modifying package-lock.json. This
+    # is good for having repeatable builds. 'npm ci' also wipes the
+    # node_modules/ directory, but that doesn't affect us since we're doing a
+    # clean build every time.
+    args: ['ci', '--no-audit']
+
+  - id: copy_assets
+    name: google/cloud-sdk:slim
+    entrypoint: bash
+    args: ['-e', '--', 'build/copy_assets.sh']
+    env:
+      - ASSETS_URL=$_ASSETS_URL
+
+  - id: npm_run_build
+    name: node:$_NODE_VERSION
+    entrypoint: npm
+    args: ['run', 'build']
+    env:
+      - VUE_APP_GIT_COMMIT=$COMMIT_SHA
+      # The rest of the environment variables are controlled by substitutions
+      # that are specified in Cloud Build triggers that use this config:
+      # https://cloud.google.com/cloud-build/docs/configuring-builds/substitute-variable-values
+      - VUE_APP_COMPETITION_NAME=$_COMPETITION_NAME
+      - VUE_APP_LOCALES=$_LOCALES
+      - VUE_APP_MANIFEST_SHORT_NAME=$_MANIFEST_SHORT_NAME
+      - VUE_APP_META_DESCRIPTION=$_META_DESCRIPTION
+      - VUE_APP_FIREBASE_API_KEY=$_FIREBASE_API_KEY
+      - VUE_APP_FIREBASE_AUTH_DOMAIN=$_FIREBASE_AUTH_DOMAIN
+      - VUE_APP_FIREBASE_DATABASE_URL=$_FIREBASE_DATABASE_URL
+      - VUE_APP_FIREBASE_PROJECT_ID=$_FIREBASE_PROJECT_ID
+      - VUE_APP_FIREBASE_STORAGE_BUCKET=$_FIREBASE_STORAGE_BUCKET
+      - VUE_APP_FIREBASE_MESSAGING_SENDER_ID=$_FIREBASE_MESSAGING_SENDER
+      - VUE_APP_FIREBASE_APP_ID=$_FIREBASE_APP_ID
+
+  - id: firebase_deploy
+    # For some reason there's no prebuilt Firebase image. To create one, clone
+    # https://github.com/GoogleCloudPlatform/cloud-builders-community, go to the
+    # firebase directory, and run:
+    #   gcloud builds submit --project <project_id> --config cloudbuild.yaml .
+    name: gcr.io/$PROJECT_ID/firebase
+    entrypoint: bash
+    args: ['-e', '--', 'build/deploy_hosting.sh']
+    env:
+      - DEPLOY_CREDENTIALS=$_DEPLOY_CREDENTIALS
+      - FIREBASE_PROJECT_ID=$_FIREBASE_PROJECT_ID
+      - FIREBASE_HOSTING_TARGET=$_FIREBASE_HOSTING_TARGET
+
+substitutions:
+  # Node 17 apparently made an OpenSSL change that broke Webpack with "Error:
+  # error:0308010C:digital envelope routines::unsupported":
+  # https://github.com/webpack/webpack/issues/14532
+  _NODE_VERSION: '16'
