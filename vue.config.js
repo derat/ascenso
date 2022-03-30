@@ -9,7 +9,7 @@ process.env.VUE_APP_GIT_COMMIT = require('child_process')
   .trim();
 
 module.exports = {
-  chainWebpack: config => {
+  chainWebpack: (config) => {
     // html-webpack-plugin performs substitution of environment variables in
     // public/index.html, but doesn't touch any other files in the public dir.
     // Tap into copy-webpack-plugin (which is used to copy the dir) and set its
@@ -17,7 +17,7 @@ module.exports = {
     // https://cli.vuejs.org/guide/webpack.html#modifying-options-of-a-plugin
     // and https://github.com/vuejs/vue-cli/issues/2436 for more details. 'vue
     // inspect' can be used to see the existing config.
-    config.plugin('copy').tap(args => {
+    config.plugin('copy').tap((args) => {
       const options = args[0][0];
       // |content| is a Node buffer: https://nodejs.org/api/buffer.html
       // |path| contains the source file's absolute path.
@@ -66,15 +66,15 @@ module.exports = {
     manifestPath: 'manifest.json',
     manifestOptions: {
       name: process.env.VUE_APP_COMPETITION_NAME,
-      short_name: process.env.VUE_APP_MANIFEST_SHORT_NAME,
+      short_name: process.env.VUE_APP_MANIFEST_SHORT_NAME || 'Ascenso',
       icons: [
         {
-          src: process.env.VUE_APP_MANIFEST_ICON_192_URL,
+          src: '/assets/android-chrome-192x192.png',
           sizes: '192x192',
           type: 'image/png',
         },
         {
-          src: process.env.VUE_APP_MANIFEST_ICON_512_URL,
+          src: '/assets/android-chrome-512x512.png',
           sizes: '512x512',
           type: 'image/png',
         },
@@ -101,11 +101,11 @@ module.exports = {
     themeColor: '#1e88e5', // colors.blue.darken1
     msTileColor: '#ffc40d',
     iconPaths: {
-      favicon32: process.env.VUE_APP_FAVICON_32_PATH,
-      favicon16: process.env.VUE_APP_FAVICON_16_PATH,
-      appleTouchIcon: process.env.VUE_APP_APPLE_TOUCH_ICON_PATH,
-      maskIcon: process.env.VUE_APP_APPLE_MASK_PATH,
-      msTileImage: process.env.VUE_APP_MS_TILE_150_PATH,
+      favicon32: 'assets/favicon-32x32.png',
+      favicon16: 'assets/favicon-16x16.png',
+      appleTouchIcon: 'assets/apple-touch-icon.png',
+      maskIcon: 'assets/safari-pinned-tab.svg',
+      msTileImage: 'assets/mstile-150x150.png',
     },
     // TODO: Enable Apple's partial PWA support?
   },

@@ -324,7 +324,7 @@ export default class Statistics extends Mixins(Perf, UserLoader) {
 
     // Load the logo and render the completed image asynchronously.
     const logo = new Image();
-    logo.src = process.env.VUE_APP_LOGO_URL || '';
+    logo.src = '/assets/logo.png';
     logo.addEventListener('load', () => {
       const w = logo.width * (logoHeight / logo.height);
       const x = (canvas.width - w) / 2;

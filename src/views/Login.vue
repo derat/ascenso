@@ -36,7 +36,7 @@ import Perf from '@/mixins/Perf';
 
 @Component({})
 export default class Login extends Mixins(Perf) {
-  readonly logoURL = process.env.VUE_APP_LOGO_URL;
+  readonly logoURL = '/assets/logo.png';
   readonly competitionName = process.env.VUE_APP_COMPETITION_NAME;
 
   // True when an OAuth-based flow has redirected back to this view after

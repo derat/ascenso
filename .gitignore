@@ -4,13 +4,10 @@ node_modules/
 
 # Site configuration and assets.
 .env
-.firebaserc
 public/assets
-
-# Repositories containing site configuration.
-*-private/
 
 # Junk created during testing.
 .e2e_js/
 .test_artifacts/
+firebase-debug.log
 firestore-debug.log
