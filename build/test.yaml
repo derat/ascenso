@@ -57,6 +57,7 @@ steps:
       - E2E_URL=http://localhost:8080/
       - VUE_APP_COMPETITION_NAME=Ascenso
       - VUE_APP_LOG_TO_CONSOLE=1
+      - VUE_APP_META_DESCRIPTION=Test
       # These variables are private and are set via substitution variables in
       # the build trigger.
       - E2E_EMAIL_1=$_E2E_EMAIL_1
