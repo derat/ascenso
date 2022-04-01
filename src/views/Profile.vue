@@ -44,7 +44,7 @@
           />
         </v-form>
 
-        <div class="caption grey--text text--darken-1">
+        <div class="text-caption grey--text text--darken-1">
           {{ $t('Profile.teamMembersLabel') }}
         </div>
         <div id="profile-team-members">

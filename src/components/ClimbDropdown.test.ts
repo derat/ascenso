@@ -22,13 +22,13 @@ describe('ClimbDropdown', () => {
     const wrapper = factory({ state: ClimbState.NOT_CLIMBED });
     const clickItem = async (index: number) => {
       // Click the button first to instantiate the menu.
-      wrapper.find({ name: 'v-btn' }).trigger('click');
+      wrapper.findComponent({ name: 'v-btn' }).trigger('click');
       await flushPromises();
 
       // Strangely, using 'trigger' instead of 'vm.$emit' doesn't work here:
       // https://stackoverflow.com/q/52058141
       wrapper
-        .findAll({ name: 'v-list-item' })
+        .findAllComponents({ name: 'v-list-item' })
         .at(index)
         .vm.$emit('click');
     };
@@ -49,25 +49,25 @@ describe('ClimbDropdown', () => {
 });
 
 describe('ClimbDropdown', () => {
-  it('displays expected text in button', () => {
+  it('displays expected text in button', async () => {
     const label = 'ABC';
     const wrapper = factory({ state: ClimbState.LEAD, label });
-    const button = wrapper.find({ name: 'v-btn' });
+    const button = wrapper.findComponent({ name: 'v-btn' });
     expect(button.text()).toEqual('L');
-    wrapper.setProps({ state: ClimbState.TOP_ROPE });
+    await wrapper.setProps({ state: ClimbState.TOP_ROPE });
     expect(button.text()).toEqual('TR');
-    wrapper.setProps({ state: ClimbState.NOT_CLIMBED });
+    await wrapper.setProps({ state: ClimbState.NOT_CLIMBED });
     expect(button.text()).toEqual(label);
   });
 });
 
 describe('ClimbDropdown', () => {
-  it('uses expected color in button', () => {
+  it('uses expected color in button', async () => {
     const color = 'red';
     const wrapper = factory({ state: ClimbState.LEAD, color });
-    const button = wrapper.find({ name: 'v-btn' });
+    const button = wrapper.findComponent({ name: 'v-btn' });
     const getLightenClass = () =>
-      button.classes().find(c => c.startsWith('lighten'));
+      button.classes().find((c) => c.startsWith('lighten'));
 
     // For the lead state, we should use the color without lightening it.
     // The 'color' attribute is mapped to an identically-named class.
@@ -75,12 +75,12 @@ describe('ClimbDropdown', () => {
     expect(getLightenClass()).toBeUndefined();
 
     // For the top-rope state, we should use a lightened version of the color.
-    wrapper.setProps({ state: ClimbState.TOP_ROPE });
+    await wrapper.setProps({ state: ClimbState.TOP_ROPE });
     expect(button.classes(color)).toBe(true);
     expect(getLightenClass()).toBeTruthy();
 
     // For the unclimbed state, we should use gray.
-    wrapper.setProps({ state: ClimbState.NOT_CLIMBED });
+    await wrapper.setProps({ state: ClimbState.NOT_CLIMBED });
     expect(button.classes('grey')).toBe(true);
     expect(button.classes(color)).toBe(false);
   });

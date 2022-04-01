@@ -63,7 +63,7 @@
     "jest": "^24.9.0",
     "nightwatch": "^1.7.12",
     "release-it": "^13.6.1",
-    "sass": "^1.25.0",
+    "sass": "~1.32",
     "sass-loader": "^8.0.2",
     "start-server-and-test": "^1.10.0",
     "stylus": "^0.54.5",
