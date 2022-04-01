@@ -435,7 +435,7 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       return;
     }
 
-    const nowMs = this.getNowMs();
+    const nowMs = Date.now();
     const startMs = this.config.startTime.toMillis();
     const endMs = this.config.endTime.toMillis();
 
@@ -469,10 +469,6 @@ export default class Routes extends Mixins(Perf, UserLoader) {
       this.timeMessage = this.$t('Routes.competitionEndedMessage');
       this.timeColor = 'blue-grey lighten-4';
     }
-  }
-
-  getNowMs() {
-    return new Date().getTime();
   }
 
   mounted() {

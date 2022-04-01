@@ -88,6 +88,16 @@ const maxGrade = '5.12c'; // from sortedData
 
 describe('Routes', () => {
   let wrapper: Wrapper<Vue>;
+  let dateNowSpy: any; // Jest spy on Date.now
+  let now = 1; // ms since epoch returned by |dateNowSpy|
+
+  beforeAll(() => {
+    dateNowSpy = jest.spyOn(Date, 'now').mockImplementation(() => now);
+  });
+
+  afterAll(() => {
+    dateNowSpy.mockRestore();
+  });
 
   beforeEach(async () => {
     MockFirebase.reset();
@@ -114,21 +124,24 @@ describe('Routes', () => {
 
   // Emits an event to display the filters dialog.
   // In reality, this event is emitted by the RoutesNav view.
-  function showFiltersDialog() {
-    wrapper.vm.$root.$emit('show-route-filters');
+  async function showFiltersDialog() {
+    await wrapper.vm.$root.$emit('show-route-filters');
   }
 
   it('displays all areas', () => {
     expect(wrapper.findAll('.area').wrappers.map((w) => w.text())).toEqual(
       sortedData.areas.map((a) => a.name)
     );
-    expect(wrapper.findAll('.mp-icon').wrappers.map((w) => w.text())).toEqual([
-      'info',
-    ]);
+    expect(
+      wrapper
+        .findAllComponents({ name: 'v-icon' })
+        .wrappers.filter((w) => w.classes('mp-icon'))
+        .map((w) => w.text())
+    ).toEqual(['info']);
   });
 
   it('passes route and climber data to route lists', () => {
-    const routeLists = wrapper.findAll(RouteList).wrappers;
+    const routeLists = wrapper.findAllComponents(RouteList).wrappers;
     expect(routeLists.map((w) => w.props('routes'))).toEqual(
       sortedData.areas.map((a) => a.routes)
     );
@@ -147,7 +160,7 @@ describe('Routes', () => {
   it('updates climb states', async () => {
     // Simulate the first climber leading the third route and the second climber
     // undoing their lead of the second route.
-    const routeLists = wrapper.findAll(RouteList).wrappers;
+    const routeLists = wrapper.findAllComponents(RouteList).wrappers;
     routeLists[1].vm.$emit(
       'set-climb-state',
       new SetClimbStateEvent(0, 'r3', ClimbState.LEAD)
@@ -174,18 +187,18 @@ describe('Routes', () => {
     ]);
   });
 
-  it('displays filters dialog', () => {
-    const dialog = wrapper.find({ ref: 'filtersDialog' });
+  it('displays filters dialog', async () => {
+    const dialog = wrapper.findComponent({ ref: 'filtersDialog' });
     expect(getValue(dialog)).toBeFalsy();
-    showFiltersDialog();
+    await showFiltersDialog();
     expect(getValue(dialog)).toBeTruthy();
 
     // The slider should cover the range of grades from the sortedData doc.
-    const slider = wrapper.find({ ref: 'filtersGradeSlider' });
+    const slider = wrapper.findComponent({ ref: 'filtersGradeSlider' });
     expect(slider.props('min')).toBe(minGrade);
     expect(slider.props('max')).toBe(maxGrade);
     expect(slider.props('value')).toEqual([minGrade, maxGrade]);
-    expect(wrapper.find({ ref: 'filtersGradeLabel' }).text()).toBe(
+    expect(wrapper.findComponent({ ref: 'filtersGradeLabel' }).text()).toBe(
       `Grades: ${minGrade} to ${maxGrade}`
     );
   });
@@ -198,26 +211,25 @@ describe('Routes', () => {
     await mountView();
 
     // The slider should be initialized to the range from the user doc.
-    showFiltersDialog();
-    const slider = wrapper.find({ ref: 'filtersGradeSlider' });
+    await showFiltersDialog();
+    const slider = wrapper.findComponent({ ref: 'filtersGradeSlider' });
     expect(slider.props('min')).toBe(minGrade);
     expect(slider.props('max')).toBe(maxGrade);
     expect(slider.props('value')).toEqual(['5.9', '5.11a']);
-    expect(wrapper.find({ ref: 'filtersGradeLabel' }).text()).toBe(
+    expect(wrapper.findComponent({ ref: 'filtersGradeLabel' }).text()).toBe(
       `Grades: 5.9 to 5.11a`
     );
   });
 
   it('saves filters to user doc', async () => {
-    showFiltersDialog();
-    const slider = wrapper.find({ ref: 'filtersGradeSlider' });
-    slider.vm.$emit('input', ['5.9', '5.11a']);
-    expect(wrapper.find({ ref: 'filtersGradeLabel' }).text()).toBe(
+    await showFiltersDialog();
+    const slider = wrapper.findComponent({ ref: 'filtersGradeSlider' });
+    await slider.vm.$emit('input', ['5.9', '5.11a']);
+    expect(wrapper.findComponent({ ref: 'filtersGradeLabel' }).text()).toBe(
       `Grades: 5.9 to 5.11a`
     );
-    const button = wrapper.find({ ref: 'applyFiltersButton' });
-    button.trigger('click');
-    await flushPromises();
+    const button = wrapper.findComponent({ ref: 'applyFiltersButton' });
+    await button.trigger('click');
 
     const doc = deepCopy(userDoc);
     doc.filters = { minGrade: '5.9', maxGrade: '5.11a' };
@@ -225,23 +237,23 @@ describe('Routes', () => {
 
     // If the selected grades match the full range, the filters should be
     // cleared in the user doc.
-    showFiltersDialog();
-    slider.vm.$emit('input', [minGrade, maxGrade]);
-    button.trigger('click');
-    await flushPromises();
+    await showFiltersDialog();
+    await slider.vm.$emit('input', [minGrade, maxGrade]);
+    await button.trigger('click');
 
     delete doc.filters;
     expect(MockFirebase.getDoc(testUserPath)).toEqual(doc);
   });
 
-  it('passes filters to route lists', () => {
-    const routeList = wrapper.find(RouteList);
+  it('passes filters to route lists', async () => {
+    const routeList = wrapper.findComponent(RouteList);
     expect(routeList.props('minGrade')).toBeUndefined();
     expect(routeList.props('maxGrade')).toBeUndefined();
 
     const doc = deepCopy(userDoc);
     doc.filters = { minGrade: '5.9', maxGrade: '5.11a' };
     MockFirebase.setDoc(testUserPath, doc);
+    await flushPromises();
     expect(routeList.props('minGrade')).toBe('5.9');
     expect(routeList.props('maxGrade')).toBe('5.11a');
 
@@ -249,71 +261,79 @@ describe('Routes', () => {
     // passing them to the route list.
     doc.filters = { minGrade, maxGrade };
     MockFirebase.setDoc(testUserPath, doc);
+    await flushPromises();
     expect(routeList.props('minGrade')).toBeUndefined();
     expect(routeList.props('maxGrade')).toBeUndefined();
   });
 
-  it('displays counts of available routes', () => {
+  it('displays counts of available routes', async () => {
     // r2 should be excluded since it's been climbed by both team members.
     const getCounts = () =>
-      wrapper.findAll('.count').wrappers.map((w) => w.text());
+      wrapper
+        .findAllComponents({ name: 'v-col' })
+        .wrappers.filter((w) => w.classes('count'))
+        .map((w) => w.text());
     expect(getCounts()).toEqual(['1', '1']);
 
     // After clearing the climbs, all routes should be included.
     const td = deepCopy(teamDoc);
     for (const uid of Object.keys(td.users)) delete td.users[uid].climbs;
     MockFirebase.setDoc(teamPath, td);
+    await flushPromises();
     expect(getCounts()).toEqual(['2', '1']);
 
     // Set filters that don't exclude any climbs.
     const ud = deepCopy(userDoc);
     ud.filters = { minGrade, maxGrade };
     MockFirebase.setDoc(testUserPath, ud);
+    await flushPromises();
     expect(getCounts()).toEqual(['2', '1']);
 
     // Exclude the two easiest climbs, which are in the first area.
     ud.filters.minGrade = '5.10c';
     MockFirebase.setDoc(testUserPath, ud);
+    await flushPromises();
     expect(getCounts()).toEqual(['0', '1']);
 
     // Also exclude the hardest climb, in the second area.
     ud.filters.maxGrade = '5.10d';
     MockFirebase.setDoc(testUserPath, ud);
+    await flushPromises();
     expect(getCounts()).toEqual(['0', '0']);
   });
 
-  it('displays time until competition starts and ends', () => {
-    let nowMs = 1000; // arbitrary
-    wrapper.setMethods({ getNowMs: () => nowMs });
+  it('displays time until competition starts and ends', async () => {
+    now = 1000; // arbitrary
 
-    const bar = wrapper.find({ ref: 'timeMessageSystemBar' });
+    const bar = wrapper.findComponent({ ref: 'timeMessageSystemBar' });
     expect(bar.isVisible()).toBe(false);
 
     MockFirebase.setDoc('global/config', {
-      startTime: firebase.firestore.Timestamp.fromMillis(nowMs + hour),
-      endTime: firebase.firestore.Timestamp.fromMillis(nowMs + 3 * hour),
+      startTime: firebase.firestore.Timestamp.fromMillis(now + hour),
+      endTime: firebase.firestore.Timestamp.fromMillis(now + 3 * hour),
     });
+    await flushPromises();
     expect(bar.isVisible()).toBe(true);
     expect(bar.text()).toBe('60 minutes until competition starts');
 
-    const advance = (ms: number) => {
-      nowMs += ms;
-      (wrapper.vm as any).updateTimeMessage();
+    const advance = async (ms: number) => {
+      now += ms;
+      await (wrapper.vm as any).updateTimeMessage();
     };
 
-    advance(59 * min + 50 * sec);
+    await advance(59 * min + 50 * sec);
     expect(bar.isVisible()).toBe(true);
     expect(bar.text()).toBe('10 seconds until competition starts');
 
-    advance(10 * sec);
+    await advance(10 * sec);
     expect(bar.isVisible()).toBe(true);
     expect(bar.text()).toBe('2 hours remaining');
 
-    advance(hour + 59 * min + 59 * sec);
+    await advance(hour + 59 * min + 59 * sec);
     expect(bar.isVisible()).toBe(true);
     expect(bar.text()).toBe('1 second remaining');
 
-    advance(sec);
+    await advance(sec);
     expect(bar.isVisible()).toBe(true);
     expect(bar.text()).toBe('Competition ended');
   });

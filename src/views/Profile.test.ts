@@ -90,12 +90,13 @@ describe('Profile', () => {
   // (i.e. the main view) identified by |ref|, which should've been assigned to
   // the element via a 'ref' attribute in the template.
   function findRef(ref: string): Wrapper<Vue> {
-    return wrapper.find({ ref });
+    return wrapper.findComponent({ ref });
   }
 
   // Validates the v-form component wrapped by |w|.
-  function validateForm(w: Wrapper<Vue>) {
+  async function validateForm(w: Wrapper<Vue>) {
     (w.vm as any).validate();
+    await flushPromises();
   }
 
   it("supports changing the user's name", async () => {
@@ -208,7 +209,7 @@ describe('Profile', () => {
     // contain the invite code.
     const button = findRef('inviteButton');
     expect(button.attributes('disabled')).toBeFalsy();
-    button.trigger('click');
+    await button.trigger('click');
     expect(getValue(dialog)).toBeTruthy();
     expect(wrapper.find('.invite-code').text()).toBe(teamInvite);
   });
@@ -233,9 +234,9 @@ describe('Profile', () => {
     // Click the button to show the dialog and then confirm we want to leave.
     const button = findRef('leaveButton');
     expect(button.exists()).toBe(true);
-    button.trigger('click');
+    await button.trigger('click');
     expect(getValue(dialog)).toBeTruthy();
-    findRef('leaveConfirmButton').trigger('click');
+    await findRef('leaveConfirmButton').trigger('click');
     await flushPromises();
     expect(getValue(dialog)).toBeFalsy();
 
@@ -247,8 +248,8 @@ describe('Profile', () => {
 
   it('supports leaving single-user team after reporting climbs', async () => {
     await init(joinedUserDoc, oneUserWithClimbTeamDoc);
-    findRef('leaveButton').trigger('click');
-    findRef('leaveConfirmButton').trigger('click');
+    await findRef('leaveButton').trigger('click');
+    await findRef('leaveConfirmButton').trigger('click');
     await flushPromises();
 
     // The user should remain on the team since they had reported climbs.
@@ -260,8 +261,8 @@ describe('Profile', () => {
 
   it('supports leaving two-user team before reporting climbs', async () => {
     await init(joinedUserDoc, twoUserTeamDoc);
-    findRef('leaveButton').trigger('click');
-    findRef('leaveConfirmButton').trigger('click');
+    await findRef('leaveButton').trigger('click');
+    await findRef('leaveConfirmButton').trigger('click');
     await flushPromises();
 
     // The user should be removed from the team.
@@ -273,8 +274,8 @@ describe('Profile', () => {
 
   it('supports leaving two-user team after reporting climbs', async () => {
     await init(joinedUserDoc, twoUserWithClimbTeamDoc);
-    findRef('leaveButton').trigger('click');
-    findRef('leaveConfirmButton').trigger('click');
+    await findRef('leaveButton').trigger('click');
+    await findRef('leaveConfirmButton').trigger('click');
     await flushPromises();
 
     // The user should remain on the team since they had reported climbs, and
@@ -291,7 +292,7 @@ describe('Profile', () => {
     // Click the button to display the initially-hidden dialog.
     const dialog = findRef('createDialog');
     expect(getValue(dialog)).toBeFalsy();
-    findRef('createButton').trigger('click');
+    await findRef('createButton').trigger('click');
     expect(getValue(dialog)).toBeTruthy();
     const confirmButton = findRef('createConfirmButton');
     expect(confirmButton.attributes('disabled')).toBeTruthy();
@@ -303,9 +304,9 @@ describe('Profile', () => {
     // wrapper doesn't appear to update its model.
     const newTeamName = 'Created Team';
     wrapper.vm.$data.createTeamName = `  ${newTeamName}  `; // should trim
-    validateForm(findRef('createForm'));
+    await validateForm(findRef('createForm'));
     expect(confirmButton.attributes('disabled')).toBeFalsy();
-    confirmButton.trigger('click');
+    await confirmButton.trigger('click');
     await flushPromises();
 
     // The user doc should be updated to contain the ID of the new team.
@@ -363,11 +364,11 @@ describe('Profile', () => {
       return null;
     };
 
-    findRef('createButton').trigger('click');
+    await findRef('createButton').trigger('click');
     const name = 'The Team';
     wrapper.vm.$data.createTeamName = name;
-    validateForm(findRef('createForm'));
-    findRef('createConfirmButton').trigger('click');
+    await validateForm(findRef('createForm'));
+    await findRef('createConfirmButton').trigger('click');
     await flushPromises();
 
     // The team should be created using the last invite code that was checked.
@@ -390,10 +391,10 @@ describe('Profile', () => {
     MockFirebase.getDocHook = (path) =>
       path.startsWith('invites/') ? { team: 'team-id' } : null;
 
-    findRef('createButton').trigger('click');
+    await findRef('createButton').trigger('click');
     wrapper.vm.$data.createTeamName = 'New Team';
-    validateForm(findRef('createForm'));
-    findRef('createConfirmButton').trigger('click');
+    await validateForm(findRef('createForm'));
+    await findRef('createConfirmButton').trigger('click');
     await flushPromises();
 
     // The user shouldn't be on a team, and an error should be shown.
@@ -407,16 +408,16 @@ describe('Profile', () => {
     // Click the button to display the initially-hidden dialog.
     const dialog = findRef('joinDialog');
     expect(getValue(dialog)).toBeFalsy();
-    findRef('joinButton').trigger('click');
+    await findRef('joinButton').trigger('click');
     expect(getValue(dialog)).toBeTruthy();
     const confirmButton = findRef('joinConfirmButton');
     expect(confirmButton.attributes('disabled')).toBeTruthy();
 
     // Enter the invite code and click the join button.
     wrapper.vm.$data.joinInviteCode = teamInvite;
-    validateForm(findRef('joinForm'));
+    await validateForm(findRef('joinForm'));
     expect(confirmButton.attributes('disabled')).toBeFalsy();
-    confirmButton.trigger('click');
+    await confirmButton.trigger('click');
     await flushPromises();
 
     // The user and team docs should be updated.
@@ -438,10 +439,10 @@ describe('Profile', () => {
     await init(singleUserDoc, origTeamDoc);
 
     // Join the team again.
-    findRef('joinButton').trigger('click');
+    await findRef('joinButton').trigger('click');
     wrapper.vm.$data.joinInviteCode = teamInvite;
-    validateForm(findRef('joinForm'));
-    findRef('joinConfirmButton').trigger('click');
+    await validateForm(findRef('joinForm'));
+    await findRef('joinConfirmButton').trigger('click');
     await flushPromises();
 
     // The user's old climb should be retained, and the should no longer be
@@ -456,10 +457,10 @@ describe('Profile', () => {
     await init(singleUserDoc, teamDoc);
 
     // Try to join a team that already has two members.
-    findRef('joinButton').trigger('click');
+    await findRef('joinButton').trigger('click');
     wrapper.vm.$data.joinInviteCode = teamInvite;
-    validateForm(findRef('joinForm'));
-    findRef('joinConfirmButton').trigger('click');
+    await validateForm(findRef('joinForm'));
+    await findRef('joinConfirmButton').trigger('click');
     await flushPromises();
 
     // The dialog should still be shown and the docs should be unchanged.
@@ -473,10 +474,10 @@ describe('Profile', () => {
     await init(singleUserDoc);
 
     // Enter an unregistered invite code.
-    findRef('joinButton').trigger('click');
+    await findRef('joinButton').trigger('click');
     wrapper.vm.$data.joinInviteCode = '987654';
-    validateForm(findRef('joinForm'));
-    findRef('joinConfirmButton').trigger('click');
+    await validateForm(findRef('joinForm'));
+    await findRef('joinConfirmButton').trigger('click');
     await flushPromises();
 
     // The dialog should still be shown and the user doc should be unchanged.

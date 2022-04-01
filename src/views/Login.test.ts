@@ -29,7 +29,7 @@ describe('Login', () => {
   });
 
   // Let tests mount the view themselves so they can set |pendingRedirect|.
-  function mountView() {
+  async function mountView() {
     wrapper = mount(
       Login,
       newVuetifyMountOptions({
@@ -37,16 +37,17 @@ describe('Login', () => {
         mocks: MockFirebase.mountMocks,
       })
     );
+    flushPromises();
   }
 
   function isSpinnerShown() {
-    return wrapper.find({ ref: 'spinner' }).exists();
+    return wrapper.findComponent({ ref: 'spinner' }).exists();
   }
 
   it('calls AuthUI.start when mounted', async () => {
-    mountView();
+    await mountView();
     expect(MockAuthUI.containerID).toBeTruthy();
-    expect(wrapper.contains(MockAuthUI.containerID!)).toBe(true);
+    expect(wrapper.find(MockAuthUI.containerID!).exists()).toBe(true);
     expect(MockAuthUI.config!.signInOptions).toEqual([
       MockGoogleAuthProviderID,
       MockEmailAuthProviderID,
@@ -55,13 +56,13 @@ describe('Login', () => {
 
   it("doesn't display the spinner when not logged in", async () => {
     MockAuthUI.pendingRedirect = false;
-    mountView();
+    await mountView();
     expect(isSpinnerShown()).toBe(false);
   });
 
   it('creates user doc and goes to profile after first login', async () => {
     MockAuthUI.pendingRedirect = true;
-    mountView();
+    await mountView();
 
     // The spinner should be shown when we redirect back to the page.
     expect(isSpinnerShown()).toBe(true);
@@ -84,7 +85,7 @@ describe('Login', () => {
     const user = MockFirebase.currentUser!;
     user.displayName = null;
     MockAuthUI.pendingRedirect = true;
-    mountView();
+    await mountView();
 
     MockAuthUI.config!.callbacks!.signInSuccessWithAuthResult!();
     await flushPromises();
@@ -98,7 +99,7 @@ describe('Login', () => {
 
   it('goes to routes view after subsequent logins', async () => {
     MockAuthUI.pendingRedirect = true;
-    mountView();
+    await mountView();
     expect(isSpinnerShown()).toBe(true);
 
     // Create a user doc to simulate the user previously having signed in.

@@ -20,23 +20,27 @@ describe('Router', () => {
     // tests. We do our best to reset it here by putting Firebase in a signed-in
     // state and going to the default landing page.
     MockFirebase.reset();
-    router.replace('routes');
+    // Avoid "NavigationDuplicated: Avoided redundant navigation to current
+    // location: ..." errors if we're already at the routes page:
+    // https://github.com/vuejs/vue-router/issues/2872#issuecomment-519073998
+    router.replace('routes').catch(() => {});
     await flushPromises();
   });
 
   // Pushes route |name| and waits for navigation to finish.
   async function push(name: string) {
-    router.push(name);
+    router.push(name).catch(() => {}); // see above
     await flushPromises();
   }
 
   it('goes to requested pages', async () => {
-    await push('routes');
     expect(router.currentRoute.name).toBe('routes');
     await push('stats');
     expect(router.currentRoute.name).toBe('stats');
     await push('profile');
     expect(router.currentRoute.name).toBe('profile');
+    await push('routes');
+    expect(router.currentRoute.name).toBe('routes');
   });
 
   it('goes to routes pages by default', async () => {

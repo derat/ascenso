@@ -7,7 +7,11 @@ import { MockFirebase } from '@/firebase/mock';
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import { mount, Wrapper } from '@vue/test-utils';
-import { setUpVuetifyTesting, newVuetifyMountOptions, getValue } from '@/testutil';
+import {
+  setUpVuetifyTesting,
+  newVuetifyMountOptions,
+  getValue,
+} from '@/testutil';
 import flushPromises from 'flush-promises';
 
 import routes from '@/router/routes';
@@ -29,18 +33,18 @@ describe('Toolbar', () => {
   });
 
   function findRef(ref: string): Wrapper<Vue> {
-    return wrapper.find({ ref });
+    return wrapper.findComponent({ ref });
   }
 
-  it('toggles the navigation drawer when the icon is clicked', () => {
+  it('toggles the navigation drawer when the icon is clicked', async () => {
     const drawer = findRef('drawer');
     expect(getValue(drawer)).toBeFalsy();
 
     const icon = findRef('toolbarIcon');
-    icon.trigger('click');
+    await icon.trigger('click');
     expect(getValue(drawer)).toBeTruthy();
 
-    icon.trigger('click');
+    await icon.trigger('click');
     expect(getValue(drawer)).toBeFalsy();
   });
 
@@ -51,13 +55,13 @@ describe('Toolbar', () => {
 
     // Open the navigation drawer and click the last item.
     // Use vm.$emit instead of trigger: https://stackoverflow.com/q/52058141
-    findRef('toolbarIcon').trigger('click');
-    const items = wrapper.findAll({ name: 'v-list-item' });
-    items.at(items.length - 1).vm.$emit('click');
+    await findRef('toolbarIcon').trigger('click');
+    const items = wrapper.findAllComponents({ name: 'v-list-item' });
+    await items.at(items.length - 1).vm.$emit('click');
 
     // Click the confirm button in the dialog.
     expect(getValue(dialog)).toBeTruthy();
-    findRef('signOutConfirmButton').trigger('click');
+    await findRef('signOutConfirmButton').trigger('click');
     await flushPromises();
 
     // The user should be signed out and we should navigate to the login view.

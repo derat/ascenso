@@ -26,7 +26,7 @@
 
 <script lang="ts">
 import firebase from 'firebase/app';
-import firebaseui from 'firebaseui';
+import * as firebaseui from 'firebaseui';
 import { Component, Mixins } from 'vue-property-decorator';
 
 import { app } from '@/firebase';

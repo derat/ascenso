@@ -58,7 +58,7 @@ describe('Statistics', () => {
 
   it('displays statistics for a team', () => {
     const cardStats: Statistic[][] = wrapper
-      .findAll(StatisticsList)
+      .findAllComponents(StatisticsList)
       .wrappers.map((w) => w.props('items'));
     expect(cardStats).toEqual([
       // Team tab.

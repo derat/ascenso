@@ -39,66 +39,69 @@ describe('RouteList', () => {
   // Returns an array of arrays of dropdowns for each route.
   function getRouteDropdowns() {
     return wrapper
-      .findAll({ name: 'v-list-item' })
-      .wrappers.map(w => w.findAll(ClimbDropdown).wrappers);
+      .findAllComponents({ name: 'v-list-item' })
+      .wrappers.map((w) => w.findAllComponents(ClimbDropdown).wrappers);
   }
 
   it('displays route information', () => {
     // For reasons that I don't understand, using a {name: 'v-list-item-title'}
     // selector here doesn't match anything, although {name: 'v-list-item}'}
     // matches the tiles. So, use class names for all of these.
-    expect(wrapper.findAll('.name').wrappers.map(w => w.text())).toEqual(
-      routes.map(r => r.name)
+    expect(wrapper.findAll('.name').wrappers.map((w) => w.text())).toEqual(
+      routes.map((r) => r.name)
     );
-    expect(wrapper.findAll('.mp-icon').wrappers.map(w => w.text())).toEqual([
-      'info',
-    ]);
-    expect(wrapper.findAll('.grade').wrappers.map(w => w.text())).toEqual(
-      routes.map(r => r.grade)
+    expect(
+      wrapper
+        .findAllComponents({ name: 'v-icon' })
+        .wrappers.filter((w) => w.classes('mp-icon'))
+        .map((w) => w.text())
+    ).toEqual(['info']);
+    expect(wrapper.findAll('.grade').wrappers.map((w) => w.text())).toEqual(
+      routes.map((r) => r.grade)
     );
-    expect(wrapper.findAll('.height').wrappers.map(w => w.text())).toEqual([
+    expect(wrapper.findAll('.height').wrappers.map((w) => w.text())).toEqual([
       "55' (17m)",
     ]);
-    expect(wrapper.findAll('.points').wrappers.map(w => w.text())).toEqual(
-      routes.map(r => `${r.lead} (${r.tr})`)
+    expect(wrapper.findAll('.points').wrappers.map((w) => w.text())).toEqual(
+      routes.map((r) => `${r.lead} (${r.tr})`)
     );
   });
 
   it('passes information to climb dropdowns', () => {
     const rd = getRouteDropdowns();
-    expect(rd.map(r => r.map(d => d.props('state')))).toEqual([
+    expect(rd.map((r) => r.map((d) => d.props('state')))).toEqual([
       [ClimbState.LEAD, ClimbState.NOT_CLIMBED],
       [ClimbState.NOT_CLIMBED, ClimbState.TOP_ROPE],
       [ClimbState.NOT_CLIMBED, ClimbState.NOT_CLIMBED],
     ]);
-    expect(rd.map(r => r.map(d => d.props('color')))).toEqual([
+    expect(rd.map((r) => r.map((d) => d.props('color')))).toEqual([
       [climberInfos[0].color, climberInfos[1].color],
       [climberInfos[0].color, climberInfos[1].color],
       [climberInfos[0].color, climberInfos[1].color],
     ]);
-    expect(rd.map(r => r.map(d => d.props('label')))).toEqual([
+    expect(rd.map((r) => r.map((d) => d.props('label')))).toEqual([
       [climberInfos[0].initials, climberInfos[1].initials],
       [climberInfos[0].initials, climberInfos[1].initials],
       [climberInfos[0].initials, climberInfos[1].initials],
     ]);
   });
 
-  it('handles a single climber', () => {
+  it('handles a single climber', async () => {
     const climber = climberInfos[0];
-    wrapper.setProps({ climberInfos: [climber] });
+    await wrapper.setProps({ climberInfos: [climber] });
 
     const rd = getRouteDropdowns();
-    expect(rd.map(r => r.map(d => d.props('state')))).toEqual([
+    expect(rd.map((r) => r.map((d) => d.props('state')))).toEqual([
       [ClimbState.LEAD],
       [ClimbState.NOT_CLIMBED],
       [ClimbState.NOT_CLIMBED],
     ]);
-    expect(rd.map(r => r.map(d => d.props('color')))).toEqual([
+    expect(rd.map((r) => r.map((d) => d.props('color')))).toEqual([
       [climber.color],
       [climber.color],
       [climber.color],
     ]);
-    expect(rd.map(r => r.map(d => d.props('label')))).toEqual([
+    expect(rd.map((r) => r.map((d) => d.props('label')))).toEqual([
       [climber.initials],
       [climber.initials],
       [climber.initials],
@@ -119,26 +122,29 @@ describe('RouteList', () => {
     ]);
   });
 
-  it('deemphasizes filtered routes', () => {
+  it('deemphasizes filtered routes', async () => {
     // By default, no routes should be filtered out.
     const filtered = () =>
-      wrapper.findAll('.filtered').wrappers.map(w => w.find('.grade').text());
+      wrapper
+        .findAllComponents({ name: 'v-list-item-content' })
+        .wrappers.filter((w) => w.classes('filtered'))
+        .map((w) => w.find('.grade').text());
     expect(filtered()).toEqual([]);
 
     // Set a max that excludes the hardest route.
-    wrapper.setProps({ maxGrade: '5.11a' });
+    await wrapper.setProps({ maxGrade: '5.11a' });
     expect(filtered()).toEqual(['5.12c']);
 
     // Add a max that excludes the easiest route.
-    wrapper.setProps({ minGrade: '5.9' });
+    await wrapper.setProps({ minGrade: '5.9' });
     expect(filtered()).toEqual(['5.8', '5.12c']);
 
     // Set a range that filters out all routes.
-    wrapper.setProps({ minGrade: '5.14a', maxGrade: '5.14c' });
+    await wrapper.setProps({ minGrade: '5.14a', maxGrade: '5.14c' });
     expect(filtered()).toEqual(['5.10a', '5.8', '5.12c']);
 
     // Set a range that includes all routes.
-    wrapper.setProps({ minGrade: '5.5', maxGrade: '5.13a' });
+    await wrapper.setProps({ minGrade: '5.5', maxGrade: '5.13a' });
     expect(filtered()).toEqual([]);
   });
 });

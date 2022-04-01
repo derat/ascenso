@@ -37,10 +37,10 @@ describe('GradeSlider', () => {
     ]);
   });
 
-  it('updates slider when value property is changed', () => {
+  it('updates slider when value property is changed', async () => {
     init(['5.5', '5.12a'], '5.5', '5.12a');
-    wrapper.setProps({ value: ['5.8', '5.11c'] });
-    expect(wrapper.find({ ref: 'slider' }).props('value')).toEqual([
+    await wrapper.setProps({ value: ['5.8', '5.11c'] });
+    expect(wrapper.findComponent({ ref: 'slider' }).props('value')).toEqual([
       GradeIndexes['5.8'],
       GradeIndexes['5.11c'],
     ]);

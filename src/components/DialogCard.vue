@@ -4,7 +4,7 @@
 
 <template>
   <v-card>
-    <v-card-title class="title grey lighten-2 mb-4" primary-title>
+    <v-card-title class="text-h6 grey lighten-2 mb-4" primary-title>
       {{ title }}
     </v-card-title>
     <slot></slot>
