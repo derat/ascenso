@@ -39,6 +39,7 @@ steps:
     name: $_CONT
     entrypoint: bash
     args:
+      - '-e'
       - '-c'
       - |
         npx firebase setup:emulators:firestore

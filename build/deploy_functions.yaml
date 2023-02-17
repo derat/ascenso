@@ -15,6 +15,7 @@ steps:
     waitFor: ['-']
     entrypoint: bash
     args:
+      - '-e'
       - '-c'
       - 'if [ -n "$_DEV" ]; then bash -e -- build/deploy_function.sh Test; fi'
 
