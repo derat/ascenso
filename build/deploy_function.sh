@@ -8,6 +8,6 @@ set -e
 gcloud \
   --project="$FIREBASE_PROJECT_ID" \
   functions deploy "$1" \
-  --runtime=go113 \
+  --runtime=go119 \
   --trigger-http \
   --set-env-vars="GCP_PROJECT=${FIREBASE_PROJECT_ID}"
