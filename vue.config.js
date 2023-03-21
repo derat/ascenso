@@ -88,6 +88,9 @@ module.exports = {
     workboxOptions: {
       // Serve the index for non-precached URLs.
       navigateFallback: '/index.html',
+      // Don't serve index.html for Google-served FirebaseUI auth junk:
+      // https://firebase.google.com/docs/auth/web/redirect-best-practices
+      navigateFallbackDenylist: [/^\/__\/auth\//],
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
